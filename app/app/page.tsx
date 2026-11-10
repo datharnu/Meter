@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChainPayment } from "@/components/ChainPayment";
 import { formatUsdc, phase } from "@/lib/rule.mjs";
 import { useDesk } from "@/lib/store";
 
@@ -19,7 +20,8 @@ export default function MetersPage() {
   return (
     <>
       <h1 className="page-title">Meters</h1>
-      <p className="lede">Each row is one sealed price. Open it to sign, lock, pay, or send the money back.</p>
+      <p className="lede">The card is a testnet payment, with the transaction hashes. Each row below is a desk meter. The desk does not move tokens.</p>
+      <ChainPayment />
       {meters.length === 0 ? (
         <div className="empty">
           <p>No meter yet.</p>

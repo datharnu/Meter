@@ -6,15 +6,18 @@ This is a second project beside Accord. The payment rule is the same kind of dea
 
 ## Do this, see this
 
-The desk in `app/` runs the rule in the browser. It does not move tokens. The contract in `contract/` is what moves them, after it is deployed.
+The chain payment is already on testnet. The desk in `app/` still runs the same rule in the browser and does not move tokens.
 
 1. `cd app && npm install && npm test && npm run dev`
-2. Open http://localhost:3000/new
-3. Choose Seal. See a meter for 48.00 USDC. Marlow's ceiling of 60.00 is not on the sheet.
-4. Sign as Marlow Studio, then as Sable Field, then lock 48.00 USDC.
-5. Choose Pay a different recipient. See `ERR_RECIPIENT` and `0.00 USDC`.
-6. Choose Pay 48.00 USDC. See `OK` and `48.00 USDC`.
-7. Start another meter, lock it, move the desk clock past the deadline, and return the balance. See the money on the buyer's side and the vendor unpaid.
+2. Open http://localhost:3000. The first card shows 48.00 tUSDC, the refused hash, and the paid hash.
+3. Open http://localhost:3000/new
+4. Choose Seal. See a meter for 48.00 USDC. Marlow's ceiling of 60.00 is not on the sheet.
+5. Sign as Marlow Studio, then as Sable Field, then lock 48.00 USDC.
+6. Choose Pay a different recipient. See `ERR_RECIPIENT` and `0.00 USDC`.
+7. Choose Pay 48.00 USDC. See `OK` and `48.00 USDC`.
+8. Start another meter, lock it, move the desk clock past the deadline, and return the balance. See the money on the buyer's side and the vendor unpaid.
+
+To run the chain payment again: `node chain/pay.mjs`. That prints the receipt. `FORCE=1 node chain/pay.mjs` pays a new one. The account keys stay in `.keys/`, which is not committed.
 
 ## The contract
 
@@ -34,14 +37,21 @@ There is no method that changes the recipient, the amount, or the evidence after
 cd contract && cargo test
 ```
 
-Deploy is not done in this repo yet. Mainnet waits on an audit. Until the deploy key is removed, whoever holds it can replace the code. The contract has no owner withdraw.
+Deployed on testnet as `meter3.mtrfc658fd1.testnet`. That account was created with no access key, so the code cannot be replaced. Mainnet waits on an audit. The contract has no owner withdraw.
+
+The payment that moved tokens:
+
+- Refused a different recipient: `DWHDfaWGb31oF1oVgk3QXhqc6U6REy42KqCcoa69jPSD` (`ERR_RECIPIENT`)
+- Paid the vendor 48.00 tUSDC: `3TfyC78Qmn9jhFHhjJSDV8Q5rFb9oFgJudijdJ9c215L`
+
+The token is `token.mtrfc658fd1.testnet`. `mint` is public and capped. It is not Circle USDC.
 
 ## Limits
 
 - The overlap of the two mandates is computed in the browser. It is not an attested enclave. A failed overlap creates no meter.
 - The desk clock is not NEAR block time.
-- A green Paid mark on the desk is the rule's answer. It is a chain payment only when a transaction hash is shown. None are shown yet.
-- The token is testnet USDC once deployed, not a promise of Circle dollars on mainnet.
+- A green Paid mark on a desk meter is the rule's answer. It is a chain payment only on the testnet card, where the transaction hash is shown.
+- The token is testnet tUSDC from this repo, not Circle dollars on mainnet.
 
 ## Licence
 

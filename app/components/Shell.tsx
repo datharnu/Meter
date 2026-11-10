@@ -16,7 +16,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Link className="mark" href="/">Meter</Link>
         <Link className="item" data-on={on("/")} href="/">Meters</Link>
         <Link className="item" data-on={on("/new")} href="/new">New</Link>
-        <p>NEAR testnet. Mainnet after an audit. This desk does not move tokens.</p>
+        <p>NEAR testnet. Mainnet after an audit.</p>
       </nav>
       <main className="main">{children}</main>
     </div>

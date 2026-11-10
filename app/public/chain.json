@@ -1,0 +1,20 @@
+{
+  "network": "testnet",
+  "contract": "meter3.mtrfc658fd1.testnet",
+  "token": "token.mtrfc658fd1.testnet",
+  "buyer": "mtrfc658fd1.testnet",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "meterId": 1,
+  "amount": "48000000",
+  "evidence": "Field report 04, price column at most 100",
+  "refused": {
+    "hash": "DWHDfaWGb31oF1oVgk3QXhqc6U6REy42KqCcoa69jPSD",
+    "code": "ERR_RECIPIENT"
+  },
+  "paid": {
+    "hash": "3TfyC78Qmn9jhFHhjJSDV8Q5rFb9oFgJudijdJ9c215L",
+    "code": "OK"
+  },
+  "vendorBalance": "48000000",
+  "at": "2026-11-10T22:16:51.377Z"
+}

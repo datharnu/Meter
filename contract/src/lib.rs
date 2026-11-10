@@ -1,10 +1,10 @@
 use hex::FromHex;
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_sdk::store::IterableMap;
 use near_sdk::{env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault, Promise};
 
 mod rule;
-use rule::{decide, fund, refund, sign, Clause, Code, Deal, Who};
+use rule::{decide, fund, refund as rule_refund, sign as rule_sign, Clause, Code, Deal, Who};
 
 #[near(serializers = [borsh, json])]
 #[derive(Clone)]
@@ -43,12 +43,12 @@ impl Contract {
         recipient: AccountId,
         amount: U128,
         evidence_hex: String,
-        deadline_ns: u64,
+        deadline_ns: U64,
     ) -> u64 {
         let buyer = env::predecessor_account_id();
         require!(amount.0 > 0, "ERR_BAD_AMOUNT");
         require!(parse_evidence(&evidence_hex).is_some(), "ERR_EVIDENCE");
-        require!(deadline_ns > env::block_timestamp(), "ERR_TOO_LATE");
+        require!(deadline_ns.0 > env::block_timestamp(), "ERR_TOO_LATE");
         let id = self.next_id;
         self.next_id += 1;
         self.meters.insert(
@@ -59,7 +59,7 @@ impl Contract {
                 recipient,
                 amount,
                 evidence: evidence_hex.to_ascii_lowercase(),
-                deadline_ns,
+                deadline_ns: deadline_ns.0,
                 buyer_signed: false,
                 vendor_signed: false,
                 funded: U128(0),
@@ -81,7 +81,7 @@ impl Contract {
             env::panic_str(Code::NotParty.as_str());
         };
         let mut deal = to_deal(&meter);
-        match sign(&mut deal, party) {
+        match rule_sign(&mut deal, party) {
             Ok(()) => {}
             Err(code) => env::panic_str(code.as_str()),
         }
@@ -130,7 +130,7 @@ impl Contract {
     pub fn refund(&mut self, id: u64) -> Promise {
         let meter = load(&self.meters, id);
         let mut deal = to_deal(&meter);
-        let amount = match refund(&mut deal, env::block_timestamp()) {
+        let amount = match rule_refund(&mut deal, env::block_timestamp()) {
             Ok(amount) => amount,
             Err(code) => env::panic_str(code.as_str()),
         };

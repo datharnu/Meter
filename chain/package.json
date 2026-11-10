@@ -1,0 +1,8 @@
+{
+  "name": "meter-chain",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "near-api-js": "7.3.1"
+  }
+}
