@@ -30,17 +30,27 @@ export default function MetersPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">Desk</h1>
-          <p className="lede">Three testnet runs, on three contracts. Slips in this browser follow the same rule and move no tokens.</p>
+          <p className="lede">The time gate is the current contract. The older runs are below it. Slips in this browser follow the same rule and move no tokens.</p>
         </div>
         <Link className="btn" href="/new">New slip</Link>
       </div>
+      <h2 className="section-title">Time gate</h2>
+      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
+        {timed.receipt && (
+          <>
+            <RunStats steps={timed.receipt.steps ?? []} />
+            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
+            <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. Release pays only while stored time ≤ block time &lt; deadline. A release before that time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. A deposit at or after the deadline is rejected. The time is a clock, not proof the work was done.</p>
+          </>
+        )}
+      </ReceiptGate>
       <h2 className="section-title">Payment record</h2>
       <ReceiptGate state={receipt.state} onRetry={receipt.reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
         {receipt.receipt && (
           <>
-            <p className="note">Contract <span className="mono break">{receipt.receipt.contract}</span>. A wrong recipient, amount, or sentence moves 0.00. The sealed line pays 48.00. After the deadline the balance returns.</p>
             <RunStats steps={receipt.receipt.steps ?? []} />
             <RunTable receipt={receipt.receipt} steps={receipt.receipt.steps ?? []} />
+            <p className="note">An older contract, <span className="mono break">{receipt.receipt.contract}</span>. A wrong recipient, amount, or sentence moves 0.00. The sealed line pays 48.00. After the deadline the balance returns. That refund is on chain.</p>
           </>
         )}
       </ReceiptGate>
@@ -48,19 +58,9 @@ export default function MetersPage() {
       <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed release on this build.">
         {signed.receipt && (
           <>
-            <p className="note">Contract <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
             <RunStats steps={signed.receipt.steps ?? []} />
             <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
-          </>
-        )}
-      </ReceiptGate>
-      <h2 className="section-title">Time gate</h2>
-      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
-        {timed.receipt && (
-          <>
-            <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. A release before the stored time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. A deposit at or after the deadline is rejected. The time is not evidence the work was done.</p>
-            <RunStats steps={timed.receipt.steps ?? []} />
-            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
+            <p className="note">Contract <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
           </>
         )}
       </ReceiptGate>

@@ -6,11 +6,12 @@ import { decide, formatUsdc, parseUsdc } from "@/lib/rule.mjs";
 const EVIDENCE = "Field report 04, price column at most 100";
 
 const samples = [
-  { id: "agreed", name: "Agreed line", recipient: "sable.testnet", amount: "48.00", evidence: EVIDENCE, open: true },
-  { id: "account", name: "Another account", recipient: "other.testnet", amount: "48.00", evidence: EVIDENCE, open: true },
-  { id: "figure", name: "A lower figure", recipient: "sable.testnet", amount: "47.00", evidence: EVIDENCE, open: true },
-  { id: "note", name: "A rewritten note", recipient: "sable.testnet", amount: "48.00", evidence: "Field report 04, price column at most 90", open: true },
-  { id: "day", name: "After the day", recipient: "sable.testnet", amount: "48.00", evidence: EVIDENCE, open: false },
+  { id: "agreed", name: "Agreed line", recipient: "sable.testnet", amount: "48.00", evidence: EVIDENCE, now: 500 },
+  { id: "early", name: "Before the time", recipient: "sable.testnet", amount: "48.00", evidence: EVIDENCE, now: 100 },
+  { id: "account", name: "Another account", recipient: "other.testnet", amount: "48.00", evidence: EVIDENCE, now: 500 },
+  { id: "figure", name: "A lower figure", recipient: "sable.testnet", amount: "47.00", evidence: EVIDENCE, now: 500 },
+  { id: "note", name: "A rewritten note", recipient: "sable.testnet", amount: "48.00", evidence: "Field report 04, price column at most 90", now: 500 },
+  { id: "day", name: "At the deadline", recipient: "sable.testnet", amount: "48.00", evidence: EVIDENCE, now: 1000 },
 ];
 
 const locked = {
@@ -22,29 +23,29 @@ const locked = {
   funded: 48_000_000,
   paid: 0,
   refunded: 0,
+  notBefore: 400,
+  deadline: 1000,
 };
 
 export default function ClausePage() {
   const [recipient, setRecipient] = useState(samples[0].recipient);
   const [amount, setAmount] = useState(samples[0].amount);
   const [evidence, setEvidence] = useState(samples[0].evidence);
-  const [open, setOpen] = useState(true);
+  const [now, setNow] = useState(samples[0].now);
   const [picked, setPicked] = useState(samples[0].id);
 
   function apply(sample: (typeof samples)[number]) {
     setRecipient(sample.recipient);
     setAmount(sample.amount);
     setEvidence(sample.evidence);
-    setOpen(sample.open);
+    setNow(sample.now);
     setPicked(sample.id);
   }
 
   const parsed = parseUsdc(amount);
-  const now = open ? 0 : 2;
-  const deadline = 1;
   const code = useMemo(() => {
     if (parsed == null) return null;
-    return decide({ ...locked, deadline }, recipient.trim(), parsed, evidence.trim(), now);
+    return decide(locked, recipient.trim(), parsed, evidence.trim(), now);
   }, [parsed, recipient, evidence, now]);
 
   const moved = code === "OK" ? parsed ?? 0 : 0;
@@ -54,7 +55,7 @@ export default function ClausePage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">The line</h1>
-          <p className="lede">Marlow’s ceiling was 60.00. Sable’s floor was 48.00. The slip is 48.00 to sable.testnet. This page does not send a transaction.</p>
+          <p className="lede">The slip is 48.00 to sable.testnet. This preview clock pays only while 400 ≤ time &lt; 1000. This page does not send a transaction. After open, the recipient, the amount, the sentence, and the time cannot be edited.</p>
         </div>
       </div>
       <div className="chips" role="group" aria-label="Sample lines">
@@ -91,7 +92,7 @@ export default function ClausePage() {
               <p className="mono">{code}</p>
             </>
           )}
-          <p className="note">The same branches run in the contract. The book is where those answers moved, or did not move, on testnet.</p>
+          <p className="note">The same branches run in contract-v2. A Clears mark here has no hash and moves nothing. The book is where those answers have a transaction.</p>
         </aside>
       </div>
     </>

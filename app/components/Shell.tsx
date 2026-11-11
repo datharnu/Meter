@@ -44,7 +44,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="main frame">{children}</main>
+        <main id="content" className="main frame">{children}</main>
       </div>
       <nav className="tabs" aria-label="Sections">
         {links.map((link) => (

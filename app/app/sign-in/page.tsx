@@ -22,7 +22,7 @@ export default function SignInPage() {
       <header className="market-bar">
         <Link href="/"><Logo /></Link>
       </header>
-      <main className="market-main market-narrow">
+      <main id="content" className="market-main market-narrow">
         <h1>Open the desk in this browser.</h1>
         <p className="market-lead">
           Slips you seal here stay on this machine. This page does not connect a wallet, and it does not create a key that can spend.

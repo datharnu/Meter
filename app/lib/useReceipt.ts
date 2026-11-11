@@ -10,6 +10,7 @@ export type Step = {
   moved?: string;
   detail?: string;
   meter?: number;
+  signer?: string;
 };
 
 export type Receipt = {

@@ -29,10 +29,11 @@ export default function BookPage() {
   const steps = receipt?.steps ?? [];
 
   function download() {
-    if (!receipt) return;
-    const rows = [{ receipt, steps }];
-    if (signed.receipt) rows.push({ receipt: signed.receipt, steps: signed.receipt.steps ?? [] });
+    if (!receipt && !signed.receipt && !timed.receipt) return;
+    const rows: { receipt: Receipt; steps: Step[] }[] = [];
     if (timed.receipt) rows.push({ receipt: timed.receipt, steps: timed.receipt.steps ?? [] });
+    if (receipt) rows.push({ receipt, steps });
+    if (signed.receipt) rows.push({ receipt: signed.receipt, steps: signed.receipt.steps ?? [] });
     const blob = new Blob([csv(rows)], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -47,10 +48,22 @@ export default function BookPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">The book</h1>
-          <p className="lede">Three recorded runs. Every figure is counted from those receipts. Desk slips are not in this book.</p>
+          <p className="lede">The time gate is the current contract. The older runs are below it. Every figure is counted from a receipt. Desk slips are not in this book.</p>
         </div>
-        <button className="btn" type="button" onClick={download} disabled={!receipt}>Download CSV</button>
+        <button className="btn" type="button" onClick={download} disabled={!receipt && !signed.receipt && !timed.receipt}>Download CSV</button>
       </div>
+      <h2 className="section-title">Time gate</h2>
+      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
+        {timed.receipt && (
+          <>
+            <RunStats steps={timed.receipt.steps ?? []} />
+            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
+            <p className="note">
+              <span className="mono break">{timed.receipt.contract}</span>. Release pays only while stored time ≤ block time &lt; deadline. An unregistered recipient stayed unpaid. After registration the same line paid 48.00 once. A deposit at or after the deadline is rejected. The refund on this contract is unit-tested, because meter 1 was paid before its deadline. The time is a clock, not proof the work was done. Recorded {timed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
+            </p>
+          </>
+        )}
+      </ReceiptGate>
       <h2 className="section-title">Payment record</h2>
       <ReceiptGate state={state} onRetry={reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
         {receipt && (
@@ -58,7 +71,7 @@ export default function BookPage() {
             <RunStats steps={steps} />
             <RunTable receipt={receipt} steps={steps} />
             <p className="note">
-              <span className="mono break">{receipt.contract}</span>. The token is <span className="mono break">{receipt.token}</span>, a public-mint test token, not Circle USDC. Every row shares {receipt.at.slice(0, 16).replace("T", " ")} UTC because the receipt records the run, not a clock on each line.
+              <span className="mono break">{receipt.contract}</span>. The token is <span className="mono break">{receipt.token}</span>, a public-mint test token, not Circle USDC. The refund on this contract is on chain. Every row shares {receipt.at.slice(0, 16).replace("T", " ")} UTC because the receipt records the run, not a clock on each line.
             </p>
           </>
         )}
@@ -71,18 +84,6 @@ export default function BookPage() {
             <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
             <p className="note">
               <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first. Recorded {signed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
-            </p>
-          </>
-        )}
-      </ReceiptGate>
-      <h2 className="section-title">Time gate</h2>
-      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
-        {timed.receipt && (
-          <>
-            <RunStats steps={timed.receipt.steps ?? []} />
-            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
-            <p className="note">
-              <span className="mono break">{timed.receipt.contract}</span>. Release pays after the stored time and before the deadline. An unregistered recipient stayed unpaid. After registration the same line paid 48.00 once. A deposit at or after the deadline is rejected. The time is not evidence the work was done. Once the time has passed, the spending key can pay immediately. Recorded {timed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
             </p>
           </>
         )}

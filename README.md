@@ -4,13 +4,24 @@ Meter enforces the stored line. It does not judge the work. The parties choose t
 
 This is a second project beside Accord. The payment rule is the same kind of deal. The screen is one invoice, not a room with tabs.
 
+## Ninety seconds
+
+A judge can see the rule without a wallet.
+
+1. Open the site. The first card is the recorded time gate: before the time, 0.00; an unregistered recipient, 0.00; after the time, 48.00. Each figure links to its transaction.
+2. Choose Open the desk, then Continue in this browser. The desk repeats those figures. Slips on the desk move no tokens.
+3. Open The line and choose Before the time. The preview shows `ERR_NOT_YET` and `0.00`. That page does not send a transaction.
+
+![Meter's first screen: the sealed-price headline, Open the desk, and the time-gate card showing 0.00 before the time, 0.00 for an unregistered recipient, and 48.00 after the time.](docs/home.jpg)
+
+
 ## Do this, see this
 
 The chain proof is already on testnet. The desk in `app/` still runs the same rule in the browser and does not move tokens.
 
 1. `cd app && npm install && npm test && npm run dev`
 2. Open http://localhost:3000. The first screen is the pitch. The first row is the time gate: `ERR_NOT_YET` at 0.00, `ERR_TRANSFER` at 0.00, and the same line at 48.00, each with its transaction hash. Under that, the buyer deleted the paying key after the payment. A Clears mark on the desk has no hash. A Paid figure on the page is a receipt step with a hash. The row below is the older payment record: a wrong account at 0.00 and the sealed line at 48.00. Further down are the signed release, the limits, and what this is not. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
-3. On the desk, the payment record shows 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. The signed release shows 48.00 cleared, 0.00 sent back, and 1 stopped line. The time gate shows 48.00 cleared, 0.00 sent back, and 4 stopped lines. One of those is the deposit at the deadline on meter 2. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` lists the three receipts, with one CSV. `/key` names the function-call keys, each scoped to `release`, and shows them deleted.
+3. On the desk, the time gate is first: 48.00 tUSDC cleared, 0.00 sent back, and 4 stopped lines. One of those is the deposit at the deadline on meter 2. The payment record below it shows 48.00 cleared, 48.00 sent back, and 4 stopped lines. The signed release shows 48.00 cleared, 0.00 sent back, and 1 stopped line. Open `/clause` and choose Before the time. See `ERR_NOT_YET` and `0.00`. That page does not send a transaction. `/book` lists the time gate first, with one CSV. `/key` names the time-gate key first. Each key was scoped to `release`, and each was deleted after its payment.
 4. From the repo root, `node chain/verify.mjs`. It re-reads the payment record, the signed release, and the time gate. No key. It prints `verify: ok`.
 5. Open http://localhost:3000/new
 6. Choose Seal. See a meter for 48.00 USDC. Marlow's ceiling of 60.00 is not on the sheet.
@@ -103,6 +114,7 @@ The receipt is `app/public/v2.json`. `node chain/verify.mjs` re-reads the three 
 - A Clears mark on the desk has no hash and moves nothing. A Paid figure on the pitch is a receipt step with a hash. Editing browser storage cannot create one. The deleted key was rejected before a transaction existed.
 - The token is testnet tUSDC from this repo, not Circle dollars on mainnet.
 - Continue in this browser writes a tab name into `sessionStorage`. That name cannot sign. The page does not connect a NEAR wallet.
+- GitHub Actions runs the desk rule tests and the line-hash vector. It does not run `cargo test`, and it does not run `node chain/verify.mjs`. Those need a local Rust toolchain and a live testnet read.
 
 ## Licence
 
