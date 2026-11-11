@@ -46,7 +46,8 @@ export function sign(deal, who) {
   return CODES.Ok;
 }
 
-export function fund(deal, amount) {
+export function fund(deal, amount, now) {
+  if (typeof now === "number" && now >= deal.deadline) return { code: CODES.TooLate, kept: 0, change: amount };
   if (!deal.buyerSigned || !deal.vendorSigned) return { code: CODES.NeedBoth, kept: 0, change: amount };
   if (deal.paid > 0 || deal.refunded > 0) return { code: CODES.AlreadyPaid, kept: 0, change: amount };
   const room = deal.amount - deal.funded;

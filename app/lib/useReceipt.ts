@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { tallyUnits } from "./ledger.mjs";
 
 export type Step = {
   label: string;
@@ -8,6 +9,7 @@ export type Step = {
   hash?: string | null;
   moved?: string;
   detail?: string;
+  meter?: number;
 };
 
 export type Receipt = {
@@ -97,18 +99,11 @@ export function formatMoved(amount: string) {
 }
 
 export function tally(steps: Step[]) {
-  let paid = BigInt(0);
-  let back = BigInt(0);
-  let stopped = 0;
-  for (const step of steps) {
-    if (step.code === "OK" && /paid/i.test(step.label)) paid += units(step.moved);
-    else if (/return/i.test(step.label)) back += units(step.moved);
-    else if (step.code.startsWith("ERR_")) stopped += 1;
-  }
-  return { paid, back, stopped };
+  return tallyUnits(steps);
 }
 
 export function meterFor(receipt: Receipt, step: Step) {
+  if (typeof step.meter === "number") return step.meter;
   if (/deadline|return/i.test(step.label)) return receipt.refundMeter ?? receipt.meterId;
   return receipt.meterId;
 }

@@ -1,48 +1,69 @@
 {
   "network": "testnet",
-  "contract": "m718aa2.mtrfc658fd1.testnet",
+  "contract": "m1870dd.mtrfc658fd1.testnet",
   "token": "token.mtrfc658fd1.testnet",
   "buyer": "mtrfc658fd1.testnet",
   "vendor": "vendor.mtrfc658fd1.testnet",
-  "recipient": "u53bac9.mtrfc658fd1.testnet",
+  "recipient": "u7bc2f8.mtrfc658fd1.testnet",
   "meterId": 1,
   "amount": "48000000",
   "evidence": "Field report 04, price column at most 100",
-  "notBefore": "1794394649392474112",
-  "deadline": "1794401669392474112",
-  "lineHash": "901248da14805b8da736c640880692900f615a5702d9375efba43fd0ff1d3c5b",
-  "agentPublicKey": "ed25519:5Xtkeep6ssf48C5Nsguxz9iL45fzn14uAnPG2RJYRhD7",
+  "sentence": "Field report 04, price column at most 100",
+  "notBefore": "1794395956334573568",
+  "deadline": "1794402976334573568",
+  "lineHash": "c3bed004db7244d51d2fb2d130cdfe25c94a3eebcf7944a66e65d04f817ee980",
+  "agentPublicKey": "ed25519:4HTqfEg7eSWDwzr1WZkvdqidF7uPCEbgGcYrcvBzgyFq",
   "steps": [
     {
       "label": "Release before the stored time",
       "code": "ERR_NOT_YET",
-      "hash": "CoTBTtwwoU9Mcbp53gkM4uFbR6DVnMe98wVtNhr7C6ZQ",
-      "moved": "0"
+      "hash": "6jEC64QsURimyDBAFEjzkakmBJsU1D4hE8WiwMxk75ia",
+      "moved": "0",
+      "signer": "m1870dd.mtrfc658fd1.testnet"
     },
     {
       "label": "Unregistered recipient stayed unpaid",
       "code": "ERR_TRANSFER",
-      "hash": "6EK9n4jRy1Nb9jbxHaGrj1HeEqRxYXh6nJAdjKaGv36S",
-      "moved": "0"
+      "hash": "EDasWtLXYPKGRRMU6Ng9t4Qu3XHw1L4XXFw282wtFyGk",
+      "moved": "0",
+      "signer": "m1870dd.mtrfc658fd1.testnet"
     },
     {
-      "label": "Paid u53bac9.mtrfc658fd1.testnet",
+      "label": "Paid u7bc2f8.mtrfc658fd1.testnet",
       "code": "OK",
-      "hash": "3CSJconAjsevnApdfH4CUaMrME2wmjdg65VuBhh2wHai",
-      "moved": "48000000"
+      "hash": "BBhEfuMFX18t4TPMfs1ppbiL3D3kv4H4N4vy65vBMQDU",
+      "moved": "48000000",
+      "signer": "m1870dd.mtrfc658fd1.testnet"
     },
     {
       "label": "Second release moved nothing",
       "code": "ERR_ALREADY_PAID",
-      "hash": "GVEbjbuRPrM8tZdJSVKhFkGELnCy4WR4L9cQhgLf7HsR",
-      "moved": "0"
+      "hash": "2juziMHKrrukZG3GmqSfBqBXXeBQWFnAB1yWZTb1wxb3",
+      "moved": "0",
+      "signer": "m1870dd.mtrfc658fd1.testnet"
     },
     {
       "label": "Buyer deleted the agent key",
       "code": "OK",
-      "hash": "DsfXWpTPKrQSZyYfncRz1PwtCESXYeCoZo7Xq7kszPjW",
-      "moved": "0"
+      "hash": "2tyHhLwu8L4cS98MdUTBSba4mnepyz7JYXxV6F6k1UE1",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet"
+    },
+    {
+      "label": "Deposit at the deadline",
+      "code": "ERR_TOO_LATE",
+      "hash": "GBzsHNTMSRSwhHPQeRAUiEB9meJAPguksmPY7bwBSJUU",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "meter": 2
     }
   ],
-  "at": "2026-11-11T10:57:55.425Z"
+  "at": "2026-11-11T11:19:44.714Z",
+  "lateDeposit": {
+    "meterId": 2,
+    "hash": "GBzsHNTMSRSwhHPQeRAUiEB9meJAPguksmPY7bwBSJUU",
+    "code": "ERR_TOO_LATE",
+    "funded": "0",
+    "signer": "mtrfc658fd1.testnet"
+  }
 }

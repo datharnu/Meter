@@ -32,7 +32,7 @@ export function ProfileDock({ place }: { place: "side" | "top" }) {
   const [tab, setTab] = useState<string | null>(null);
   const [contract, setContract] = useState("m028a47.mtrfc658fd1.testnet");
   const [signed, setSigned] = useState("m2b2440.mtrfc658fd1.testnet");
-  const [timed, setTimed] = useState("m718aa2.mtrfc658fd1.testnet");
+  const [timed, setTimed] = useState("m1870dd.mtrfc658fd1.testnet");
   const [copied, setCopied] = useState("");
 
   useEffect(() => {

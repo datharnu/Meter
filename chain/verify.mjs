@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { lineHash } from "./line.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const receipt = JSON.parse(readFileSync(join(root, "app/public/chain.json"), "utf8"));
@@ -120,7 +121,67 @@ const deadline = timedRaw.match(/"deadline_ns":(\d+)/)?.[1];
 if (notBefore !== String(timed.notBefore) || deadline !== String(timed.deadline)) {
   throw new Error(`Window ${notBefore} to ${deadline} does not match the receipt`);
 }
+const sentence = String(timedMeter.sentence ?? "");
+const expectedSentence = String(timed.sentence ?? timed.evidence).normalize("NFC");
+if (sentence.normalize("NFC") !== expectedSentence) throw new Error("Sentence on the line does not match the receipt");
+const recomputed = lineHash({
+  contract: timed.contract,
+  meterId: timed.meterId,
+  token: timed.token,
+  recipient: timedMeter.recipient,
+  amount: String(timedMeter.amount),
+  notBefore,
+  deadline,
+  evidence: sentence,
+});
+if (recomputed !== timedMeter.line_hash || recomputed !== timed.lineHash) {
+  throw new Error(`Recomputed line ${recomputed}, stored ${timedMeter.line_hash}`);
+}
+const pinnedToken = await call(timed.contract, "token", {});
+if (String(pinnedToken) !== timed.token) throw new Error(`Pinned token ${pinnedToken}, receipt says ${timed.token}`);
+await checkLedger(receipt);
+await checkLedger(signed);
+await checkLedger(timed);
+if (timed.lateDeposit) {
+  const late = await call(timed.contract, "get", { id: timed.lateDeposit.meterId });
+  if (String(late.funded) !== "0" || String(late.paid) !== "0") {
+    throw new Error(`Late deposit meter funded ${late.funded} paid ${late.paid}`);
+  }
+  await seen(timed.lateDeposit.hash, [timed.lateDeposit.signer, timed.buyer, timed.contract]);
+}
+if ((await keysOf(receipt.contract)).length !== 0) throw new Error("Payment record still has an access key");
 console.log(`time gate · ${timed.contract}`);
 console.log(`  paid      meter ${timed.meterId} · ${timedCodes.join(" · ")} · ok`);
 console.log(`  window    ${notBefore} · quote not checked · ok`);
+console.log(`  line      ${recomputed.slice(0, 16)} · token ${pinnedToken} · ok`);
 console.log("verify: ok");
+
+function requireHash(file) {
+  for (const step of file.steps ?? []) {
+    const moved = BigInt(step.moved && /^-?\d+$/.test(String(step.moved)) ? String(step.moved) : "0");
+    if (step.code === "OK" && moved > 0n && !step.hash) {
+      throw new Error(`${file.contract} ${step.label} moved tokens with no transaction hash`);
+    }
+  }
+}
+
+async function seen(hash, signers) {
+  let last = "not found";
+  for (const signer of [...new Set(signers.filter(Boolean))]) {
+    try {
+      const status = await rpc("tx", { tx_hash: hash, sender_account_id: signer, wait_until: "NONE" });
+      if (status) return;
+    } catch (error) {
+      last = error.message ?? String(error);
+    }
+  }
+  throw new Error(`No transaction ${hash}: ${last}`);
+}
+
+async function checkLedger(file) {
+  requireHash(file);
+  for (const step of file.steps ?? []) {
+    if (!step.hash) continue;
+    await seen(step.hash, [step.signer, file.contract, file.buyer]);
+  }
+}

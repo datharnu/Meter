@@ -10,11 +10,15 @@ const sample = {
   amount: 48_000_000,
   notBefore: 100,
   deadline: 1000,
-  evidence: "ab".repeat(32),
+  evidence: "Field report 04, price column at most 100",
 };
 
 test("the line hash matches the contract vector", () => {
-  assert.equal(lineHash(sample), "ef94b445cac1c1ab3b81d1c0cfac8e6017df89a1ce571540fc61cfb5ffc24d8d");
+  assert.equal(lineHash(sample), "1b1cb8f6af3e2644bfacb7c21d6a6273e51beb87807b0b65e1a5cb6d3ebb9965");
+  assert.equal(
+    lineHash({ ...sample, evidence: "e\u0301" }),
+    lineHash({ ...sample, evidence: "\u00e9" }),
+  );
 });
 
 test("48.00 is not an amount the line can hash", () => {

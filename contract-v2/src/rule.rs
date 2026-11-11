@@ -2,6 +2,7 @@
 //! `finish_release` sees a successful transfer. No method in this module moves `not_before_ns`.
 
 use sha2::{Digest, Sha256};
+use unicode_normalization::UnicodeNormalization;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Clause {
@@ -44,6 +45,7 @@ pub enum Code {
     Busy,
     TooEarly,
     TooLate,
+    WrongToken,
     Nothing,
 }
 
@@ -66,6 +68,7 @@ impl Code {
             Code::Busy => "ERR_BUSY",
             Code::TooEarly => "ERR_TOO_EARLY",
             Code::TooLate => "ERR_TOO_LATE",
+            Code::WrongToken => "ERR_WRONG_TOKEN",
             Code::Nothing => "ERR_NOTHING",
         }
     }
@@ -121,8 +124,11 @@ pub fn sign(deal: &mut Deal, who: Who) -> Result<(), Code> {
 }
 
 /// Credits at most the clause amount. Returns the unused part the token must send back.
-/// This does not read the clock. A deposit after the deadline is still kept.
-pub fn fund(deal: &mut Deal, sender_is_buyer: bool, amount: u128) -> Result<u128, Code> {
+/// A deposit at or after the deadline is rejected and nothing is kept.
+pub fn fund(deal: &mut Deal, sender_is_buyer: bool, amount: u128, now_ns: u64) -> Result<u128, Code> {
+    if now_ns >= deal.clause.deadline_ns {
+        return Err(Code::TooLate);
+    }
     if !deal.both_signed() {
         return Err(Code::NeedBoth);
     }
@@ -214,8 +220,32 @@ pub fn finish_refund(deal: &mut Deal, succeeded: bool) {
     }
 }
 
+pub fn accept_token(predecessor_is_token: bool) -> Result<(), Code> {
+    if predecessor_is_token {
+        Ok(())
+    } else {
+        Err(Code::WrongToken)
+    }
+}
+
+/// Five recorded refusals is the tripwire. The fifth call is the one that burns the key.
+pub fn record_refusal(refusals: u32) -> (u32, bool) {
+    let next = refusals.saturating_add(1);
+    (next, next >= 5)
+}
+
+pub const RELEASE_METHOD: &str = "release";
+
 pub fn conserved(deal: &Deal) -> bool {
     deal.paid + deal.refunded <= deal.funded && deal.funded <= deal.clause.amount && !(deal.paid > 0 && deal.refunded > 0)
+}
+
+pub fn normalize_sentence(sentence: &str) -> String {
+    sentence.nfc().collect()
+}
+
+pub fn evidence_hex(sentence: &str) -> String {
+    hex::encode(Sha256::digest(normalize_sentence(sentence).as_bytes()))
 }
 
 fn push_field(out: &mut Vec<u8>, field: &[u8]) {
@@ -233,8 +263,9 @@ pub fn line_bytes(
     amount: u128,
     not_before_ns: u64,
     deadline_ns: u64,
-    evidence_hex: &str,
+    sentence: &str,
 ) -> Vec<u8> {
+    let sentence: String = sentence.nfc().collect();
     let mut out = Vec::new();
     for field in [
         "meter/v2".to_string(),
@@ -245,7 +276,7 @@ pub fn line_bytes(
         amount.to_string(),
         not_before_ns.to_string(),
         deadline_ns.to_string(),
-        evidence_hex.to_string(),
+        sentence,
     ] {
         push_field(&mut out, field.as_bytes());
     }
@@ -282,7 +313,7 @@ mod tests {
         let mut d = deal();
         sign(&mut d, Who::Buyer).unwrap();
         sign(&mut d, Who::Vendor).unwrap();
-        assert_eq!(fund(&mut d, true, 48_000_000).unwrap(), 0);
+        assert_eq!(fund(&mut d, true, 48_000_000, 50).unwrap(), 0);
         d
     }
 
@@ -355,41 +386,69 @@ mod tests {
     }
 
     #[test]
-    fn extra_deposit_is_not_kept_and_the_clock_is_not_read() {
+    fn extra_deposit_is_not_kept() {
         let mut d = deal();
-        d.clause.deadline_ns = 1;
         sign(&mut d, Who::Buyer).unwrap();
         sign(&mut d, Who::Vendor).unwrap();
-        assert_eq!(fund(&mut d, true, 60_000_000).unwrap(), 12_000_000);
+        assert_eq!(fund(&mut d, true, 60_000_000, 50).unwrap(), 12_000_000);
         assert_eq!(d.funded, 48_000_000);
+    }
+
+    #[test]
+    fn a_deposit_at_the_deadline_is_rejected() {
+        let mut d = deal();
+        sign(&mut d, Who::Buyer).unwrap();
+        sign(&mut d, Who::Vendor).unwrap();
+        assert_eq!(fund(&mut d, true, 48_000_000, 1_000), Err(Code::TooLate));
+        assert_eq!(d.funded, 0);
+    }
+
+    #[test]
+    fn a_short_deposit_does_not_fund_the_meter() {
+        let mut d = deal();
+        sign(&mut d, Who::Buyer).unwrap();
+        sign(&mut d, Who::Vendor).unwrap();
+        assert_eq!(fund(&mut d, true, 1_000_000, 50).unwrap(), 0);
+        assert!(!d.locked());
+        assert_eq!(decide(&d, "sable.testnet", 48_000_000, &evidence(1), 500), Err(Code::NotLocked));
+    }
+
+    #[test]
+    fn a_different_token_is_rejected_and_the_fifth_refusal_burns() {
+        assert_eq!(accept_token(false), Err(Code::WrongToken));
+        assert_eq!(accept_token(true), Ok(()));
+        let mut refusals = 0;
+        let mut burn = false;
+        for _ in 0..4 {
+            (refusals, burn) = record_refusal(refusals);
+            assert!(!burn);
+        }
+        (refusals, burn) = record_refusal(refusals);
+        assert!(burn);
+        assert_eq!(refusals, 5);
+        assert_eq!(RELEASE_METHOD, "release");
     }
 
     #[test]
     fn a_stranger_and_a_second_signature_do_not_open_the_escrow() {
         let mut d = deal();
-        assert_eq!(fund(&mut d, true, 1), Err(Code::NeedBoth));
+        assert_eq!(fund(&mut d, true, 1, 50), Err(Code::NeedBoth));
         sign(&mut d, Who::Buyer).unwrap();
         assert_eq!(sign(&mut d, Who::Buyer), Err(Code::AlreadySigned));
         sign(&mut d, Who::Vendor).unwrap();
-        assert_eq!(fund(&mut d, false, 48_000_000), Err(Code::NotBuyer));
+        assert_eq!(fund(&mut d, false, 48_000_000, 50), Err(Code::NotBuyer));
     }
 
     #[test]
     fn the_line_hash_uses_integer_units_and_a_fixed_vector() {
-        let evidence = "ab".repeat(32);
-        let bytes = line_bytes(
-            "m.example.testnet",
-            1,
-            "token.example.testnet",
-            "sable.testnet",
-            48_000_000,
-            100,
-            1_000,
-            &evidence,
-        );
+        let sentence = "Field report 04, price column at most 100";
+        let bytes = line_bytes("m.example.testnet", 1, "token.example.testnet", "sable.testnet", 48_000_000, 100, 1_000, sentence);
         let text = String::from_utf8(bytes.clone()).unwrap();
         assert!(text.contains("48000000"));
         assert!(!text.contains("48.00"));
-        assert_eq!(line_hash_hex(&bytes), "ef94b445cac1c1ab3b81d1c0cfac8e6017df89a1ce571540fc61cfb5ffc24d8d");
+        assert_eq!(line_hash_hex(&bytes), "1b1cb8f6af3e2644bfacb7c21d6a6273e51beb87807b0b65e1a5cb6d3ebb9965");
+        let composed = line_hash_hex(&line_bytes("m.example.testnet", 1, "token.example.testnet", "sable.testnet", 48_000_000, 100, 1_000, "e\u{0301}"));
+        let single = line_hash_hex(&line_bytes("m.example.testnet", 1, "token.example.testnet", "sable.testnet", 48_000_000, 100, 1_000, "\u{00e9}"));
+        assert_eq!(composed, single);
     }
 }

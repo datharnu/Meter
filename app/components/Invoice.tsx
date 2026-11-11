@@ -65,7 +65,7 @@ function Sheet({
 
   function lock() {
     const next = copy();
-    const result = fund(next, next.amount);
+    const result = fund(next, next.amount, next.clock);
     if (result.code !== "OK" || result.kept === 0) return;
     patch(meter.id, { funded: next.funded });
   }

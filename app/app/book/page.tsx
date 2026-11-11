@@ -82,7 +82,7 @@ export default function BookPage() {
             <RunStats steps={timed.receipt.steps ?? []} />
             <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
             <p className="note">
-              <span className="mono break">{timed.receipt.contract}</span>. Release pays after the stored time and before the deadline. An unregistered recipient stayed unpaid. After registration the same line paid 48.00 once. The time is not evidence the work was done. Once the time has passed, the spending key can pay immediately. Recorded {timed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
+              <span className="mono break">{timed.receipt.contract}</span>. Release pays after the stored time and before the deadline. An unregistered recipient stayed unpaid. After registration the same line paid 48.00 once. A deposit at or after the deadline is rejected. The time is not evidence the work was done. Once the time has passed, the spending key can pay immediately. Recorded {timed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
             </p>
           </>
         )}

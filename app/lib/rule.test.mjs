@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { tallyUnits } from "./ledger.mjs";
 import { decide, fund, refund, release, sign, slip } from "./rule.mjs";
 
 const amount = 48_000_000;
@@ -59,6 +60,21 @@ test("a stored time blocks the release and a decimal amount is not the line", ()
   assert.equal(d.paid, 0);
   assert.equal(decide(d, "other.testnet", amount, "field-report-04", 100), "ERR_RECIPIENT");
   assert.equal(release(d, "sable.testnet", amount, "field-report-04", 600).moved, amount);
+});
+
+test("a deposit at the deadline is rejected and a paid mark without a hash is not a payment", () => {
+  const d = deal();
+  sign(d, "buyer");
+  sign(d, "vendor");
+  const late = fund(d, amount, 1_000);
+  assert.equal(late.code, "ERR_TOO_LATE");
+  assert.equal(d.funded, 0);
+  const count = tallyUnits([
+    { label: "Paid vendor", code: "OK", moved: "48000000" },
+    { label: "Paid vendor", code: "OK", moved: "48000000", hash: "BGX34Gq1NRv17qNtdBy2pcFqszP5V1AzBfpxy7bwveSt" },
+  ]);
+  assert.equal(count.paid, BigInt(amount));
+  assert.equal(count.stopped, 0);
 });
 
 test("deadline returns the balance", () => {

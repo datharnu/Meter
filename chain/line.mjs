@@ -11,7 +11,7 @@ export function lineBytes({ contract, meterId, token, recipient, amount, notBefo
     String(amount),
     String(notBefore),
     String(deadline),
-    evidence,
+    String(evidence).normalize("NFC"),
   ];
   const parts = [];
   for (const field of fields) {

@@ -1,6 +1,6 @@
 # Meter
 
-Two companies write a ceiling and a floor. The sheet shows only the price, the recipient, the evidence, and the deadline. Both sign that sheet. A NEAR contract holds the USDC and pays it only when the recipient, the amount, and the evidence match. Anything else is rejected. A missed deadline sends the balance back to the buyer.
+Meter enforces the stored line. It does not judge the work. The parties choose the time, and the contract enforces it: `stored_time ≤ block_time < deadline`. Two companies write a ceiling and a floor. The sheet shows only the price, the recipient, the evidence, and the deadline. Both sign that sheet. A NEAR contract holds the USDC and pays it only when the recipient, the amount, and the evidence match. Anything else is rejected. A missed deadline sends the balance back to the buyer.
 
 This is a second project beside Accord. The payment rule is the same kind of deal. The screen is one invoice, not a room with tabs.
 
@@ -9,8 +9,8 @@ This is a second project beside Accord. The payment rule is the same kind of dea
 The chain proof is already on testnet. The desk in `app/` still runs the same rule in the browser and does not move tokens.
 
 1. `cd app && npm install && npm test && npm run dev`
-2. Open http://localhost:3000. The first screen is the pitch: the sentence, a wrong account at 0.00, and the sealed line at 48.00. Further down are the payment-record run, the signed release, the limits, and what this is not. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
-3. On the desk, the payment record shows 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. The signed release shows 48.00 cleared, 0.00 sent back, and 1 stopped line. The time gate shows 48.00 cleared and 3 stopped lines. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` lists the three receipts, with one CSV. `/key` names the function-call keys, each scoped to `release`, and shows them deleted.
+2. Open http://localhost:3000. The first screen is the pitch. The first row is the time gate: `ERR_NOT_YET` at 0.00, `ERR_TRANSFER` at 0.00, and the same line at 48.00, each with its transaction hash. Under that, the buyer deleted the paying key after the payment. A Clears mark on the desk has no hash. A Paid figure on the page is a receipt step with a hash. The row below is the older payment record: a wrong account at 0.00 and the sealed line at 48.00. Further down are the signed release, the limits, and what this is not. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
+3. On the desk, the payment record shows 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. The signed release shows 48.00 cleared, 0.00 sent back, and 1 stopped line. The time gate shows 48.00 cleared, 0.00 sent back, and 4 stopped lines. One of those is the deposit at the deadline on meter 2. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` lists the three receipts, with one CSV. `/key` names the function-call keys, each scoped to `release`, and shows them deleted.
 4. From the repo root, `node chain/verify.mjs`. It re-reads the payment record, the signed release, and the time gate. No key. It prints `verify: ok`.
 5. Open http://localhost:3000/new
 6. Choose Seal. See a meter for 48.00 USDC. Marlow's ceiling of 60.00 is not on the sheet.
@@ -71,29 +71,36 @@ The receipt is `app/public/tee.json`. The model is `z-ai/glm-5.3-flash`. The pin
 cd contract-tee && cargo test
 ```
 
-The time gate is a third contract, `m718aa2.mtrfc658fd1.testnet`, in `contract-v2/`. `release` pays only when the block time is at or after the time stored on the line and before the deadline. No method can move that time earlier. `open` rejects a time that is already past, and a time that is not before the deadline. `sign` is a call from the buyer's or the vendor's own account. It stores approval of the line hash. It is not a detached signature. The meter is marked paid only after the token transfer succeeds. A failed transfer leaves it unpaid, so `release` can be tried again.
+The time gate is a third contract, `m1870dd.mtrfc658fd1.testnet`, in `contract-v2/`. `release` pays only while `stored_time ≤ block_time < deadline`. One nanosecond before the deadline still clears. At the deadline the call is `ERR_TOO_LATE`. The unit test is `one_nanosecond_before_the_deadline_clears_and_the_deadline_does_not`. NEAR time is nanoseconds, not blocks. No method can move that time earlier, and no method can move the recipient, the amount, the sentence, or the deadline. `open` rejects a time that is already past, and a time that is not before the deadline. `sign` is a call from the buyer's or the vendor's own account. It stores approval of the line hash. It is not a detached signature, so there is no detached signature to replay. Accept is not a method.
 
-The parties choose the gap. A one-second gap is a weak gate they chose. Once the time has arrived, the spending key can pay immediately, and deleting the key loses if that payment lands first. The time is not evidence the work was done. A deposit after the deadline is still accepted. The Intel quote is not checked. This contract does not read a model.
+The line hash is SHA-256 of the length-prefixed fields, and the last field is the sentence in Unicode NFC. The amount field is the integer base units. `48.00` is not a value the hash accepts. `open` requires that SHA-256 of that sentence equals the evidence hex. The token account is stored at `new` and `token()` returns it. A transfer from any other token is rejected.
 
-The recorded recipient was a new account with no token registration. The release before the stored time moved 0.00. The release to that unregistered account moved 0.00 and left the meter unpaid. After registration, the same line paid 48.00 once. The next release moved 0.00. The account was created with no full-access key, and the agent key was deleted after payment.
+The meter is marked paid only after the token transfer succeeds. A failed transfer leaves it unpaid, so `release` can be tried again. After the deadline, any account can call `refund`. The tokens go back to the stored buyer. A second success is refused. The payment-record refund is on chain, on `m028a47` meter 2. The time-gate refund is unit-tested, not chain-receipted on this run, because meter 1 on `m1870dd` was paid before its deadline.
+
+The parties choose the gap. A one-second gap is a weak gate they chose. Once the time has arrived, the spending key can pay immediately, and deleting the key loses if that payment lands first. The time is not evidence the work was done. A deposit at or after the deadline is rejected and nothing is kept. The earlier contract `m718aa2.mtrfc658fd1.testnet` still keeps a late deposit. Do not read that account as this claim. The Intel quote is not checked. This contract does not read a model. It was deployed with no full-access key, so it cannot be upgraded.
+
+The paying key is created for the method name `release` only, with an allowance of 0.50 NEAR. A function-call key cannot attach a deposit, and `install_agent` and `revoke_agent` require 1 yocto, so that key cannot call them. That limit is the NEAR access-key protocol. Five recorded refusals delete the key. The unregistered-recipient failure is a transfer failure, not one of those five.
+
+The recorded recipient was a new account with no token registration. The release before the stored time moved 0.00. The release to that unregistered account moved 0.00 and left the meter unpaid. After registration, the same line paid 48.00 once. The next release moved 0.00. The buyer deleted the agent key after that payment. The account has no access key. The key is a gas cap and a five-refusal tripwire. The line is what the money follows.
 
 | Step | Result | Transaction |
 |---|---|---|
-| Release before the stored time | `ERR_NOT_YET`, nothing moved | [`CoTBTtwwo…`](https://testnet.nearblocks.io/txns/CoTBTtwwoU9Mcbp53gkM4uFbR6DVnMe98wVtNhr7C6ZQ) |
-| Unregistered recipient | `ERR_TRANSFER`, nothing moved | [`6EK9n4jR…`](https://testnet.nearblocks.io/txns/6EK9n4jRy1Nb9jbxHaGrj1HeEqRxYXh6nJAdjKaGv36S) |
-| Paid 48.00 tUSDC once | `OK` | [`3CSJconA…`](https://testnet.nearblocks.io/txns/3CSJconAjsevnApdfH4CUaMrME2wmjdg65VuBhh2wHai) |
-| Second release | `ERR_ALREADY_PAID`, nothing moved | [`GVEbjbuR…`](https://testnet.nearblocks.io/txns/GVEbjbuRPrM8tZdJSVKhFkGELnCy4WR4L9cQhgLf7HsR) |
-| Buyer deleted the agent key | key removed | [`DsfXWpTP…`](https://testnet.nearblocks.io/txns/DsfXWpTPKrQSZyYfncRz1PwtCESXYeCoZo7Xq7kszPjW) |
+| Release before the stored time | `ERR_NOT_YET`, nothing moved | [`6jEC64Qs…`](https://testnet.nearblocks.io/txns/6jEC64QsURimyDBAFEjzkakmBJsU1D4hE8WiwMxk75ia) |
+| Unregistered recipient | `ERR_TRANSFER`, nothing moved | [`EDasWtLX…`](https://testnet.nearblocks.io/txns/EDasWtLXYPKGRRMU6Ng9t4Qu3XHw1L4XXFw282wtFyGk) |
+| Paid 48.00 tUSDC once | `OK` | [`BBhEfuMF…`](https://testnet.nearblocks.io/txns/BBhEfuMFX18t4TPMfs1ppbiL3D3kv4H4N4vy65vBMQDU) |
+| Second release | `ERR_ALREADY_PAID`, nothing moved | [`2juziMHK…`](https://testnet.nearblocks.io/txns/2juziMHKrrukZG3GmqSfBqBXXeBQWFnAB1yWZTb1wxb3) |
+| Buyer deleted the agent key | key removed | [`2tyHhLwu…`](https://testnet.nearblocks.io/txns/2tyHhLwu8L4cS98MdUTBSba4mnepyz7JYXxV6F6k1UE1) |
+| Deposit at the deadline, second meter | `ERR_TOO_LATE`, nothing kept | [`GBzsHNTM…`](https://testnet.nearblocks.io/txns/GBzsHNTMSRSwhHPQeRAUiEB9meJAPguksmPY7bwBSJUU) |
 
-The receipt is `app/public/v2.json`. `node chain/verify.mjs` re-reads this contract as well. `cd contract-v2 && cargo test` runs the rule. `node chain/v2-prove.mjs` deploys another one only when `FORCE=1`.
+The receipt is `app/public/v2.json`. `node chain/verify.mjs` re-reads the three contracts, recomputes this line hash from the sentence stored on the meter, checks `token()`, and checks that each contract has no access key. `cd contract-v2 && cargo test` runs the rule, including a pool ledger and an ed25519 condition check in `contract-v2/src/v3.rs`. Those two are not methods on the deployed contract. `node chain/v2-prove.mjs` deploys another one only when `FORCE=1`.
 
 ## Limits
 
 - The overlap of the two mandates is computed in the browser. It is not an attested enclave. A failed overlap creates no meter. There is no domain proof and no market-making observer in this repo.
 - On the signed release, a matching `provider_tee` signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first. The Intel quote is not checked. The contract does not read the field report.
-- On the time gate, release pays only after the stored time and before the deadline. The parties choose that gap. Once the time has arrived, the spending key can pay immediately, and deleting the key loses if that payment lands first. The time is not evidence the work was done. A deposit after the deadline is still accepted. The Intel quote is not checked.
-- The desk clock is not NEAR block time. The deadline refund above used the contract's block time.
-- A desk slip can say Clears. That is the rule's answer in the browser. It is not a payment. Paid on the pitch is a testnet transaction hash. The deleted key was rejected before a transaction existed.
+- On the time gate, release pays only while `stored_time ≤ block_time < deadline`. One nanosecond before the deadline still clears. At the deadline the call is `ERR_TOO_LATE`. The unit test is `one_nanosecond_before_the_deadline_clears_and_the_deadline_does_not`. The parties choose that gap. Once the time has arrived, the spending key can pay immediately, and deleting the key loses if that payment lands first. The buyer deleted the key after the payment. The time is a clock, not proof the work was done. A deposit at or after the deadline is rejected. The earlier account `m718aa2.mtrfc658fd1.testnet` still keeps a late deposit. The Intel quote is not checked. Pool mode and the condition gate are unit-tested in `contract-v2/src/v3.rs` and are not methods on `m1870dd`.
+- The desk clock is not NEAR block time. The payment-record refund on `m028a47` meter 2 used the contract's block time and is on chain. The time-gate refund is unit-tested, because meter 1 on `m1870dd` was paid before its deadline.
+- A Clears mark on the desk has no hash and moves nothing. A Paid figure on the pitch is a receipt step with a hash. Editing browser storage cannot create one. The deleted key was rejected before a transaction existed.
 - The token is testnet tUSDC from this repo, not Circle dollars on mainnet.
 - Continue in this browser writes a tab name into `sessionStorage`. That name cannot sign. The page does not connect a NEAR wallet.
 

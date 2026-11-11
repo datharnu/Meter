@@ -23,7 +23,8 @@ const TGAS = 1_000_000_000_000n;
 const NEAR = 10n ** 24n;
 const AMOUNT = "48000000";
 const EVIDENCE_TEXT = "Field report 04, price column at most 100";
-const EVIDENCE = createHash("sha256").update(EVIDENCE_TEXT).digest("hex");
+const SENTENCE = EVIDENCE_TEXT.normalize("NFC");
+const EVIDENCE = createHash("sha256").update(Buffer.from(SENTENCE, "utf8")).digest("hex");
 const STORAGE_BYTE = 10_000_000_000_000_000_000n;
 
 const provider = new JsonRpcProvider({ url: RPC });
@@ -225,6 +226,7 @@ async function main() {
       vendor: vendorId,
       recipient: recipientId,
       amount: AMOUNT,
+      sentence: SENTENCE,
       evidence_hex: EVIDENCE,
       not_before_ns: notBefore.toString(),
       deadline_ns: deadline.toString(),
@@ -242,7 +244,7 @@ async function main() {
     amount: AMOUNT,
     notBefore: notBefore.toString(),
     deadline: deadline.toString(),
-    evidence: EVIDENCE,
+    evidence: SENTENCE,
   });
   const viewed = await viewMeter(meterId, id);
   if (viewed.line_hash !== hash) throw new Error(`Line hash ${viewed.line_hash}, local ${hash}`);
@@ -278,7 +280,7 @@ async function main() {
   if (earlyAttempt?.code !== "ERR_NOT_YET" || String(earlyView.paid) !== "0" || earlyView.releasing !== false) {
     throw new Error(`Early release stored ${JSON.stringify(earlyAttempt)} paid ${earlyView.paid} releasing ${earlyView.releasing}`);
   }
-  steps.push({ label: "Release before the stored time", code: "ERR_NOT_YET", hash: early.hash, moved: "0" });
+  steps.push({ label: "Release before the stored time", code: "ERR_NOT_YET", hash: early.hash, moved: "0", signer: meterId });
 
   console.log("  waiting           stored time");
   await waitUntil(notBefore);
@@ -293,7 +295,7 @@ async function main() {
   if (await tokenBalance(tokenAccount, recipientId) !== beforeBalance) {
     throw new Error("Unregistered release moved tokens");
   }
-  steps.push({ label: "Unregistered recipient stayed unpaid", code: "ERR_TRANSFER", hash: unregistered.hash, moved: "0" });
+  steps.push({ label: "Unregistered recipient stayed unpaid", code: "ERR_TRANSFER", hash: unregistered.hash, moved: "0", signer: meterId });
 
   const listed = await send(buyer, tokenAccount, [
     call("register", { account_id: recipientId }, 20n * TGAS),
@@ -310,7 +312,7 @@ async function main() {
   if (BigInt(afterBalance) - BigInt(beforeBalance) !== BigInt(AMOUNT)) {
     throw new Error(`Recipient balance ${afterBalance} from ${beforeBalance}`);
   }
-  steps.push({ label: `Paid ${recipientId}`, code: "OK", hash: paid.hash, moved: AMOUNT });
+  steps.push({ label: `Paid ${recipientId}`, code: "OK", hash: paid.hash, moved: AMOUNT, signer: meterId });
 
   const again = await release("second");
   if (again.failure) throw new Error(again.failure);
@@ -320,7 +322,7 @@ async function main() {
     throw new Error(`Second release stored ${JSON.stringify(againAttempt)} paid ${againView.paid}`);
   }
   if (await tokenBalance(tokenAccount, recipientId) !== afterBalance) throw new Error("Second release moved tokens");
-  steps.push({ label: "Second release moved nothing", code: "ERR_ALREADY_PAID", hash: again.hash, moved: "0" });
+  steps.push({ label: "Second release moved nothing", code: "ERR_ALREADY_PAID", hash: again.hash, moved: "0", signer: meterId });
 
   const revoked = await send(buyer, meterId, [
     call("revoke_agent", { id }, 30n * TGAS, 1n),
@@ -328,7 +330,7 @@ async function main() {
   if (revoked.failure) throw new Error(revoked.failure);
   const keyList = await provider.query({ request_type: "view_access_key_list", account_id: meterId, finality: "final" });
   if ((keyList.keys ?? []).length !== 0) throw new Error("The contract still has an access key");
-  steps.push({ label: "Buyer deleted the agent key", code: "OK", hash: revoked.hash, moved: "0" });
+  steps.push({ label: "Buyer deleted the agent key", code: "OK", hash: revoked.hash, moved: "0", signer: buyerId });
 
   const receipt = {
     network: "testnet",
@@ -340,6 +342,7 @@ async function main() {
     meterId: id,
     amount: AMOUNT,
     evidence: EVIDENCE_TEXT,
+    sentence: SENTENCE,
     notBefore: notBefore.toString(),
     deadline: deadline.toString(),
     lineHash: hash,

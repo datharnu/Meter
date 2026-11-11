@@ -54,6 +54,19 @@ function signedMeans(step: Step) {
   return "Which means this line is on the signed release.";
 }
 
+function ProofCell({ label, amount, code, hash }: { label: string; amount?: string; code: string; hash?: string | null }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <b>{formatUnits(amount ?? "0")}<small> tUSDC</small></b>
+      <a className="mono proof-link" href={hash ? txUrl(hash) : "/book"}>
+        {code}
+        {hash ? <small className="proof-hash">{shortHash(hash)}</small> : null}
+      </a>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { state, receipt, reload } = useReceipt();
   const signed = useReceipt("/tee.json");
@@ -88,63 +101,57 @@ export default function HomePage() {
         <p className="kicker"><span>NEAR testnet</span><span>Not Circle USDC</span></p>
         <h1>One sealed price. The contract pays that line, or it pays nothing.</h1>
         <p className="market-lead">
-          A buyer locks testnet tUSDC against one recipient, one amount, and one sentence. The contract pays that line once. A different account, figure, or sentence moves 0.00. On the time-gate contract, a release before the stored time also moves 0.00.
+          Meter enforces the stored line. It does not judge the work. The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. Before that time, 0.00 moves. An unregistered recipient stays unpaid. The same line then pays 48.00.
         </p>
         <div className="market-actions">
           <Link className="btn" href="/sign-in">Open the desk</Link>
           <Link className="ghost" href="/book">See the proof</Link>
         </div>
 
-        {state === "loading" && <p className="note">Reading the testnet receipt.</p>}
-        {state === "error" && (
+        {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
+        {timed.state === "error" && (
           <p className="alert" role="alert">
-            The testnet receipt did not load. The desk can still open.
-            <button className="text-btn" type="button" onClick={reload}>Try again</button>
+            The time gate did not load. The desk can still open.
+            <button className="text-btn" type="button" onClick={timed.reload}>Try again</button>
           </p>
         )}
-        {state === "empty" && <p className="note">No recorded run in this build. The desk can still open.</p>}
-        {state === "ready" && receipt && refused && paid && (
-          <div className="market-proof">
-            <div>
-              <span>Wrong account</span>
-              <b>{formatUnits(refused.moved ?? "0")}<small> tUSDC</small></b>
-              <a className="mono" href={refused.hash ? txUrl(refused.hash) : "/book"}>{refused.code}</a>
-            </div>
-            <div>
-              <span>Sealed line</span>
-              <b>{formatUnits(paid.moved ?? "0")}<small> tUSDC</small></b>
-              <a className="mono" href={paid.hash ? txUrl(paid.hash) : "/book"}>{paid.code}</a>
-            </div>
-            <div>
-              <span>Recorded</span>
-              <b className="market-when">{when}</b>
-              <span>One receipt, not a clock on each line</span>
-            </div>
-          </div>
-        )}
-        {state === "ready" && <p className="pitch-consequence">A different account was named. 0.00 moved. The sealed line paid 48.00.</p>}
+        {timed.state === "empty" && <p className="note">No time gate in this build. The desk can still open.</p>}
         {timed.state === "ready" && timed.receipt && tooEarly && unregistered && timedPaid && (
           <>
             <div className="market-proof">
-              <div>
-                <span>Before the time</span>
-                <b>{formatUnits(tooEarly.moved ?? "0")}<small> tUSDC</small></b>
-                <a className="mono" href={tooEarly.hash ? txUrl(tooEarly.hash) : "/book"}>{tooEarly.code}</a>
-              </div>
-              <div>
-                <span>Unregistered</span>
-                <b>{formatUnits(unregistered.moved ?? "0")}<small> tUSDC</small></b>
-                <a className="mono" href={unregistered.hash ? txUrl(unregistered.hash) : "/book"}>{unregistered.code}</a>
-              </div>
-              <div>
-                <span>After the time</span>
-                <b>{formatUnits(timedPaid.moved ?? "0")}<small> tUSDC</small></b>
-                <a className="mono" href={timedPaid.hash ? txUrl(timedPaid.hash) : "/book"}>{timedPaid.code}</a>
-              </div>
+              <ProofCell label="Before the time" amount={tooEarly.moved} code={tooEarly.code} hash={tooEarly.hash} />
+              <ProofCell label="Unregistered" amount={unregistered.moved} code={unregistered.code} hash={unregistered.hash} />
+              <ProofCell label="After the time" amount={timedPaid.moved} code={timedPaid.code} hash={timedPaid.hash} />
             </div>
             <p className="pitch-consequence">Before the stored time, 0.00 moved. The unregistered account stayed unpaid. The same line then paid 48.00.</p>
           </>
         )}
+        <p className="hero-note">
+          The buyer deleted the paying key after that 48.00. The key is a 0.50 NEAR gas cap and a five-refusal tripwire. The line is what the money follows. Once the stored time has arrived, that key can pay immediately, and a delete loses if the payment lands first. A Clears mark on the desk has no hash and moves nothing. A Paid figure on this page is a receipt step with a hash. Editing browser storage cannot create one.
+        </p>
+        {state === "loading" && <p className="note">Reading the payment record.</p>}
+        {state === "error" && (
+          <p className="alert" role="alert">
+            The payment record did not load. The desk can still open.
+            <button className="text-btn" type="button" onClick={reload}>Try again</button>
+          </p>
+        )}
+        {state === "empty" && <p className="note">No payment record in this build. The desk can still open.</p>}
+        {state === "ready" && receipt && refused && paid && (
+          <div className="market-follow">
+            <p className="proof-caption">The older contracts prove the same rule with different guards: a wrong recipient moved 0.00, and the sealed line paid 48.00.</p>
+            <div className="market-proof">
+              <ProofCell label="Wrong account" amount={refused.moved} code={refused.code} hash={refused.hash} />
+              <ProofCell label="Sealed line" amount={paid.moved} code={paid.code} hash={paid.hash} />
+              <div>
+                <span>Recorded</span>
+                <b className="market-when">{when}</b>
+                <span>One receipt, not a clock on each line</span>
+              </div>
+            </div>
+          </div>
+        )}
+        {state === "ready" && <p className="pitch-consequence">A different account was named. 0.00 moved. The sealed line paid 48.00.</p>}
 
         <section className="pitch-section" id="problem">
           <h2>The problem</h2>
@@ -159,16 +166,16 @@ export default function HomePage() {
         <section className="pitch-section" id="rule">
           <h2>The rule</h2>
           <p>
-            <span className="mono">release</span> checks the recipient, the amount, the evidence hash, and the deadline. There is no method that edits those fields after the meter is opened. The paying key can call <span className="mono">release</span> and nothing else. Its allowance is 0.50 NEAR, for gas. A failed check is stored. The balance stays.
+            <span className="mono">release</span> checks the recipient, the amount, and the evidence hash. On the time-gate contract it also requires stored time ≤ block time &lt; deadline. One nanosecond before the deadline still clears. At the deadline the call is <span className="mono">ERR_TOO_LATE</span>. The unit test is <span className="mono break">one_nanosecond_before_the_deadline_clears_and_the_deadline_does_not</span>. There is no method that edits those fields after the meter is opened. The paying key can call <span className="mono">release</span> and nothing else. Its allowance is 0.50 NEAR, for gas. A failed check is stored. The balance stays.
           </p>
           <div className="pitch-split">
             <div className="panel">
               <h3>Where the money is decided</h3>
-              <p><span className="mono">contract/src/rule.rs</span> is what <span className="mono">release</span> calls. The screen does not choose the recipient at pay time.</p>
+              <p><span className="mono">contract/src/rule.rs</span> is the payment record. <span className="mono">contract-v2/src/rule.rs</span> is the time gate. The screen does not choose the recipient at pay time.</p>
             </div>
             <div className="panel">
               <h3>Where the number on the desk comes from</h3>
-              <p><span className="mono">app/lib/rule.mjs</span> repeats those branches so the desk can preview a slip. A Clears mark there is not a chain payment.</p>
+              <p><span className="mono">app/lib/rule.mjs</span> repeats those branches so the desk can preview a slip. A Clears mark there has no hash and moves nothing. A Paid figure on this page counts only when the step has a transaction hash.</p>
             </div>
           </div>
         </section>
@@ -231,7 +238,7 @@ export default function HomePage() {
         <section className="pitch-section" id="time">
           <h2>The time gate</h2>
           <p>
-            A third contract, <span className="mono break">{timed.receipt?.contract ?? "m718aa2.mtrfc658fd1.testnet"}</span>. <span className="mono">release</span> pays only when the block time is at or after the time stored on the line and before the deadline. No method can move that time earlier. The meter is marked paid only after the token transfer succeeds. The recipient <span className="mono break">{timed.receipt?.recipient ?? "the new account"}</span> was not registered with the token, so the first release after the time moved 0.00 and left the meter unpaid. After registration, the same line paid 48.00 once. The time is not evidence the work was done. Once that time has passed, the spending key can pay immediately, and deleting the key loses if that payment lands first. Recorded {timedWhen}.
+            A third contract, <span className="mono break">{timed.receipt?.contract ?? "m1870dd.mtrfc658fd1.testnet"}</span>. <span className="mono">release</span> pays only while stored time ≤ block time &lt; deadline. One nanosecond before the deadline still clears. At the deadline the call is <span className="mono">ERR_TOO_LATE</span>. No method can move that time earlier. Accept is not a method. The meter is marked paid only after the token transfer succeeds. The recipient <span className="mono break">{timed.receipt?.recipient ?? "the new account"}</span> was not registered with the token, so the first release after the time moved 0.00 and left the meter unpaid. After registration, the same line paid 48.00 once. The buyer deleted the paying key after that payment. A deposit at or after the deadline is rejected. The payment-record refund is on chain. This meter&apos;s refund is unit-tested, because meter 1 was paid before its deadline. The earlier contract <span className="mono">m718aa2.mtrfc658fd1.testnet</span> still keeps a late deposit. The time is a clock. It is not proof the work was done. Once the stored time has arrived, the key can pay immediately, and a delete loses if the payment lands first. Recorded {timedWhen}.
           </p>
           {timed.state === "ready" && timedSteps.length > 0 ? (
             <ol className="run-list">
@@ -314,7 +321,7 @@ export default function HomePage() {
             {" · "}
             <a href={signed.receipt ? `https://testnet.nearblocks.io/address/${signed.receipt.contract}` : "https://testnet.nearblocks.io/address/m2b2440.mtrfc658fd1.testnet"}>Open the signed release</a>
             {" · "}
-            <a href={timed.receipt ? `https://testnet.nearblocks.io/address/${timed.receipt.contract}` : "https://testnet.nearblocks.io/address/m718aa2.mtrfc658fd1.testnet"}>Open the time gate</a>
+            <a href={timed.receipt ? `https://testnet.nearblocks.io/address/${timed.receipt.contract}` : "https://testnet.nearblocks.io/address/m1870dd.mtrfc658fd1.testnet"}>Open the time gate</a>
             {" · "}
             <Link href="/book">Open the book</Link>
             {" · "}
@@ -331,15 +338,15 @@ export default function HomePage() {
             </div>
             <div>
               <dt>The page decides the payment.</dt>
-              <dd>A Clears mark on a desk slip is the preview in <span className="mono">app/lib/rule.mjs</span>. The hash is the chain.</dd>
+              <dd>A Clears mark on a desk slip has no hash and moves nothing. A Paid figure on this page is a receipt step with a hash. Editing browser storage cannot create one.</dd>
             </div>
             <div>
               <dt>The key can pay anyone.</dt>
-              <dd>It can call <span className="mono">release</span> only. A mismatch moves 0.00. The buyer then deleted it. The next call never reached a block.</dd>
+              <dd>It can call <span className="mono">release</span> only. Its allowance is 0.50 NEAR, for gas, and five refusals delete it. The buyer deleted it after the 48.00 payment. The line is what the money follows. Once the stored time has arrived, that key can pay immediately, and a delete loses if the payment lands first.</dd>
             </div>
             <div>
               <dt>The time proves the work.</dt>
-              <dd>The stored time is a clock. It is not the field report. A release before it moved 0.00. After it, the spending key can pay immediately, and deleting the key loses if that payment lands first. A deposit after the deadline is still accepted.</dd>
+              <dd>The stored time is a clock. It is not the field report. A release before it moved 0.00. After it, the spending key can pay immediately, and deleting the key loses if that payment lands first. A deposit at or after the deadline is rejected. The earlier account m718aa2 still keeps a late deposit.</dd>
             </div>
             <div>
               <dt>The signature checks the work.</dt>
@@ -361,7 +368,7 @@ export default function HomePage() {
           <ul className="source-list">
             <li>Receipt <span className="mono">app/public/chain.json</span>, {when}, NEAR testnet, contract <span className="mono break">{receipt?.contract ?? "m028a47.mtrfc658fd1.testnet"}</span>.</li>
             <li>Signed release <span className="mono">app/public/tee.json</span>, {signedWhen}, contract <span className="mono break">{signed.receipt?.contract ?? "m2b2440.mtrfc658fd1.testnet"}</span>. The Intel quote was not checked.</li>
-            <li>Time gate <span className="mono">app/public/v2.json</span>, {timedWhen}, contract <span className="mono break">{timed.receipt?.contract ?? "m718aa2.mtrfc658fd1.testnet"}</span>. The time is not evidence the work was done.</li>
+            <li>Time gate <span className="mono">app/public/v2.json</span>, {timedWhen}, contract <span className="mono break">{timed.receipt?.contract ?? "m1870dd.mtrfc658fd1.testnet"}</span>. The time is not evidence the work was done.</li>
             <li>Attempted inputs are the ones <span className="mono">chain/prove.mjs</span> sent: <span className="mono">other.testnet</span>, <span className="mono">47000000</span> units (47.00), and an evidence hash that does not match.</li>
             <li>Desk companies Marlow and Sable, ceiling 60.00 and floor 48.00, are example copy. They are not the chain balance.</li>
           </ul>

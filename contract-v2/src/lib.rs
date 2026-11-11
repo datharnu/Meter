@@ -9,9 +9,12 @@ use near_sdk::store::IterableMap;
 use near_sdk::{env, ext_contract, near, require, AccountId, Allowance, Gas, NearToken, PanicOnDefault, Promise, PromiseOrValue, PublicKey};
 
 mod rule;
+#[cfg(test)]
+mod v3;
 use rule::{
-    begin_refund, begin_release, check_window, decide, finish_refund, finish_release, fund, line_bytes, line_hash_hex,
-    sign as rule_sign, Clause, Code, Deal, Who,
+    accept_token, begin_refund, begin_release, check_window, decide, finish_refund, finish_release, fund, line_bytes,
+    line_hash_hex, normalize_sentence, record_refusal, sign as rule_sign, Clause, Code, Deal, Who, RELEASE_METHOD,
+    evidence_hex as hash_sentence,
 };
 
 #[near(serializers = [borsh, json])]
@@ -28,6 +31,7 @@ pub struct MeterState {
     pub vendor: AccountId,
     pub recipient: AccountId,
     pub amount: U128,
+    pub sentence: String,
     pub evidence: String,
     pub not_before_ns: u64,
     pub deadline_ns: u64,
@@ -60,25 +64,32 @@ impl Contract {
         Self { token, next_id: 1, meters: IterableMap::new(b"m".to_vec()) }
     }
 
+    pub fn token(&self) -> AccountId {
+        self.token.clone()
+    }
+
     pub fn open(
         &mut self,
         vendor: AccountId,
         recipient: AccountId,
         amount: U128,
+        sentence: String,
         evidence_hex: String,
         not_before_ns: U64,
         deadline_ns: U64,
     ) -> u64 {
         let buyer = env::predecessor_account_id();
         require!(amount.0 > 0, "ERR_BAD_AMOUNT");
-        require!(parse_evidence(&evidence_hex).is_some(), "ERR_EVIDENCE");
+        require!(!sentence.is_empty() && sentence.len() <= 512, "ERR_EVIDENCE");
+        let sentence = normalize_sentence(&sentence);
+        let evidence = hash_sentence(&sentence);
+        require!(evidence == evidence_hex.to_ascii_lowercase(), "ERR_EVIDENCE");
         match check_window(env::block_timestamp(), not_before_ns.0, deadline_ns.0) {
             Ok(()) => {}
             Err(code) => env::panic_str(code.as_str()),
         }
         let id = self.next_id;
         self.next_id += 1;
-        let evidence = evidence_hex.to_ascii_lowercase();
         let line_hash = line_hash_hex(&line_bytes(
             &env::current_account_id().to_string(),
             id,
@@ -87,7 +98,7 @@ impl Contract {
             amount.0,
             not_before_ns.0,
             deadline_ns.0,
-            &evidence,
+            &sentence,
         ));
         self.meters.insert(
             id,
@@ -96,6 +107,7 @@ impl Contract {
                 vendor,
                 recipient,
                 amount,
+                sentence,
                 evidence,
                 not_before_ns: not_before_ns.0,
                 deadline_ns: deadline_ns.0,
@@ -152,7 +164,7 @@ impl Contract {
         let me = env::current_account_id();
         let allowance = Allowance::limited(NearToken::from_yoctonear(500_000_000_000_000_000_000_000))
             .unwrap_or_else(|| env::panic_str("ERR_ALLOWANCE"));
-        Promise::new(me.clone()).add_access_key_allowance(public_key, allowance, me, "release")
+        Promise::new(me.clone()).add_access_key_allowance(public_key, allowance, me, RELEASE_METHOD)
     }
 
     /// Buyer kill switch. The key is marked dead in this receipt and deleted in the same transaction.
@@ -168,11 +180,14 @@ impl Contract {
     }
 
     pub fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> U128 {
-        require!(env::predecessor_account_id() == self.token, "ERR_WRONG_TOKEN");
+        match accept_token(env::predecessor_account_id() == self.token) {
+            Ok(()) => {}
+            Err(code) => env::panic_str(code.as_str()),
+        }
         let id: u64 = msg.parse().unwrap_or_else(|_| env::panic_str("ERR_BAD_MSG"));
         let mut meter = load(&self.meters, id);
         let mut deal = to_deal(&meter);
-        match fund(&mut deal, sender_id == meter.buyer, amount.0) {
+        match fund(&mut deal, sender_id == meter.buyer, amount.0, env::block_timestamp()) {
             Ok(change) => {
                 meter.funded = U128(deal.funded);
                 self.meters.insert(id, meter);
@@ -221,9 +236,9 @@ impl Contract {
         )
     }
 
+    /// Anyone may call this after the deadline. It pays the stored buyer their own deposit.
     pub fn refund(&mut self, id: u64) -> Promise {
         let mut meter = load(&self.meters, id);
-        require!(env::predecessor_account_id() == meter.buyer, "ERR_NOT_BUYER");
         let mut deal = to_deal(&meter);
         let amount = match begin_refund(&mut deal, env::block_timestamp()) {
             Ok(amount) => amount,
@@ -301,12 +316,12 @@ impl Contract {
     }
 
     fn refuse(&mut self, id: u64, mut meter: MeterState, code: &str, signer: PublicKey) -> PromiseOrValue<String> {
-        meter.refusals += 1;
+        let (refusals, burn) = record_refusal(meter.refusals);
+        meter.refusals = refusals;
         meter.attempts.push(Attempt { code: code.into(), moved: U128(0) });
         if meter.attempts.len() > 12 {
             meter.attempts.remove(0);
         }
-        let burn = meter.refusals >= 5;
         if burn {
             meter.revoked = true;
             meter.agent = None;

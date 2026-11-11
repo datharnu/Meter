@@ -58,7 +58,7 @@ export default function MetersPage() {
       <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
         {timed.receipt && (
           <>
-            <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. A release before the stored time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. The time is not evidence the work was done.</p>
+            <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. A release before the stored time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. A deposit at or after the deadline is rejected. The time is not evidence the work was done.</p>
             <RunStats steps={timed.receipt.steps ?? []} />
             <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
           </>

@@ -154,6 +154,12 @@ a { color: inherit; }
 .market-proof b { display: block; margin: 8px 0 4px; font-size: 28px; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; font-weight: 560; }
 .market-proof b small { display: inline; margin-left: 6px; font-size: 13px; letter-spacing: 0; font-weight: 500; vertical-align: 4px; }
 .market-proof small { font-size: 14px; color: var(--muted); font-weight: 460; }
+.market-proof a.proof-link { display: block; margin-top: 4px; color: inherit; text-decoration: none; overflow-wrap: anywhere; }
+.market-proof a.proof-link:hover { text-decoration: underline; }
+.market-proof a.proof-link .proof-hash { display: block; margin-top: 2px; font-size: 12px; letter-spacing: 0; }
+.market-follow { margin-top: 28px; }
+.proof-caption { margin: 0 0 12px; max-width: 68ch; font-size: 15px; line-height: 1.45; }
+.hero-note { margin: 14px 0 0; max-width: 62ch; color: var(--muted); }
 .market-contract { font-size: 14px !important; font-family: var(--mono); font-weight: 500 !important; letter-spacing: 0 !important; overflow-wrap: anywhere; }
 .market .panel { margin-bottom: 12px; }
 .market .panel h2 { margin: 0 0 8px; font-size: 18px; font-weight: 560; }
