@@ -95,19 +95,48 @@ a { color: inherit; }
 .cell-value .hash, .hash { white-space: nowrap; overflow-wrap: normal; }
 .market { min-height: 100vh; background: var(--bg); color: var(--ink); }
 .market-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 28px;
+  padding: 12px 28px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px);
 }
-.market-nav { display: flex; align-items: center; gap: 16px; }
-.market-nav a { text-decoration: none; }
+.market-nav { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; justify-content: flex-end; }
+.market-nav a { text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
 .market-main { max-width: 880px; margin: 0 auto; padding: 48px 28px 80px; }
+.pitch { max-width: 960px; }
 .market-narrow { max-width: 640px; }
 .market h1 { font-size: 52px; line-height: 1.02; letter-spacing: -0.05em; font-weight: 560; margin: 12px 0 16px; }
-.market-lead { font-size: 18px; color: var(--muted); max-width: 46ch; margin: 0 0 24px; }
+.market-lead { font-size: 18px; color: var(--muted); max-width: 52ch; margin: 0 0 24px; }
 .market-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+.pitch-consequence { margin: 16px 0 0; font-size: 18px; max-width: 42ch; }
+.pitch-section { margin-top: 64px; scroll-margin-top: 88px; }
+.pitch-section h2 { font-size: 28px; font-weight: 560; letter-spacing: -0.04em; margin: 0 0 12px; }
+.pitch-section h3 { font-size: 16px; font-weight: 560; margin: 0 0 8px; }
+.pitch-section p { margin: 0 0 12px; max-width: 68ch; }
+.pitch-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pitch-scroll { overflow-x: auto; background: var(--surface); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); }
+.pitch-table { width: 100%; min-width: 640px; border-collapse: collapse; }
+.pitch-table caption { caption-side: top; text-align: left; padding: 14px 16px 0; color: var(--muted); font-size: 13px; }
+.pitch-table th, .pitch-table td { text-align: left; vertical-align: top; padding: 12px 16px; box-shadow: inset 0 1px 0 var(--line); }
+.pitch-table thead th { color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+.run-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.run-list li { background: var(--surface); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); padding: 16px; }
+.run-list li > div { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.run-list p { margin: 8px 0 0; }
+.run-list p span { color: var(--muted); margin-right: 6px; }
+.run-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.not-list, .source-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.not-list div { background: var(--surface); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); padding: 16px; }
+.not-list dt { font-weight: 560; margin-bottom: 6px; }
+.not-list dd { margin: 0; color: var(--muted); }
+.pitch-close { margin-top: 64px; font-size: 28px; line-height: 1.2; letter-spacing: -0.04em; font-weight: 560; max-width: 22ch; }
+.market-when { font-size: 18px !important; letter-spacing: -0.03em !important; font-weight: 560 !important; }
 .market-proof {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -381,7 +410,11 @@ textarea { resize: vertical; line-height: 1.4; }
   }
   .market h1 { font-size: 36px; }
   .market-main { padding: 24px 16px 64px; }
-  .market-bar { padding: 16px; }
+  .market-bar { position: static; flex-wrap: wrap; padding: 12px 16px; align-items: flex-start; }
+  .market-nav { flex-wrap: nowrap; overflow-x: auto; width: 100%; justify-content: flex-start; }
+  .market-nav a { white-space: nowrap; flex: 0 0 auto; }
+  .pitch-split { grid-template-columns: 1fr; }
+  .pitch-close { font-size: 24px; }
   .market-proof { grid-template-columns: 1fr; }
   .frame { max-width: none; padding: 4px 16px 108px; }
   .frame-bar { justify-content: space-between; padding: 0 16px; }

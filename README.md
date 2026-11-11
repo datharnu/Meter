@@ -9,7 +9,7 @@ This is a second project beside Accord. The payment rule is the same kind of dea
 The chain proof is already on testnet. The desk in `app/` still runs the same rule in the browser and does not move tokens.
 
 1. `cd app && npm install && npm test && npm run dev`
-2. Open http://localhost:3000. The first screen is the recorded testnet result: a wrong account at 0.00 and the agreed line at 48.00. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
+2. Open http://localhost:3000. The first screen is the pitch: the sentence, a wrong account at 0.00, and the sealed line at 48.00, with the run, the limits, and what this is not further down the page. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
 3. On the desk, see 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` is the same receipt, with a CSV. `/key` names the function-call key, scoped to `release`, and shows it deleted.
 4. From the repo root, `node chain/verify.mjs`. It re-reads the live contract. No key. It prints `verify: ok`.
 5. Open http://localhost:3000/new
