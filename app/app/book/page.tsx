@@ -8,7 +8,7 @@ function csv(rows: { receipt: Receipt; steps: Step[] }[]) {
   const header = "run,date,contract,meter,line,code,moved,hash";
   const body = rows.flatMap(({ receipt, steps }) => steps.map((step) => {
     const cells = [
-      receipt.model ? "signed release" : "payment record",
+      receipt.notBefore ? "time gate" : receipt.model ? "signed release" : "payment record",
       receipt.at,
       receipt.contract,
       String(meterFor(receipt, step)),
@@ -25,12 +25,14 @@ function csv(rows: { receipt: Receipt; steps: Step[] }[]) {
 export default function BookPage() {
   const { state, receipt, reload } = useReceipt();
   const signed = useReceipt("/tee.json");
+  const timed = useReceipt("/v2.json");
   const steps = receipt?.steps ?? [];
 
   function download() {
     if (!receipt) return;
     const rows = [{ receipt, steps }];
     if (signed.receipt) rows.push({ receipt: signed.receipt, steps: signed.receipt.steps ?? [] });
+    if (timed.receipt) rows.push({ receipt: timed.receipt, steps: timed.receipt.steps ?? [] });
     const blob = new Blob([csv(rows)], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -45,7 +47,7 @@ export default function BookPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">The book</h1>
-          <p className="lede">Two recorded runs. Every figure is counted from those receipts. Desk slips are not in this book.</p>
+          <p className="lede">Three recorded runs. Every figure is counted from those receipts. Desk slips are not in this book.</p>
         </div>
         <button className="btn" type="button" onClick={download} disabled={!receipt}>Download CSV</button>
       </div>
@@ -69,6 +71,18 @@ export default function BookPage() {
             <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
             <p className="note">
               <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first. Recorded {signed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
+            </p>
+          </>
+        )}
+      </ReceiptGate>
+      <h2 className="section-title">Time gate</h2>
+      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
+        {timed.receipt && (
+          <>
+            <RunStats steps={timed.receipt.steps ?? []} />
+            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
+            <p className="note">
+              <span className="mono break">{timed.receipt.contract}</span>. Release pays after the stored time and before the deadline. An unregistered recipient stayed unpaid. After registration the same line paid 48.00 once. The time is not evidence the work was done. Once the time has passed, the spending key can pay immediately. Recorded {timed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
             </p>
           </>
         )}

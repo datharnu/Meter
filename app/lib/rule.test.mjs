@@ -52,6 +52,15 @@ test("pays once and refuses a different recipient", () => {
   assert.equal(decide(d, "sable.testnet", amount, "field-report-04", 500), "ERR_ALREADY_PAID");
 });
 
+test("a stored time blocks the release and a decimal amount is not the line", () => {
+  const d = ready();
+  d.notBefore = 600;
+  assert.equal(decide(d, "sable.testnet", amount, "field-report-04", 599), "ERR_NOT_YET");
+  assert.equal(d.paid, 0);
+  assert.equal(decide(d, "other.testnet", amount, "field-report-04", 100), "ERR_RECIPIENT");
+  assert.equal(release(d, "sable.testnet", amount, "field-report-04", 600).moved, amount);
+});
+
 test("deadline returns the balance", () => {
   const d = ready();
   assert.equal(refund(d, 999).code, "ERR_TOO_EARLY");

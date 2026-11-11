@@ -28,6 +28,10 @@ export type Receipt = {
   model?: string;
   signer?: string;
   quote?: string;
+  recipient?: string;
+  notBefore?: string;
+  deadline?: string;
+  lineHash?: string;
   at: string;
 };
 

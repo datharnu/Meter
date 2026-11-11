@@ -32,6 +32,7 @@ export function ProfileDock({ place }: { place: "side" | "top" }) {
   const [tab, setTab] = useState<string | null>(null);
   const [contract, setContract] = useState("m028a47.mtrfc658fd1.testnet");
   const [signed, setSigned] = useState("m2b2440.mtrfc658fd1.testnet");
+  const [timed, setTimed] = useState("m718aa2.mtrfc658fd1.testnet");
   const [copied, setCopied] = useState("");
 
   useEffect(() => {
@@ -46,6 +47,12 @@ export function ProfileDock({ place }: { place: "side" | "top" }) {
       .then((response) => (response.ok ? response.json() : null))
       .then((body) => {
         if (body?.contract) setSigned(body.contract);
+      })
+      .catch(() => undefined);
+    fetch("/v2.json")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        if (body?.contract) setTimed(body.contract);
       })
       .catch(() => undefined);
   }, []);
@@ -116,6 +123,14 @@ export function ProfileDock({ place }: { place: "side" | "top" }) {
                 ))}
               </dd>
             </div>
+            <div>
+              <dt>Time gate</dt>
+              <dd className="mono" title={timed}>
+                {timed.split(".").map((part, index, parts) => (
+                  <span key={`${part}-${index}`}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>
+                ))}
+              </dd>
+            </div>
           </dl>
           <p className="who-links">
             <button className="text-btn" type="button" onClick={() => copy(contract)}>{copied === contract ? "Copied" : "Copy record"}</button>
@@ -124,6 +139,10 @@ export function ProfileDock({ place }: { place: "side" | "top" }) {
           <p className="who-links">
             <button className="text-btn" type="button" onClick={() => copy(signed)}>{copied === signed ? "Copied" : "Copy release"}</button>
             <a href={`https://testnet.nearblocks.io/address/${signed}`}>Release</a>
+          </p>
+          <p className="who-links">
+            <button className="text-btn" type="button" onClick={() => copy(timed)}>{copied === timed ? "Copied" : "Copy time gate"}</button>
+            <a href={`https://testnet.nearblocks.io/address/${timed}`}>Time gate</a>
           </p>
           <p className="note">Slips in this browser stay on this machine. The paying key on each contract was deleted. Nothing here is sent to a Meter server.</p>
           <button className="ghost" type="button" onClick={reset}>Clear this browser</button>

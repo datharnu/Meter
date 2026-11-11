@@ -12,6 +12,7 @@ export default function MetersPage() {
   const meters = useDesk((s) => s.meters);
   const receipt = useReceipt();
   const signed = useReceipt("/tee.json");
+  const timed = useReceipt("/v2.json");
 
   if (!ready) {
     return (
@@ -29,7 +30,7 @@ export default function MetersPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">Desk</h1>
-          <p className="lede">Two testnet runs, on two contracts. Slips in this browser follow the same rule and move no tokens.</p>
+          <p className="lede">Three testnet runs, on three contracts. Slips in this browser follow the same rule and move no tokens.</p>
         </div>
         <Link className="btn" href="/new">New slip</Link>
       </div>
@@ -53,6 +54,16 @@ export default function MetersPage() {
           </>
         )}
       </ReceiptGate>
+      <h2 className="section-title">Time gate</h2>
+      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
+        {timed.receipt && (
+          <>
+            <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. A release before the stored time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. The time is not evidence the work was done.</p>
+            <RunStats steps={timed.receipt.steps ?? []} />
+            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
+          </>
+        )}
+      </ReceiptGate>
       <h2 className="section-title">This browser</h2>
       {meters.length === 0 ? (
         <div className="empty">
@@ -72,7 +83,7 @@ export default function MetersPage() {
             </thead>
             <tbody>
               {meters.map((m) => {
-                const status = m.paid > 0 ? "Paid" : m.refunded > 0 ? "Returned" : phase(m, m.clock);
+                const status = m.paid > 0 ? "Clears" : m.refunded > 0 ? "Returns" : phase(m, m.clock);
                 return (
                   <tr key={m.id}>
                     <td className="num" data-label="Amount"><Link className="mono" href={`/m/${m.id}`}>{formatUsdc(m.amount)} USDC</Link></td>

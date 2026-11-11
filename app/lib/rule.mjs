@@ -10,6 +10,8 @@ export const CODES = {
   Amount: "ERR_AMOUNT",
   Evidence: "ERR_EVIDENCE",
   AlreadyPaid: "ERR_ALREADY_PAID",
+  NotYet: "ERR_NOT_YET",
+  Busy: "ERR_BUSY",
   TooEarly: "ERR_TOO_EARLY",
   TooLate: "ERR_TOO_LATE",
 };
@@ -55,11 +57,13 @@ export function fund(deal, amount) {
 
 export function decide(deal, recipient, amount, evidence, now) {
   if (deal.paid > 0 || deal.refunded > 0) return CODES.AlreadyPaid;
+  if (deal.releasing || deal.refunding) return CODES.Busy;
   if (!(deal.buyerSigned && deal.vendorSigned && deal.funded === deal.amount)) return CODES.NotLocked;
-  if (now >= deal.deadline) return CODES.TooLate;
   if (recipient !== deal.recipient) return CODES.Recipient;
   if (amount !== deal.amount) return CODES.Amount;
   if (evidence !== deal.evidence) return CODES.Evidence;
+  if (typeof deal.notBefore === "number" && now < deal.notBefore) return CODES.NotYet;
+  if (now >= deal.deadline) return CODES.TooLate;
   return CODES.Ok;
 }
 

@@ -3,7 +3,9 @@ use near_sdk::json_types::{U128, U64};
 use near_sdk::store::IterableMap;
 use near_sdk::{env, ext_contract, near, require, AccountId, Allowance, Gas, NearToken, PanicOnDefault, Promise, PromiseOrValue, PublicKey};
 
+mod attest;
 mod rule;
+use attest::{check as check_attestation, parse_address, release_line};
 use rule::{decide, fund, refund as rule_refund, sign as rule_sign, Clause, Code, Deal, Who};
 
 #[near(serializers = [borsh, json])]
@@ -37,6 +39,10 @@ pub struct MeterState {
 #[derive(PanicOnDefault)]
 pub struct Contract {
     token: AccountId,
+    /// Model id inside the signed text. Example: `z-ai/glm-5.3-flash`.
+    model: String,
+    /// Ethereum address of the `provider_tee` key. The quote is not stored.
+    tee_signer: [u8; 20],
     next_id: u64,
     meters: IterableMap<u64, MeterState>,
 }
@@ -44,8 +50,12 @@ pub struct Contract {
 #[near]
 impl Contract {
     #[init]
-    pub fn new(token: AccountId) -> Self {
-        Self { token, next_id: 1, meters: IterableMap::new(b"m".to_vec()) }
+    /// `tee_signer_hex` is the `provider_tee` signing address from a verified model report.
+    /// This contract checks signatures from that address. It does not check the Intel quote.
+    pub fn new(token: AccountId, model: String, tee_signer_hex: String) -> Self {
+        require!(!model.is_empty() && model.len() <= 128, "ERR_ATTESTATION");
+        let tee_signer = parse_address(&tee_signer_hex).unwrap_or_else(|| env::panic_str("ERR_ATTESTATION"));
+        Self { token, model, tee_signer, next_id: 1, meters: IterableMap::new(b"m".to_vec()) }
     }
 
     pub fn open(
@@ -149,7 +159,19 @@ impl Contract {
         }
     }
 
-    pub fn release(&mut self, id: u64, recipient: AccountId, amount: U128, evidence_hex: String) -> PromiseOrValue<String> {
+    /// Pays the stored line only when `request_body` and `response_body` are the exact
+    /// bytes of a `provider_tee` signature and both contain this release's line.
+    /// A mismatch still moves 0. The deployed account `m028a47` does not run this method.
+    pub fn release(
+        &mut self,
+        id: u64,
+        recipient: AccountId,
+        amount: U128,
+        evidence_hex: String,
+        request_body: String,
+        response_body: String,
+        signature_hex: String,
+    ) -> PromiseOrValue<String> {
         require!(env::predecessor_account_id() == env::current_account_id(), "ERR_UNAUTHORIZED");
         let signer = env::signer_account_pk();
         let mut meter = load(&self.meters, id);
@@ -160,22 +182,11 @@ impl Contract {
         let evidence = parse_evidence(&evidence_hex).unwrap_or_else(|| env::panic_str("ERR_EVIDENCE"));
         let deal = to_deal(&meter);
         if let Err(code) = decide(&deal, recipient.as_str(), amount.0, &evidence, env::block_timestamp()) {
-            meter.refusals += 1;
-            meter.attempts.push(Attempt { code: code.as_str().into(), moved: U128(0) });
-            if meter.attempts.len() > 12 {
-                meter.attempts.remove(0);
-            }
-            let burn = meter.refusals >= 5;
-            if burn {
-                meter.revoked = true;
-                meter.agent = None;
-            }
-            let label = code.as_str().to_string();
-            self.meters.insert(id, meter);
-            if burn {
-                return PromiseOrValue::Promise(Promise::new(env::current_account_id()).delete_key(signer));
-            }
-            return PromiseOrValue::Value(label);
+            return self.refuse(id, meter, code.as_str(), signer);
+        }
+        let line = release_line(id, recipient.as_str(), amount.0, &hex::encode(evidence));
+        if let Err(code) = check_attestation(&self.model, &self.tee_signer, &line, &request_body, &response_body, &signature_hex) {
+            return self.refuse(id, meter, code, signer);
         }
         meter.paid = amount;
         meter.attempts.push(Attempt { code: "OK".into(), moved: amount });
@@ -253,6 +264,28 @@ impl Contract {
 
     pub fn get(&self, id: u64) -> Option<MeterState> {
         self.meters.get(&id).cloned()
+    }
+
+    pub fn tee(&self) -> (String, String) {
+        (self.model.clone(), hex::encode(self.tee_signer))
+    }
+
+    fn refuse(&mut self, id: u64, mut meter: MeterState, code: &str, signer: PublicKey) -> PromiseOrValue<String> {
+        meter.refusals += 1;
+        meter.attempts.push(Attempt { code: code.into(), moved: U128(0) });
+        if meter.attempts.len() > 12 {
+            meter.attempts.remove(0);
+        }
+        let burn = meter.refusals >= 5;
+        if burn {
+            meter.revoked = true;
+            meter.agent = None;
+        }
+        self.meters.insert(id, meter);
+        if burn {
+            return PromiseOrValue::Promise(Promise::new(env::current_account_id()).delete_key(signer));
+        }
+        PromiseOrValue::Value(code.to_string())
     }
 }
 

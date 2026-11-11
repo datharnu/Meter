@@ -1,0 +1,48 @@
+{
+  "network": "testnet",
+  "contract": "m718aa2.mtrfc658fd1.testnet",
+  "token": "token.mtrfc658fd1.testnet",
+  "buyer": "mtrfc658fd1.testnet",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "recipient": "u53bac9.mtrfc658fd1.testnet",
+  "meterId": 1,
+  "amount": "48000000",
+  "evidence": "Field report 04, price column at most 100",
+  "notBefore": "1794394649392474112",
+  "deadline": "1794401669392474112",
+  "lineHash": "901248da14805b8da736c640880692900f615a5702d9375efba43fd0ff1d3c5b",
+  "agentPublicKey": "ed25519:5Xtkeep6ssf48C5Nsguxz9iL45fzn14uAnPG2RJYRhD7",
+  "steps": [
+    {
+      "label": "Release before the stored time",
+      "code": "ERR_NOT_YET",
+      "hash": "CoTBTtwwoU9Mcbp53gkM4uFbR6DVnMe98wVtNhr7C6ZQ",
+      "moved": "0"
+    },
+    {
+      "label": "Unregistered recipient stayed unpaid",
+      "code": "ERR_TRANSFER",
+      "hash": "6EK9n4jRy1Nb9jbxHaGrj1HeEqRxYXh6nJAdjKaGv36S",
+      "moved": "0"
+    },
+    {
+      "label": "Paid u53bac9.mtrfc658fd1.testnet",
+      "code": "OK",
+      "hash": "3CSJconAjsevnApdfH4CUaMrME2wmjdg65VuBhh2wHai",
+      "moved": "48000000"
+    },
+    {
+      "label": "Second release moved nothing",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "GVEbjbuRPrM8tZdJSVKhFkGELnCy4WR4L9cQhgLf7HsR",
+      "moved": "0"
+    },
+    {
+      "label": "Buyer deleted the agent key",
+      "code": "OK",
+      "hash": "DsfXWpTPKrQSZyYfncRz1PwtCESXYeCoZo7Xq7kszPjW",
+      "moved": "0"
+    }
+  ],
+  "at": "2026-11-11T10:57:55.425Z"
+}

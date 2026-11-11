@@ -92,7 +92,7 @@ function Sheet({
   const open = meter.paid === 0 && meter.refunded === 0;
   const late = meter.clock >= meter.deadline;
 
-  const status = meter.paid > 0 ? "Paid" : meter.refunded > 0 ? "Returned" : step;
+  const status = meter.paid > 0 ? "Clears" : meter.refunded > 0 ? "Returns" : step;
   const statusKind = meter.paid > 0 ? "paid" : meter.refunded > 0 ? "back" : "neutral";
 
   return (
@@ -172,7 +172,7 @@ function Sheet({
             </div>
           )}
           {!open && <p>This slip is closed on the desk.</p>}
-          <p className="note">The ceiling and the floor stayed off this sheet. The desk clock is not NEAR block time. A payment here is the rule, with no token moved.</p>
+          <p className="note">The ceiling and the floor stayed off this sheet. The desk clock is not NEAR block time. Clears means the rule would pay. This page has no transaction hash, so nothing is paid.</p>
         </aside>
       </div>
     </>

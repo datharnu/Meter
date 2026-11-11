@@ -57,12 +57,18 @@ function signedMeans(step: Step) {
 export default function HomePage() {
   const { state, receipt, reload } = useReceipt();
   const signed = useReceipt("/tee.json");
+  const timed = useReceipt("/v2.json");
   const signedSteps = signed.receipt?.steps ?? [];
   const signedWhen = signed.receipt ? recordedAt(signed.receipt.at) : "the signed release";
   const steps = receipt?.steps ?? [];
   const refused = steps.find((step) => step.code === "ERR_RECIPIENT");
   const paid = steps.find((step) => step.code === "OK" && /paid/i.test(step.label));
   const when = receipt ? recordedAt(receipt.at) : "the recorded run";
+  const timedSteps = timed.receipt?.steps ?? [];
+  const tooEarly = timedSteps.find((step) => step.code === "ERR_NOT_YET");
+  const unregistered = timedSteps.find((step) => step.code === "ERR_TRANSFER");
+  const timedPaid = timedSteps.find((step) => step.code === "OK" && /paid/i.test(step.label));
+  const timedWhen = timed.receipt ? recordedAt(timed.receipt.at) : "the time gate";
 
   return (
     <div className="market">
@@ -73,6 +79,7 @@ export default function HomePage() {
           <a href="#rule">The rule</a>
           <a href="#run">The run</a>
           <a href="#signed">Signed release</a>
+          <a href="#time">Time gate</a>
           <a href="#not">What this is not</a>
           <Link className="btn" href="/sign-in">Open the desk</Link>
         </nav>
@@ -81,7 +88,7 @@ export default function HomePage() {
         <p className="kicker"><span>NEAR testnet</span><span>Not Circle USDC</span></p>
         <h1>One sealed price. The contract pays that line, or it pays nothing.</h1>
         <p className="market-lead">
-          A buyer locks testnet tUSDC against one recipient, one amount, and one sentence. The contract pays that line once. A different account, figure, or sentence moves 0.00.
+          A buyer locks testnet tUSDC against one recipient, one amount, and one sentence. The contract pays that line once. A different account, figure, or sentence moves 0.00. On the time-gate contract, a release before the stored time also moves 0.00.
         </p>
         <div className="market-actions">
           <Link className="btn" href="/sign-in">Open the desk</Link>
@@ -116,6 +123,28 @@ export default function HomePage() {
           </div>
         )}
         {state === "ready" && <p className="pitch-consequence">A different account was named. 0.00 moved. The sealed line paid 48.00.</p>}
+        {timed.state === "ready" && timed.receipt && tooEarly && unregistered && timedPaid && (
+          <>
+            <div className="market-proof">
+              <div>
+                <span>Before the time</span>
+                <b>{formatUnits(tooEarly.moved ?? "0")}<small> tUSDC</small></b>
+                <a className="mono" href={tooEarly.hash ? txUrl(tooEarly.hash) : "/book"}>{tooEarly.code}</a>
+              </div>
+              <div>
+                <span>Unregistered</span>
+                <b>{formatUnits(unregistered.moved ?? "0")}<small> tUSDC</small></b>
+                <a className="mono" href={unregistered.hash ? txUrl(unregistered.hash) : "/book"}>{unregistered.code}</a>
+              </div>
+              <div>
+                <span>After the time</span>
+                <b>{formatUnits(timedPaid.moved ?? "0")}<small> tUSDC</small></b>
+                <a className="mono" href={timedPaid.hash ? txUrl(timedPaid.hash) : "/book"}>{timedPaid.code}</a>
+              </div>
+            </div>
+            <p className="pitch-consequence">Before the stored time, 0.00 moved. The unregistered account stayed unpaid. The same line then paid 48.00.</p>
+          </>
+        )}
 
         <section className="pitch-section" id="problem">
           <h2>The problem</h2>
@@ -139,7 +168,7 @@ export default function HomePage() {
             </div>
             <div className="panel">
               <h3>Where the number on the desk comes from</h3>
-              <p><span className="mono">app/lib/rule.mjs</span> repeats those branches so the desk can preview a slip. A green Paid mark there is not a chain payment.</p>
+              <p><span className="mono">app/lib/rule.mjs</span> repeats those branches so the desk can preview a slip. A Clears mark there is not a chain payment.</p>
             </div>
           </div>
         </section>
@@ -199,6 +228,32 @@ export default function HomePage() {
           {signed.state === "error" && <button className="text-btn" type="button" onClick={signed.reload}>Try again</button>}
         </section>
 
+        <section className="pitch-section" id="time">
+          <h2>The time gate</h2>
+          <p>
+            A third contract, <span className="mono break">{timed.receipt?.contract ?? "m718aa2.mtrfc658fd1.testnet"}</span>. <span className="mono">release</span> pays only when the block time is at or after the time stored on the line and before the deadline. No method can move that time earlier. The meter is marked paid only after the token transfer succeeds. The recipient <span className="mono break">{timed.receipt?.recipient ?? "the new account"}</span> was not registered with the token, so the first release after the time moved 0.00 and left the meter unpaid. After registration, the same line paid 48.00 once. The time is not evidence the work was done. Once that time has passed, the spending key can pay immediately, and deleting the key loses if that payment lands first. Recorded {timedWhen}.
+          </p>
+          {timed.state === "ready" && timedSteps.length > 0 ? (
+            <ol className="run-list">
+              {timedSteps.map((step) => (
+                <li key={`${step.code}-${step.hash ?? step.label}`}>
+                  <div>
+                    <b>{step.label}</b>
+                    <span className="tag" data-kind={step.code.startsWith("ERR_") ? "refused" : step.code === "OK" && Number(step.moved) > 0 ? "paid" : "neutral"}>{step.code}</span>
+                  </div>
+                  <p className="run-meta">
+                    <span className="mono">{formatUnits(step.moved ?? "0")} tUSDC</span>
+                    {step.hash ? <a className="mono" href={txUrl(step.hash)} title={step.hash}>{shortHash(step.hash)}</a> : <span>No transaction.</span>}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="note">{timed.state === "error" ? "The time gate stays hidden until that receipt loads." : "Reading the time gate."}</p>
+          )}
+          {timed.state === "error" && <button className="text-btn" type="button" onClick={timed.reload}>Try again</button>}
+        </section>
+
         <section className="pitch-section" id="compare">
           <h2>A transfer, and this run</h2>
           <div className="pitch-scroll">
@@ -252,12 +307,14 @@ export default function HomePage() {
         <section className="pitch-section" id="proof">
           <h2>Proof</h2>
           <p>
-            From a clone, <span className="mono">node chain/verify.mjs</span> re-reads the payment record. No key. The signed release is a second receipt, <span className="mono">app/public/tee.json</span>. The book lists both, with a CSV. The figures above are those files, not a balance this page invented.
+            From a clone, <span className="mono">node chain/verify.mjs</span> re-reads the payment record, the signed release, and the time gate. No key. The book lists all three, with a CSV. The figures above are those files, not a balance this page invented.
           </p>
           <p>
             <a href={receipt ? `https://testnet.nearblocks.io/address/${receipt.contract}` : "https://testnet.nearblocks.io/address/m028a47.mtrfc658fd1.testnet"}>Open the payment record</a>
             {" · "}
             <a href={signed.receipt ? `https://testnet.nearblocks.io/address/${signed.receipt.contract}` : "https://testnet.nearblocks.io/address/m2b2440.mtrfc658fd1.testnet"}>Open the signed release</a>
+            {" · "}
+            <a href={timed.receipt ? `https://testnet.nearblocks.io/address/${timed.receipt.contract}` : "https://testnet.nearblocks.io/address/m718aa2.mtrfc658fd1.testnet"}>Open the time gate</a>
             {" · "}
             <Link href="/book">Open the book</Link>
             {" · "}
@@ -274,11 +331,15 @@ export default function HomePage() {
             </div>
             <div>
               <dt>The page decides the payment.</dt>
-              <dd>A green Paid mark on a desk slip is the preview in <span className="mono">app/lib/rule.mjs</span>. The hash is the chain.</dd>
+              <dd>A Clears mark on a desk slip is the preview in <span className="mono">app/lib/rule.mjs</span>. The hash is the chain.</dd>
             </div>
             <div>
               <dt>The key can pay anyone.</dt>
               <dd>It can call <span className="mono">release</span> only. A mismatch moves 0.00. The buyer then deleted it. The next call never reached a block.</dd>
+            </div>
+            <div>
+              <dt>The time proves the work.</dt>
+              <dd>The stored time is a clock. It is not the field report. A release before it moved 0.00. After it, the spending key can pay immediately, and deleting the key loses if that payment lands first. A deposit after the deadline is still accepted.</dd>
             </div>
             <div>
               <dt>The signature checks the work.</dt>
@@ -300,12 +361,13 @@ export default function HomePage() {
           <ul className="source-list">
             <li>Receipt <span className="mono">app/public/chain.json</span>, {when}, NEAR testnet, contract <span className="mono break">{receipt?.contract ?? "m028a47.mtrfc658fd1.testnet"}</span>.</li>
             <li>Signed release <span className="mono">app/public/tee.json</span>, {signedWhen}, contract <span className="mono break">{signed.receipt?.contract ?? "m2b2440.mtrfc658fd1.testnet"}</span>. The Intel quote was not checked.</li>
+            <li>Time gate <span className="mono">app/public/v2.json</span>, {timedWhen}, contract <span className="mono break">{timed.receipt?.contract ?? "m718aa2.mtrfc658fd1.testnet"}</span>. The time is not evidence the work was done.</li>
             <li>Attempted inputs are the ones <span className="mono">chain/prove.mjs</span> sent: <span className="mono">other.testnet</span>, <span className="mono">47000000</span> units (47.00), and an evidence hash that does not match.</li>
             <li>Desk companies Marlow and Sable, ceiling 60.00 and floor 48.00, are example copy. They are not the chain balance.</li>
           </ul>
         </section>
 
-        <p className="pitch-close">A transfer pays whoever is named when it is sent. Meter pays the sealed line, or it pays nothing.</p>
+        <p className="pitch-close">A transfer pays whoever is named when it is sent. The sealed line is paid, or nothing moves. On the time gate, that payment also waits for the stored time.</p>
       </main>
     </div>
   );

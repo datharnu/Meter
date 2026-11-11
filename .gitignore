@@ -2,7 +2,6 @@ target/
 node_modules/
 .next/
 .next-stale*/
-.next-stale-*/
 .DS_Store
 .keys/
 .env

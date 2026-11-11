@@ -10,8 +10,8 @@ The chain proof is already on testnet. The desk in `app/` still runs the same ru
 
 1. `cd app && npm install && npm test && npm run dev`
 2. Open http://localhost:3000. The first screen is the pitch: the sentence, a wrong account at 0.00, and the sealed line at 48.00. Further down are the payment-record run, the signed release, the limits, and what this is not. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
-3. On the desk, the payment record shows 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. The signed release shows 48.00 cleared, 0.00 sent back, and 1 stopped line. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` lists both receipts, with one CSV. `/key` names both function-call keys, each scoped to `release`, and shows both deleted.
-4. From the repo root, `node chain/verify.mjs`. It re-reads both live contracts. No key. It prints `verify: ok`.
+3. On the desk, the payment record shows 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. The signed release shows 48.00 cleared, 0.00 sent back, and 1 stopped line. The time gate shows 48.00 cleared and 3 stopped lines. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` lists the three receipts, with one CSV. `/key` names the function-call keys, each scoped to `release`, and shows them deleted.
+4. From the repo root, `node chain/verify.mjs`. It re-reads the payment record, the signed release, and the time gate. No key. It prints `verify: ok`.
 5. Open http://localhost:3000/new
 6. Choose Seal. See a meter for 48.00 USDC. Marlow's ceiling of 60.00 is not on the sheet.
 7. Sign as Marlow Studio, then as Sable Field, then lock 48.00 USDC.
@@ -71,12 +71,29 @@ The receipt is `app/public/tee.json`. The model is `z-ai/glm-5.3-flash`. The pin
 cd contract-tee && cargo test
 ```
 
+The time gate is a third contract, `m718aa2.mtrfc658fd1.testnet`, in `contract-v2/`. `release` pays only when the block time is at or after the time stored on the line and before the deadline. No method can move that time earlier. `open` rejects a time that is already past, and a time that is not before the deadline. `sign` is a call from the buyer's or the vendor's own account. It stores approval of the line hash. It is not a detached signature. The meter is marked paid only after the token transfer succeeds. A failed transfer leaves it unpaid, so `release` can be tried again.
+
+The parties choose the gap. A one-second gap is a weak gate they chose. Once the time has arrived, the spending key can pay immediately, and deleting the key loses if that payment lands first. The time is not evidence the work was done. A deposit after the deadline is still accepted. The Intel quote is not checked. This contract does not read a model.
+
+The recorded recipient was a new account with no token registration. The release before the stored time moved 0.00. The release to that unregistered account moved 0.00 and left the meter unpaid. After registration, the same line paid 48.00 once. The next release moved 0.00. The account was created with no full-access key, and the agent key was deleted after payment.
+
+| Step | Result | Transaction |
+|---|---|---|
+| Release before the stored time | `ERR_NOT_YET`, nothing moved | [`CoTBTtwwo…`](https://testnet.nearblocks.io/txns/CoTBTtwwoU9Mcbp53gkM4uFbR6DVnMe98wVtNhr7C6ZQ) |
+| Unregistered recipient | `ERR_TRANSFER`, nothing moved | [`6EK9n4jR…`](https://testnet.nearblocks.io/txns/6EK9n4jRy1Nb9jbxHaGrj1HeEqRxYXh6nJAdjKaGv36S) |
+| Paid 48.00 tUSDC once | `OK` | [`3CSJconA…`](https://testnet.nearblocks.io/txns/3CSJconAjsevnApdfH4CUaMrME2wmjdg65VuBhh2wHai) |
+| Second release | `ERR_ALREADY_PAID`, nothing moved | [`GVEbjbuR…`](https://testnet.nearblocks.io/txns/GVEbjbuRPrM8tZdJSVKhFkGELnCy4WR4L9cQhgLf7HsR) |
+| Buyer deleted the agent key | key removed | [`DsfXWpTP…`](https://testnet.nearblocks.io/txns/DsfXWpTPKrQSZyYfncRz1PwtCESXYeCoZo7Xq7kszPjW) |
+
+The receipt is `app/public/v2.json`. `node chain/verify.mjs` re-reads this contract as well. `cd contract-v2 && cargo test` runs the rule. `node chain/v2-prove.mjs` deploys another one only when `FORCE=1`.
+
 ## Limits
 
 - The overlap of the two mandates is computed in the browser. It is not an attested enclave. A failed overlap creates no meter. There is no domain proof and no market-making observer in this repo.
 - On the signed release, a matching `provider_tee` signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first. The Intel quote is not checked. The contract does not read the field report.
+- On the time gate, release pays only after the stored time and before the deadline. The parties choose that gap. Once the time has arrived, the spending key can pay immediately, and deleting the key loses if that payment lands first. The time is not evidence the work was done. A deposit after the deadline is still accepted. The Intel quote is not checked.
 - The desk clock is not NEAR block time. The deadline refund above used the contract's block time.
-- A green Paid mark on a desk meter is the rule's answer in the browser. The testnet card is the chain payment, and each hash is a transaction except the deleted key, which the network rejected before a transaction existed.
+- A desk slip can say Clears. That is the rule's answer in the browser. It is not a payment. Paid on the pitch is a testnet transaction hash. The deleted key was rejected before a transaction existed.
 - The token is testnet tUSDC from this repo, not Circle dollars on mainnet.
 - Continue in this browser writes a tab name into `sessionStorage`. That name cannot sign. The page does not connect a NEAR wallet.
 
