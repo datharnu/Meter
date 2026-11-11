@@ -66,8 +66,39 @@ export function txUrl(hash: string) {
   return `https://testnet.nearblocks.io/txns/${hash}`;
 }
 
+export function units(amount?: string) {
+  try {
+    return BigInt(amount && /^-?\d+$/.test(amount) ? amount : "0");
+  } catch {
+    return BigInt(0);
+  }
+}
+
+const SCALE = BigInt(1000000);
+
+export function formatUnits(amount: string | bigint) {
+  const n = typeof amount === "bigint" ? amount : units(amount);
+  const neg = n < BigInt(0);
+  const v = neg ? -n : n;
+  const whole = v / SCALE;
+  const frac = (v % SCALE).toString().padStart(6, "0").slice(0, 2);
+  return `${neg ? "-" : ""}${whole}.${frac}`;
+}
+
 export function formatMoved(amount: string) {
-  return `${(Number(amount) / 1_000_000).toFixed(2)} tUSDC`;
+  return `${formatUnits(amount)} tUSDC`;
+}
+
+export function tally(steps: Step[]) {
+  let paid = BigInt(0);
+  let back = BigInt(0);
+  let stopped = 0;
+  for (const step of steps) {
+    if (step.code === "OK" && /paid/i.test(step.label)) paid += units(step.moved);
+    else if (/return/i.test(step.label)) back += units(step.moved);
+    else if (step.code.startsWith("ERR_")) stopped += 1;
+  }
+  return { paid, back, stopped };
 }
 
 export function meterFor(receipt: Receipt, step: Step) {

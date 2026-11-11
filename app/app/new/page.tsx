@@ -61,9 +61,13 @@ export default function NewMeter() {
 
   return (
     <>
-      <h1 className="page-title">New meter</h1>
-      <p className="lede">Each company writes a limit. The sheet that follows shows only the price they both can live with.</p>
-      <form className="sheet sheet-pad" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">New slip</h1>
+          <p className="lede">Each company writes a limit. The sheet that follows shows only the price they both can live with.</p>
+        </div>
+      </div>
+      <form className="panel form-narrow" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <div className="form-grid">
           <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
             <legend>Buyer</legend>
@@ -81,9 +85,9 @@ export default function NewMeter() {
         <label>Recipient<input {...form.register("recipient")} spellCheck={false} /></label>
         <label>Evidence both will accept<input {...form.register("evidence")} /></label>
         <label>Deadline, minutes<input type="number" {...form.register("minutes")} /></label>
-        {error.root && <p className="error" role="alert">{error.root.message}</p>}
+        {error.root && <p className="alert" role="alert">{error.root.message}</p>}
         {Object.values(error).filter((e) => e?.message && e !== error.root).slice(0, 1).map((e) => (
-          <p className="error" role="alert" key={e.message}>{e.message}</p>
+          <p className="alert" role="alert" key={e.message}>{e.message}</p>
         ))}
         <button className="btn" type="submit">Seal</button>
         <p className="note">The ceiling and the floor are not copied onto the meter. This overlap is computed in the browser. It is not an enclave attestation.</p>

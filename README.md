@@ -9,8 +9,8 @@ This is a second project beside Accord. The payment rule is the same kind of dea
 The chain proof is already on testnet. The desk in `app/` still runs the same rule in the browser and does not move tokens.
 
 1. `cd app && npm install && npm test && npm run dev`
-2. Open http://localhost:3000. The desk shows 48.00 tUSDC and each testnet step, with its hash.
-3. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That box does not send a transaction. `/book` counts this receipt only, and its download is that same receipt as CSV. `/key` names the function-call key, scoped to `release`, and shows it deleted.
+2. Open http://localhost:3000. The first screen is the recorded testnet result: a wrong account at 0.00 and the agreed line at 48.00. Choose Open the desk. Continue in this browser. That names the tab. It does not create a key.
+3. On the desk, see 48.00 tUSDC cleared, 48.00 sent back, and 4 stopped lines. Open `/clause` and choose Another account. See `ERR_RECIPIENT` and `0.00`. That page does not send a transaction. `/book` is the same receipt, with a CSV. `/key` names the function-call key, scoped to `release`, and shows it deleted.
 4. From the repo root, `node chain/verify.mjs`. It re-reads the live contract. No key. It prints `verify: ok`.
 5. Open http://localhost:3000/new
 6. Choose Seal. See a meter for 48.00 USDC. Marlow's ceiling of 60.00 is not on the sheet.
@@ -61,6 +61,7 @@ The vendor account's token balance is 96.00 because an earlier run had already p
 - The desk clock is not NEAR block time. The deadline refund above used the contract's block time.
 - A green Paid mark on a desk meter is the rule's answer in the browser. The testnet card is the chain payment, and each hash is a transaction except the deleted key, which the network rejected before a transaction existed.
 - The token is testnet tUSDC from this repo, not Circle dollars on mainnet.
+- Continue in this browser writes a tab name into `sessionStorage`. That name cannot sign. The page does not connect a NEAR wallet.
 
 ## Licence
 

@@ -11,6 +11,7 @@ type Desk = {
   add: (meter: Meter) => void;
   patch: (id: string, next: Partial<Meter>) => void;
   pushAttempt: (id: string, attempt: Attempt) => void;
+  clear: () => void;
 };
 
 export const useDesk = create<Desk>()(
@@ -28,6 +29,7 @@ export const useDesk = create<Desk>()(
         set((s) => ({
           meters: s.meters.map((m) => (m.id === id ? { ...m, attempts: [...m.attempts, attempt] } : m)),
         })),
+      clear: () => set({ meters: [] }),
     }),
     {
       name: "meter-desk",

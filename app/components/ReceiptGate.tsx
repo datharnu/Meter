@@ -14,6 +14,7 @@ export function ReceiptGate({
   if (state === "loading") {
     return (
       <div className="skeleton" aria-busy="true" aria-live="polite">
+        <p>Reading the testnet receipt</p>
         <span style={{ width: "28%" }} />
         <span style={{ width: "70%" }} />
         <span />

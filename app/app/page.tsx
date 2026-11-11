@@ -1,49 +1,68 @@
 "use client";
 
 import Link from "next/link";
-import { ChainPayment } from "@/components/ChainPayment";
-import { formatUsdc, phase } from "@/lib/rule.mjs";
-import { useDesk } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { Logo } from "@/components/Logo";
+import { formatUnits, txUrl, type Receipt } from "@/lib/useReceipt";
 
-export default function MetersPage() {
-  const ready = useDesk((s) => s.ready);
-  const meters = useDesk((s) => s.meters);
-  if (!ready) {
-    return (
-      <div className="skeleton" aria-busy="true">
-        <span style={{ width: "24%" }} />
-        <span />
-        <span style={{ width: "70%" }} />
-      </div>
-    );
-  }
+export default function LandingPage() {
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    fetch("/chain.json")
+      .then((response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json() as Promise<Receipt>;
+      })
+      .then(setReceipt)
+      .catch(() => setFailed(true));
+  }, []);
+
+  const refused = receipt?.steps?.find((step) => step.code === "ERR_RECIPIENT");
+  const paid = receipt?.steps?.find((step) => step.code === "OK" && /paid/i.test(step.label));
+
   return (
-    <>
-      <h1 className="page-title">Desk</h1>
-      <p className="lede">One slip, one price. The card is the testnet run. The rows under it live in this browser and do not move tokens.</p>
-      <ol className="stops">
-        <li><Link href="/new">Write a slip</Link><span>The sheet shows 48.00. The ceiling of 60.00 stays off it.</span></li>
-        <li><Link href="/clause">Try a line</Link><span>Change the account, the figure, or the sentence. A mismatch stays at 0.00.</span></li>
-        <li><Link href="/book">Read the book</Link><span>The same answers, as the transactions from one testnet run.</span></li>
-        <li><Link href="/key">See the key</Link><span>It could call release. The buyer deleted it.</span></li>
-      </ol>
-      <ChainPayment />
-      {meters.length === 0 ? (
-        <div className="empty">
-          <p>No meter yet.</p>
-          <Link className="btn" href="/new" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>Start a meter</Link>
+    <div className="market">
+      <header className="market-bar">
+        <Logo />
+        <nav className="market-nav">
+          <Link href="/book">The proof</Link>
+          <Link className="btn" href="/sign-in">Open the desk</Link>
+        </nav>
+      </header>
+      <main className="market-main">
+        <p className="kicker"><span>NEAR testnet</span><span>Not Circle USDC</span></p>
+        <h1>One sealed price. The contract pays that line, or it pays nothing.</h1>
+        <p className="market-lead">
+          Marlow Studio names a ceiling. Sable Field names a floor. The slip keeps only the price they both accept, the recipient, and one sentence. A different account, figure, or sentence moves 0.
+        </p>
+        <div className="market-actions">
+          <Link className="btn" href="/sign-in">Open the desk</Link>
+          <Link className="ghost" href="/book">See the proof</Link>
         </div>
-      ) : (
-        <div className="rows">
-          {meters.map((m) => (
-            <Link className="row" key={m.id} href={`/m/${m.id}`}>
-              <b className="mono">{formatUsdc(m.amount)} USDC</b>
-              <span className="ellipsis" title={`${m.buyerName} and ${m.vendorName}`}>{m.buyerName} and {m.vendorName}</span>
-              <span>{m.paid > 0 ? "Paid" : m.refunded > 0 ? "Returned" : phase(m, m.clock)}</span>
-            </Link>
-          ))}
-        </div>
-      )}
-    </>
+        {failed && <p className="alert" role="alert">The testnet receipt did not load. The desk can still open.</p>}
+        {!receipt && !failed && <p className="note">Reading the testnet receipt.</p>}
+        {receipt && refused && paid && (
+          <div className="market-proof">
+            <div>
+              <span>Wrong account</span>
+              <b>{formatUnits(refused.moved ?? "0")}<small> tUSDC</small></b>
+              <a className="mono" href={refused.hash ? txUrl(refused.hash) : "/book"}>{refused.code}</a>
+            </div>
+            <div>
+              <span>Agreed line</span>
+              <b>{formatUnits(paid.moved ?? "0")}<small> tUSDC</small></b>
+              <a className="mono" href={paid.hash ? txUrl(paid.hash) : "/book"}>{paid.code}</a>
+            </div>
+            <div>
+              <span>Contract</span>
+              <b className="market-contract">{receipt.contract}</b>
+              <span>Mainnet after an audit</span>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

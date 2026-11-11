@@ -51,10 +51,12 @@ export default function ClausePage() {
 
   return (
     <>
-      <h1 className="page-title">The line</h1>
-      <p className="lede">
-        Marlow Studio’s ceiling was 60.00. Sable Field’s floor was 48.00. The slip is 48.00 to sable.testnet, for one sentence. Change any part. This box does not send a transaction.
-      </p>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">The line</h1>
+          <p className="lede">Marlow’s ceiling was 60.00. Sable’s floor was 48.00. The slip is 48.00 to sable.testnet. This page does not send a transaction.</p>
+        </div>
+      </div>
       <div className="chips" role="group" aria-label="Sample lines">
         {samples.map((sample) => (
           <button key={sample.id} type="button" className="chip" data-on={picked === sample.id} onClick={() => apply(sample)}>
@@ -62,36 +64,36 @@ export default function ClausePage() {
           </button>
         ))}
       </div>
-      <article className="sheet sheet-pad">
-        <div className="kicker">
-          <span>Marlow Studio</span>
-          <span>Sable Field</span>
-        </div>
-        <label>
-          Recipient
-          <input value={recipient} onChange={(event) => { setRecipient(event.target.value); setPicked(""); }} autoComplete="off" />
-        </label>
-        <label>
-          Figure
-          <input value={amount} onChange={(event) => { setAmount(event.target.value); setPicked(""); }} inputMode="decimal" autoComplete="off" />
-        </label>
-        <label>
-          Sentence
-          <textarea value={evidence} onChange={(event) => { setEvidence(event.target.value); setPicked(""); }} rows={3} />
-        </label>
-        {parsed == null ? (
-          <p className="error-line" role="alert">Write the figure as dollars and cents, like 48.00.</p>
-        ) : (
-          <div className="verdict" aria-live="polite">
-            <p className="amount">{formatUsdc(moved)}<span>tUSDC</span></p>
-            <span className="stamp" data-kind={code === "OK" ? "paid" : "refused"}>{code === "OK" ? "Clears" : "Stops"}</span>
-            <p className="mono">{code}</p>
-          </div>
-        )}
-        <p className="note">
-          The same branches run in the contract. The book is where those answers moved, or did not move, on testnet.
-        </p>
-      </article>
+      <div className="split">
+        <form className="panel" onSubmit={(event) => event.preventDefault()}>
+          <div className="kicker"><span>Marlow Studio</span><span>Sable Field</span></div>
+          <label>
+            Recipient
+            <input value={recipient} onChange={(event) => { setRecipient(event.target.value); setPicked(""); }} autoComplete="off" />
+          </label>
+          <label>
+            Figure
+            <input value={amount} onChange={(event) => { setAmount(event.target.value); setPicked(""); }} inputMode="decimal" autoComplete="off" aria-invalid={parsed == null} />
+          </label>
+          <label>
+            Sentence
+            <textarea value={evidence} onChange={(event) => { setEvidence(event.target.value); setPicked(""); }} rows={4} />
+          </label>
+        </form>
+        <aside className="panel sticky-side" aria-live="polite">
+          <p className="kicker"><span>Answer</span><span>Browser copy</span></p>
+          {parsed == null ? (
+            <p className="alert" role="alert">Write the figure as dollars and cents, like 48.00.</p>
+          ) : (
+            <>
+              <p className="amount">{formatUsdc(moved)}<span>tUSDC</span></p>
+              <span className="tag" data-kind={code === "OK" ? "paid" : "refused"}>{code === "OK" ? "Clears" : "Stops"}</span>
+              <p className="mono">{code}</p>
+            </>
+          )}
+          <p className="note">The same branches run in the contract. The book is where those answers moved, or did not move, on testnet.</p>
+        </aside>
+      </div>
     </>
   );
 }
