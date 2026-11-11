@@ -1,0 +1,14 @@
+{
+  "model": "z-ai/glm-5.3-flash",
+  "line": "meter:1 recipient:vendor.mtrfc658fd1.testnet amount:48000000 evidence:4f3ef0d259848e5d050796af293f8d92d2beb6e5571110fbd78a4b64b05fdc85",
+  "evidence": "4f3ef0d259848e5d050796af293f8d92d2beb6e5571110fbd78a4b64b05fdc85",
+  "evidenceText": "Field report 04, price column at most 100",
+  "amount": "48000000",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "buyer": "mtrfc658fd1.testnet",
+  "completionId": "9bce8ccc39014f69bee308d6e3147ebf",
+  "signer": "0x3b753b4406613c5e70ae640508632b600424fa0c",
+  "signature": "0xf0972bed2f332f3f34c25c362db084c54a564c27bf5d828db66089dbc87b4eb671562084b2e545977bde34822ebde9fcddcadb50c9d9af83f14f26746ddc1bd51c",
+  "request": "{\"model\":\"z-ai/glm-5.3-flash\",\"messages\":[{\"role\":\"system\",\"content\":\"Repeat the user's release line exactly. Output only that line.\"},{\"role\":\"user\",\"content\":\"meter:1 recipient:vendor.mtrfc658fd1.testnet amount:48000000 evidence:4f3ef0d259848e5d050796af293f8d92d2beb6e5571110fbd78a4b64b05fdc85\"}],\"stream\":false,\"temperature\":0,\"max_tokens\":120}",
+  "response": "{\"id\":\"9bce8ccc39014f69bee308d6e3147ebf\",\"object\":\"chat.completion\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":null,\"reasoning_content\":\"The user is asking me to repeat their release line exactly. This appears to be some kind of transaction or release command format, possibly for a smart contract or payment system. The instruction says to repeat the line exactly and output only that line.\\n\\nThe line is:\\nmeter:1 recipient:vendor.mtrfc658fd1.testnet amount:48000000 evidence:4f3ef0d259848e5d050796af293f8d92d2beb6e5571110fbd78a4b64b05fdc85\\n\\nThis\"},\"finish_reason\":\"length\",\"logprobs\":null}],\"model\":\"z-ai/glm-5.3-flash\",\"created\":1794389594,\"usage\":{\"prompt_tokens\":92,\"total_tokens\":212,\"completion_tokens\":120,\"prompt_tokens_details\":null,\"reasoning_tokens\":124,\"completion_tokens_details\":{\"reasoning_tokens\":124}}}"
+}

@@ -24,11 +24,14 @@ export type Receipt = {
   steps?: Step[];
   refused?: { hash: string; code: string };
   paid?: { hash: string; code: string };
-  vendorBalance: string;
+  vendorBalance?: string;
+  model?: string;
+  signer?: string;
+  quote?: string;
   at: string;
 };
 
-export function useReceipt() {
+export function useReceipt(path = "/chain.json") {
   const [state, setState] = useState<"loading" | "empty" | "error" | "ready">("loading");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -36,7 +39,7 @@ export function useReceipt() {
   useEffect(() => {
     let gone = false;
     setState("loading");
-    fetch("/chain.json")
+    fetch(path)
       .then(async (response) => {
         if (response.status === 404) return null;
         if (!response.ok) throw new Error(String(response.status));
@@ -57,7 +60,7 @@ export function useReceipt() {
     return () => {
       gone = true;
     };
-  }, [attempt]);
+  }, [attempt, path]);
 
   return { state, receipt, reload: () => setAttempt((n) => n + 1) };
 }

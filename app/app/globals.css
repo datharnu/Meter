@@ -88,7 +88,7 @@ a { color: inherit; }
 .who-facts div { display: grid; gap: 2px; }
 .who-facts dt { color: var(--muted); font-size: 12px; }
 .who-facts dd { margin: 0; }
-.who-links { display: flex; gap: 12px; margin: 0; align-items: center; }
+.who-links { display: flex; gap: 12px; margin: 8px 0 0; align-items: center; flex-wrap: wrap; }
 .text-btn { border: 0; background: transparent; padding: 0; min-height: 44px; color: var(--ink); text-decoration: underline; }
 .topbar-end { display: flex; align-items: center; gap: 10px; }
 .scroll-id { margin: 0; white-space: nowrap; overflow-x: auto; font-size: 13px; }
@@ -128,6 +128,7 @@ a { color: inherit; }
 .run-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .run-list li { background: var(--surface); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); padding: 16px; }
 .run-list li > div { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.run-list li > div b { min-width: 0; overflow-wrap: anywhere; }
 .run-list p { margin: 8px 0 0; }
 .run-list p span { color: var(--muted); margin-right: 6px; }
 .run-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }

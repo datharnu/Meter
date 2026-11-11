@@ -32,11 +32,11 @@ export function RunStats({ steps }: { steps: Step[] }) {
   );
 }
 
-export function RunTable({ receipt, steps }: { receipt: Receipt; steps: Step[] }) {
+export function RunTable({ receipt, steps, caption = "Lines from the recorded testnet run" }: { receipt: Receipt; steps: Step[]; caption?: string }) {
   return (
     <div className="table-wrap">
       <table className="ledger-table ledger-run">
-        <caption>Lines from the recorded testnet run</caption>
+        <caption>{caption}</caption>
         <thead>
           <tr>
             <th>Line</th>

@@ -4,11 +4,13 @@ import { ReceiptGate } from "@/components/ReceiptGate";
 import { RunStats, RunTable } from "@/components/RunTable";
 import { formatUnits, meterFor, useReceipt, type Receipt, type Step } from "@/lib/useReceipt";
 
-function csv(receipt: Receipt, steps: Step[]) {
-  const header = "date,meter,line,code,moved,hash";
-  const body = steps.map((step) => {
+function csv(rows: { receipt: Receipt; steps: Step[] }[]) {
+  const header = "run,date,contract,meter,line,code,moved,hash";
+  const body = rows.flatMap(({ receipt, steps }) => steps.map((step) => {
     const cells = [
+      receipt.model ? "signed release" : "payment record",
       receipt.at,
+      receipt.contract,
       String(meterFor(receipt, step)),
       step.label,
       step.code,
@@ -16,17 +18,20 @@ function csv(receipt: Receipt, steps: Step[]) {
       step.hash ?? "",
     ];
     return cells.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(",");
-  });
+  }));
   return [header, ...body].join("\n");
 }
 
 export default function BookPage() {
   const { state, receipt, reload } = useReceipt();
+  const signed = useReceipt("/tee.json");
   const steps = receipt?.steps ?? [];
 
   function download() {
     if (!receipt) return;
-    const blob = new Blob([csv(receipt, steps)], { type: "text/csv" });
+    const rows = [{ receipt, steps }];
+    if (signed.receipt) rows.push({ receipt: signed.receipt, steps: signed.receipt.steps ?? [] });
+    const blob = new Blob([csv(rows)], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -40,17 +45,30 @@ export default function BookPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">The book</h1>
-          <p className="lede">One recorded run. Every figure is counted from that receipt. Desk slips are not in this book.</p>
+          <p className="lede">Two recorded runs. Every figure is counted from those receipts. Desk slips are not in this book.</p>
         </div>
         <button className="btn" type="button" onClick={download} disabled={!receipt}>Download CSV</button>
       </div>
+      <h2 className="section-title">Payment record</h2>
       <ReceiptGate state={state} onRetry={reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
         {receipt && (
           <>
             <RunStats steps={steps} />
             <RunTable receipt={receipt} steps={steps} />
             <p className="note">
-              {receipt.contract}. The token is {receipt.token}, a public-mint test token, not Circle USDC. Every row shares {receipt.at.slice(0, 16).replace("T", " ")} UTC because the receipt records the run, not a clock on each line.
+              <span className="mono break">{receipt.contract}</span>. The token is <span className="mono break">{receipt.token}</span>, a public-mint test token, not Circle USDC. Every row shares {receipt.at.slice(0, 16).replace("T", " ")} UTC because the receipt records the run, not a clock on each line.
+            </p>
+          </>
+        )}
+      </ReceiptGate>
+      <h2 className="section-title">Signed release</h2>
+      <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed release on this build.">
+        {signed.receipt && (
+          <>
+            <RunStats steps={signed.receipt.steps ?? []} />
+            <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
+            <p className="note">
+              <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first. Recorded {signed.receipt.at.slice(0, 16).replace("T", " ")} UTC.
             </p>
           </>
         )}

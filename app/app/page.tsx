@@ -40,8 +40,25 @@ function means(step: Step) {
   return "Which means this line is in the recorded run.";
 }
 
+function signedRead(step: Step) {
+  if (step.code === "ERR_ATTEST_LINE") return "Recipient the sealed vendor. Amount 48.00. The sealed sentence. The request and the response were {\"ok\":true}.";
+  if (/paid/i.test(step.label)) return "The same line, with the provider_tee signature over the request and response that contain it.";
+  if (/deleted/i.test(step.label)) return "The buyer removed the key that can call release.";
+  return step.label;
+}
+
+function signedMeans(step: Step) {
+  if (step.code === "ERR_ATTEST_LINE") return "Which means a body that does not contain the release line was paid nothing.";
+  if (/paid/i.test(step.label) && step.code === "OK") return "Which means the sealed vendor received 48.00.";
+  if (/deleted/i.test(step.label)) return "Which means that key can no longer sign.";
+  return "Which means this line is on the signed release.";
+}
+
 export default function HomePage() {
   const { state, receipt, reload } = useReceipt();
+  const signed = useReceipt("/tee.json");
+  const signedSteps = signed.receipt?.steps ?? [];
+  const signedWhen = signed.receipt ? recordedAt(signed.receipt.at) : "the signed release";
   const steps = receipt?.steps ?? [];
   const refused = steps.find((step) => step.code === "ERR_RECIPIENT");
   const paid = steps.find((step) => step.code === "OK" && /paid/i.test(step.label));
@@ -55,6 +72,7 @@ export default function HomePage() {
           <a href="#problem">The problem</a>
           <a href="#rule">The rule</a>
           <a href="#run">The run</a>
+          <a href="#signed">Signed release</a>
           <a href="#not">What this is not</a>
           <Link className="btn" href="/sign-in">Open the desk</Link>
         </nav>
@@ -153,6 +171,34 @@ export default function HomePage() {
           )}
         </section>
 
+        <section className="pitch-section" id="signed">
+          <h2>The signed release</h2>
+          <p>
+            A second contract, <span className="mono break">{signed.receipt?.contract ?? "m2b2440.mtrfc658fd1.testnet"}</span>. On this one, <span className="mono">release</span> also requires a <span className="mono">provider_tee</span> signature. The request and the response must both contain the release line. The signer pinned at creation is <span className="mono break">{signed.receipt?.signer ?? "0x3b753b4406613c5e70ae640508632b600424fa0c"}</span>. Model <span className="mono">{signed.receipt?.model ?? "z-ai/glm-5.3-flash"}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first. This is not the run above. Recorded {signedWhen}.
+          </p>
+          {signed.state === "ready" && signedSteps.length > 0 ? (
+            <ol className="run-list">
+              {signedSteps.map((step) => (
+                <li key={`${step.code}-${step.hash ?? step.label}`}>
+                  <div>
+                    <b>{step.label}</b>
+                    <span className="tag" data-kind={step.code.startsWith("ERR_") ? "refused" : step.code === "OK" && Number(step.moved) > 0 ? "paid" : "neutral"}>{step.code}</span>
+                  </div>
+                  <p><span>Read.</span> {signedRead(step)}</p>
+                  <p><span>Decided.</span> {signedMeans(step)}</p>
+                  <p className="run-meta">
+                    <span className="mono">{formatUnits(step.moved ?? "0")} tUSDC</span>
+                    {step.hash ? <a className="mono" href={txUrl(step.hash)} title={step.hash}>{shortHash(step.hash)}</a> : <span>No transaction.</span>}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="note">{signed.state === "error" ? "The signed release stays hidden until that receipt loads." : "Reading the signed release."}</p>
+          )}
+          {signed.state === "error" && <button className="text-btn" type="button" onClick={signed.reload}>Try again</button>}
+        </section>
+
         <section className="pitch-section" id="compare">
           <h2>A transfer, and this run</h2>
           <div className="pitch-scroll">
@@ -206,10 +252,12 @@ export default function HomePage() {
         <section className="pitch-section" id="proof">
           <h2>Proof</h2>
           <p>
-            From a clone, <span className="mono">node chain/verify.mjs</span> re-reads the live contract. No key. The book on this site is the same receipt, with a CSV. The figures above are that file, not a balance this page invented.
+            From a clone, <span className="mono">node chain/verify.mjs</span> re-reads the payment record. No key. The signed release is a second receipt, <span className="mono">app/public/tee.json</span>. The book lists both, with a CSV. The figures above are those files, not a balance this page invented.
           </p>
           <p>
-            <a href={receipt ? `https://testnet.nearblocks.io/address/${receipt.contract}` : "https://testnet.nearblocks.io/address/m028a47.mtrfc658fd1.testnet"}>Open the contract</a>
+            <a href={receipt ? `https://testnet.nearblocks.io/address/${receipt.contract}` : "https://testnet.nearblocks.io/address/m028a47.mtrfc658fd1.testnet"}>Open the payment record</a>
+            {" · "}
+            <a href={signed.receipt ? `https://testnet.nearblocks.io/address/${signed.receipt.contract}` : "https://testnet.nearblocks.io/address/m2b2440.mtrfc658fd1.testnet"}>Open the signed release</a>
             {" · "}
             <Link href="/book">Open the book</Link>
             {" · "}
@@ -233,6 +281,10 @@ export default function HomePage() {
               <dd>It can call <span className="mono">release</span> only. A mismatch moves 0.00. The buyer then deleted it. The next call never reached a block.</dd>
             </div>
             <div>
+              <dt>The signature checks the work.</dt>
+              <dd>On the signed release, the model repeated a line this repo already wrote. The contract checks that both bodies contain that line and that the signer matches the address pinned at creation. It does not read the field report. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</dd>
+            </div>
+            <div>
               <dt>This is Circle USDC on mainnet.</dt>
               <dd>The token is <span className="mono">token.mtrfc658fd1.testnet</span>. Mint is public and capped. Mainnet waits on an audit. The contract has no owner withdraw.</dd>
             </div>
@@ -246,7 +298,8 @@ export default function HomePage() {
         <section className="pitch-section" id="sources">
           <h2>Sources</h2>
           <ul className="source-list">
-            <li>Receipt <span className="mono">app/public/chain.json</span>, {when}, NEAR testnet, contract <span className="mono">{receipt?.contract ?? "m028a47.mtrfc658fd1.testnet"}</span>.</li>
+            <li>Receipt <span className="mono">app/public/chain.json</span>, {when}, NEAR testnet, contract <span className="mono break">{receipt?.contract ?? "m028a47.mtrfc658fd1.testnet"}</span>.</li>
+            <li>Signed release <span className="mono">app/public/tee.json</span>, {signedWhen}, contract <span className="mono break">{signed.receipt?.contract ?? "m2b2440.mtrfc658fd1.testnet"}</span>. The Intel quote was not checked.</li>
             <li>Attempted inputs are the ones <span className="mono">chain/prove.mjs</span> sent: <span className="mono">other.testnet</span>, <span className="mono">47000000</span> units (47.00), and an evidence hash that does not match.</li>
             <li>Desk companies Marlow and Sable, ceiling 60.00 and floor 48.00, are example copy. They are not the chain balance.</li>
           </ul>

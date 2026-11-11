@@ -11,6 +11,7 @@ export default function MetersPage() {
   const ready = useDesk((s) => s.ready);
   const meters = useDesk((s) => s.meters);
   const receipt = useReceipt();
+  const signed = useReceipt("/tee.json");
 
   if (!ready) {
     return (
@@ -28,15 +29,27 @@ export default function MetersPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">Desk</h1>
-          <p className="lede">The figures are one testnet run. Slips in this browser follow the same rule and move no tokens.</p>
+          <p className="lede">Two testnet runs, on two contracts. Slips in this browser follow the same rule and move no tokens.</p>
         </div>
         <Link className="btn" href="/new">New slip</Link>
       </div>
+      <h2 className="section-title">Payment record</h2>
       <ReceiptGate state={receipt.state} onRetry={receipt.reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
         {receipt.receipt && (
           <>
+            <p className="note">Contract <span className="mono break">{receipt.receipt.contract}</span>. A wrong recipient, amount, or sentence moves 0.00. The sealed line pays 48.00. After the deadline the balance returns.</p>
             <RunStats steps={receipt.receipt.steps ?? []} />
             <RunTable receipt={receipt.receipt} steps={receipt.receipt.steps ?? []} />
+          </>
+        )}
+      </ReceiptGate>
+      <h2 className="section-title">Signed release</h2>
+      <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed release on this build.">
+        {signed.receipt && (
+          <>
+            <p className="note">Contract <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
+            <RunStats steps={signed.receipt.steps ?? []} />
+            <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
           </>
         )}
       </ReceiptGate>

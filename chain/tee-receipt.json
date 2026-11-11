@@ -1,0 +1,36 @@
+{
+  "network": "testnet",
+  "contract": "m2b2440.mtrfc658fd1.testnet",
+  "recordedContract": "m028a47.mtrfc658fd1.testnet",
+  "token": "token.mtrfc658fd1.testnet",
+  "buyer": "mtrfc658fd1.testnet",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "model": "z-ai/glm-5.3-flash",
+  "signer": "0x3b753b4406613c5e70ae640508632b600424fa0c",
+  "quote": "not checked",
+  "meterId": 1,
+  "amount": "48000000",
+  "evidence": "Field report 04, price column at most 100",
+  "completionId": "9bce8ccc39014f69bee308d6e3147ebf",
+  "steps": [
+    {
+      "label": "Body without the line refused",
+      "code": "ERR_ATTEST_LINE",
+      "hash": "EQzQ5NRzoxLdBSjgk6cjJD5eJCenrEW5rc6hTs1YnR4u",
+      "moved": "0"
+    },
+    {
+      "label": "Paid vendor.mtrfc658fd1.testnet",
+      "code": "OK",
+      "hash": "FjVb3vTXkQHYSbiWMEwkTzdDxY1o72sTq7cmbtpitCP",
+      "moved": "48000000"
+    },
+    {
+      "label": "Buyer deleted the agent key",
+      "code": "OK",
+      "hash": "HVVXnFMz8sqnYxrcGDy6voyX3gjX6ng85No9WZrTyDFS",
+      "moved": "0"
+    }
+  ],
+  "at": "2026-11-11T09:40:00.833Z"
+}
