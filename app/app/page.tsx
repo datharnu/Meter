@@ -1,8 +1,10 @@
 "use client";
 
+
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { Logo } from "@/components/Logo";
+import { LinePreview } from "@/components/LinePreview";
+import { SectionHead } from "@/components/SectionHead";
+import { SiteNav } from "@/components/SiteNav";
 import { formatUnits, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
 function recordedAt(iso: string) {
@@ -54,27 +56,25 @@ function Ledger({ steps }: { steps: Step[] }) {
   );
 }
 
+const HEADLINE = ["One", "sealed", "price.", "The", "contract", "pays", "that", "line,", "or", "it", "pays", "nothing."];
+
+function Headline() {
+  return (
+    <h1 className="hero-title">
+      <span className="sr-only">One sealed price. The contract pays that line, or it pays nothing.</span>
+      <span aria-hidden="true">
+        {HEADLINE.map((word, index) => (
+          <span key={`${word}-${index}`}>
+            <span className="word" style={{ ["--i" as string]: index }}>{word}</span>
+            {word === "price." ? <br /> : index < HEADLINE.length - 1 ? " " : null}
+          </span>
+        ))}
+      </span>
+    </h1>
+  );
+}
+
 export default function HomePage() {
-  const [menu, setMenu] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!menu) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
-      setMenu(false);
-      menuButton.current?.focus();
-    }
-    function onPointer(event: PointerEvent) {
-      const nav = document.getElementById("pitch-nav");
-      if (nav && event.target instanceof Node && !nav.contains(event.target)) setMenu(false);
-    }
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onPointer);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onPointer);
-    };
-  }, [menu]);
   const { state, receipt, reload } = useReceipt();
   const signed = useReceipt("/tee.json");
   const timed = useReceipt("/v2.json");
@@ -92,65 +92,46 @@ export default function HomePage() {
 
   return (
     <div className="market">
-      <header className="market-bar">
-        <div className="market-pill">
-          <Logo />
-          <nav id="pitch-nav" className="market-nav" aria-label="Argument">
-            <button ref={menuButton} className="menu-btn" type="button" aria-expanded={menu} aria-controls="pitch-sections" onClick={() => setMenu((open) => !open)}>
-              Sections
-            </button>
-            <div id="pitch-sections" className="market-links" data-open={menu ? "true" : "false"}>
-              <a href="#problem" onClick={() => setMenu(false)}>The sheet</a>
-              <a href="#rule" onClick={() => setMenu(false)}>The rule</a>
-              <a href="#run" onClick={() => setMenu(false)}>The run</a>
-              <a href="#signed" onClick={() => setMenu(false)}>Signed release</a>
-              <a href="#time" onClick={() => setMenu(false)}>Time gate</a>
-              <a href="#not" onClick={() => setMenu(false)}>What this is not</a>
-            </div>
-            <Link className="btn" href="/sign-in">Open the desk</Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav />
       <main id="content" className="market-main pitch">
-        <p className="kicker settle"><span>NEAR testnet</span><span>Not Circle USDC</span></p>
-        <h1 className="settle settle-2">One sealed price. The contract pays that line, or it pays nothing.</h1>
-        <p className="market-lead settle settle-3">
-          Meter enforces the stored line. It does not judge the work. The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline.
+        <p className="eyebrow"><i data-hue="teal" />NEAR testnet</p>
+        <Headline />
+        <p className="thesis">Meter enforces the stored line. It does not judge the work.</p>
+        <p className="market-lead">
+          The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. The token is testnet, not Circle USDC.
         </p>
-        <div className="market-actions settle settle-4">
+        <div className="market-actions">
           <Link className="btn" href="/sign-in">Open the desk</Link>
           <Link className="ghost" href="/book">See the proof</Link>
         </div>
-
-        {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
-        {timed.state === "error" && (
-          <p className="alert" role="alert">
-            The time gate did not load. The desk can still open.
-            <button className="text-btn" type="button" onClick={timed.reload}>Try again</button>
-          </p>
-        )}
-        {timed.state === "empty" && <p className="note">No time gate in this build. The desk can still open.</p>}
-        {timed.state === "ready" && timed.receipt && tooEarly && unregistered && timedPaid && (
-          <div className="stage settle settle-5">
-            <div className="stage-chrome">
-              <b>Time gate</b>
-              <span className="mono break">{timed.receipt.contract}</span>
-              <span className="tag" data-kind="neutral">NEAR testnet</span>
-            </div>
+        <figure className="stage preview">
+          <div className="stage-chrome">
+            <b>Time gate</b>
+            <span className="mono break" title={timed.receipt?.contract ?? "m1870dd.mtrfc658fd1.testnet"}>{timed.receipt?.contract ?? "m1870dd.mtrfc658fd1.testnet"}</span>
+            <span className="tag" data-kind="neutral">NEAR testnet</span>
+          </div>
+          {timed.state === "loading" && <p className="note preview-state">Reading the time gate.</p>}
+          {timed.state === "error" && (
+            <p className="alert preview-state" role="alert">
+              The time gate did not load. The desk can still open.
+              <button className="text-btn" type="button" onClick={timed.reload}>Try again</button>
+            </p>
+          )}
+          {timed.state === "empty" && <p className="note preview-state">No time gate in this build. The desk can still open.</p>}
+          {timed.state === "ready" && tooEarly && unregistered && timedPaid && (
             <div className="market-proof">
               <ProofCell label="Before the time" amount={tooEarly.moved} code={tooEarly.code} hash={tooEarly.hash} />
               <ProofCell label="Unregistered" amount={unregistered.moved} code={unregistered.code} hash={unregistered.hash} />
               <ProofCell label="After the time" amount={timedPaid.moved} code={timedPaid.code} hash={timedPaid.hash} />
             </div>
-            <p className="pitch-consequence">Before the stored time, 0.00 moved. The unregistered account stayed unpaid. The same line then paid 48.00.</p>
-          </div>
-        )}
-        <div className="facts">
-          <div><span>After that 48.00</span><b>Key deleted</b><small>The line is what the money follows</small></div>
-          <div><span>The paying key</span><b>0.50 NEAR</b><small>release only, five refusals</small></div>
-          <div><span>On the desk</span><b>Clears</b><small>No hash, and nothing moves</small></div>
-        </div>
-        <p className="hero-note">Once the stored time has arrived, that key can pay immediately, and a delete loses if the payment lands first. A Paid figure on this page is a receipt step with a hash. Editing browser storage cannot create one.</p>
+          )}
+          <figcaption>The time gate on NEAR testnet. Before the stored time, 0.00 moved. After it, the same line paid 48.00.</figcaption>
+        </figure>
+        <section className="pitch-section" id="try">
+          <SectionHead hue="orange" eyebrow="Same rule, this browser" title="Try the refusal" />
+          <p className="hero-note">The sealed line is 48.00 to sable.testnet. This clock pays only while 400 ≤ time &lt; 1000. Choose Before the time. The answer comes from <span className="mono">app/lib/rule.mjs</span>. Nothing on this page is a transaction.</p>
+          <LinePreview />
+        </section>
         {state === "loading" && <p className="note">Reading the payment record.</p>}
         {state === "error" && (
           <p className="alert" role="alert">
@@ -178,7 +159,7 @@ export default function HomePage() {
         {state === "ready" && <p className="pitch-consequence">A different account was named. 0.00 moved. The sealed line paid 48.00.</p>}
 
         <section className="pitch-section" id="problem">
-          <h2>The sheet</h2>
+          <SectionHead hue="teal" eyebrow="Example slip" title="The sheet" />
           <div className="split">
             <article className="panel">
               <p className="kicker"><span>Example slip</span><span>Moves nothing</span></p>
@@ -206,20 +187,20 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="rule">
-          <h2>The rule</h2>
+          <SectionHead hue="orange" eyebrow="Four checks" title="The rule" />
           <div className="stage">
             <div className="market-proof checks">
-              <div data-tone="neutral"><span>Recipient</span><b>Sealed</b><small>Another account moves 0.00</small></div>
-              <div data-tone="neutral"><span>Amount</span><b>48.00</b><small>47.00 does not replace it</small></div>
-              <div data-tone="neutral"><span>Evidence</span><b>The sentence</b><small>A rewrite moves 0.00</small></div>
-              <div data-tone="neutral"><span>Time</span><b>The window</b><small>stored time ≤ block time &lt; deadline</small></div>
+              <div data-tone="neutral" data-hue="teal"><span>Recipient</span><b>Sealed</b><small>Another account moves 0.00</small></div>
+              <div data-tone="neutral" data-hue="orange"><span>Amount</span><b>48.00</b><small>47.00 does not replace it</small></div>
+              <div data-tone="neutral" data-hue="purple"><span>Evidence</span><b>The sentence</b><small>A rewrite moves 0.00</small></div>
+              <div data-tone="neutral" data-hue="cyan"><span>Time</span><b>The window</b><small>stored time ≤ block time &lt; deadline</small></div>
             </div>
           </div>
           <p className="hero-note">One nanosecond before the deadline still clears. At the deadline the call is <span className="mono">ERR_TOO_LATE</span>. The unit test is <span className="mono break">one_nanosecond_before_the_deadline_clears_and_the_deadline_does_not</span>. <span className="mono">release</span> can call nothing else. There is no method that edits the line after open.</p>
         </section>
 
         <section className="pitch-section" id="run">
-          <h2>The run</h2>
+          <SectionHead hue="cyan" eyebrow="Payment record" title="The run" />
           <div className="stage">
             <div className="stage-chrome">
               <b>Payment record</b>
@@ -233,7 +214,7 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="signed">
-          <h2>The signed release</h2>
+          <SectionHead hue="purple" eyebrow="Not the run above" title="The signed release" />
           <div className="stage">
             <div className="stage-chrome">
               <b>{signed.receipt?.model ?? "z-ai/glm-5.3-flash"}</b>
@@ -249,7 +230,7 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="time">
-          <h2>The time gate</h2>
+          <SectionHead hue="teal" eyebrow="Stored time" title="The time gate" />
           <div className="facts">
             <div><span>The window</span><b>One nanosecond</b><small>Before the deadline still clears</small></div>
             <div><span>Refund</span><b>Two records</b><small>On chain for the older meter. Unit-tested here.</small></div>
@@ -271,7 +252,7 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="compare">
-          <h2>A transfer, and this run</h2>
+          <SectionHead hue="yellow" eyebrow="Against a transfer" title="A transfer, and this run" wide />
           <div className="pitch-scroll">
             <table className="pitch-table">
               <caption>A normal transfer pays the account named at send time. Recorded {when}.</caption>
@@ -286,27 +267,27 @@ export default function HomePage() {
                 <tr>
                   <th>other.testnet, 48.00</th>
                   <td>Pays the account named then</td>
-                  <td><span className="mono">0.00</span> <span className="mono">ERR_RECIPIENT</span></td>
+                  <td><span className="mono">0.00</span> <span className="mono">ERR_RECIPIENT</span>. Which means the wrong account was paid nothing.</td>
                 </tr>
                 <tr>
                   <th>47.00 instead of 48.00</th>
                   <td>The caller picks a new figure</td>
-                  <td><span className="mono">0.00</span> <span className="mono">ERR_AMOUNT</span></td>
+                  <td><span className="mono">0.00</span> <span className="mono">ERR_AMOUNT</span>. Which means 47.00 did not replace 48.00.</td>
                 </tr>
                 <tr>
                   <th>Evidence hash changed</th>
                   <td>A memo does not hold the money</td>
-                  <td><span className="mono">0.00</span> <span className="mono">ERR_EVIDENCE</span></td>
+                  <td><span className="mono">0.00</span> <span className="mono">ERR_EVIDENCE</span>. Which means the rewritten sentence was paid nothing.</td>
                 </tr>
                 <tr>
                   <th>Same key after delete</th>
                   <td>A live key can sign again</td>
-                  <td>Rejected before a transaction</td>
+                  <td>Rejected before a transaction. Which means a deleted key cannot spend.</td>
                 </tr>
                 <tr>
                   <th>After the deadline</th>
                   <td>The balance sits</td>
-                  <td><span className="mono">48.00</span> back to the buyer</td>
+                  <td><span className="mono">48.00</span> back to the buyer. Which means the lock ended.</td>
                 </tr>
               </tbody>
             </table>
@@ -314,7 +295,7 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="proof">
-          <h2>Proof</h2>
+          <SectionHead hue="green" eyebrow="On testnet" title="Proof" />
           <div className="proof-links">
             <a href={receipt ? `https://testnet.nearblocks.io/address/${receipt.contract}` : "https://testnet.nearblocks.io/address/m028a47.mtrfc658fd1.testnet"}>
               <span>Payment record</span>
@@ -335,7 +316,7 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="not">
-          <h2>What this is not</h2>
+          <SectionHead hue="yellow" eyebrow="Limits" title="What this is not" />
           <dl className="not-list">
             <div>
               <dt>This is just a dashboard.</dt>
@@ -369,7 +350,7 @@ export default function HomePage() {
         </section>
 
         <section className="pitch-section" id="sources">
-          <h2>Sources</h2>
+          <SectionHead hue="teal" eyebrow="Files" title="Sources" />
           <ul className="source-list">
             <li><span className="mono">app/public/chain.json</span> · {when}</li>
             <li><span className="mono">app/public/tee.json</span> · {signedWhen} · the Intel quote was not checked</li>

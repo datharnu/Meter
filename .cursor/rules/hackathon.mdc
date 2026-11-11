@@ -1,0 +1,26 @@
+---
+description: Hackathon build rules — one provable loop, refusal included, no fake success
+alwaysApply: true
+---
+
+# Hackathon
+
+One sentence. One scene. One capital path. No second feature until that path has a receipt.
+
+- The UI is not the guard. Refusal happens where value moves.
+- Demo the refusal: out of bounds, then a changed or replayed approval. Exact inputs, reason codes.
+- States are ALLOW, REFUSE, PENDING, UNKNOWN. Unproven execution is not success.
+- A sponsor API must change a decision. A displayed price is not an integration.
+- Compose an existing protocol unless the invariant cannot live anywhere else.
+- Do not add screens, agents, or simulate buttons ahead of the hero loop.
+- Money math is exact. The risk case gets tests.
+- One function is allowed to move money. Every feature calls it. If the check throws, block the spend.
+- An approval binds a hash of every field the user can change. Recompute that hash where the money moves. "Up to" is not "exact."
+- Recompute price, collateral, and destination on the server. The client may send the amount. A merchant payee comes from the origin, not the request body.
+- Check the fact that makes the other numbers true before using them. A missing feed is either a refusal or an explicit "unverified," never a clean yes.
+- Quote before value moves. A failed fill refunds, and the receipt says whether the refund landed.
+- When a money bug is fixed, comment the old wrong behavior at the fix so it cannot return.
+- README first screen: one sentence, where to click, which cluster the proof ran on, and each claim beside its limit. The rest follows personal skill `hackathon-win` (`readme.md`). No default framework README, no feature list at the top.
+- Keep one real failure in the record after it is fixed. A later green run does not delete it.
+
+Full playbook: personal skill `hackathon-win`.

@@ -19,7 +19,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const setReady = useDesk((s) => s.setReady);
   useEffect(() => { setReady(); }, [setReady]);
-  if (path === "/" || path === "/sign-in") return children;
+  const marketing = path === "/" || path === "/sign-in" || path === "/how" || path === "/security" || path === "/verify" || path.startsWith("/product") || path.startsWith("/docs");
+  if (marketing) return children;
   const current = (href: string) => path === href;
   return (
     <div className="shell">
