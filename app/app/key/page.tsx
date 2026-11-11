@@ -1,6 +1,7 @@
 "use client";
 
 import { ReceiptGate } from "@/components/ReceiptGate";
+import { Icon } from "@/components/Icons";
 import { formatUnits, txUrl, useReceipt } from "@/lib/useReceipt";
 
 export default function KeyPage() {
@@ -33,7 +34,7 @@ export default function KeyPage() {
               <div className="stat">
                 <span>Allowance</span>
                 <b>0.50</b>
-                <small>NEAR, gas only</small>
+                <small className="with-icon"><Icon name="near" size={12} />NEAR, gas only</small>
               </div>
               <div className="stat">
                 <span>Status</span>
@@ -95,7 +96,7 @@ export default function KeyPage() {
               <div className="stat">
                 <span>Allowance</span>
                 <b>0.50</b>
-                <small>NEAR, gas only</small>
+                <small className="with-icon"><Icon name="near" size={12} />NEAR, gas only</small>
               </div>
               <div className="stat">
                 <span>Status</span>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Icon } from "@/components/Icons";
 import { SiteNav } from "@/components/SiteNav";
 import { readTab, writeTab } from "@/components/ProfileDock";
 
@@ -21,7 +22,7 @@ export default function SignInPage() {
     <div className="market">
       <SiteNav />
       <main id="content" className="market-main market-narrow">
-        <p className="eyebrow"><i data-hue="teal" />This browser</p>
+        <p className="eyebrow"><Icon name="desk" size={14} />This browser</p>
         <h1>Open the desk in this browser.</h1>
         <p className="market-lead">
           Slips you seal here stay on this machine. This page does not connect a wallet, and it does not create a key that can spend.

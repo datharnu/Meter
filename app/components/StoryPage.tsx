@@ -9,7 +9,7 @@ export function StoryBody({ story }: { story: Story }) {
       <h1>{story.title}</h1>
       <p className="market-lead">{story.lede}</p>
       {story.blocks.map((block) => (
-        <section key={block.heading} className="story-block">
+        <section key={block.heading} className="story-block" id={block.id}>
           <h2>{block.heading}</h2>
           {block.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         </section>

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { DocArticle } from "@/components/DocArticle";
 import { SiteNav } from "@/components/SiteNav";
-import { StoryBody } from "@/components/StoryPage";
 import { docGroups, docLinks, type Story } from "@/lib/site";
 
 function DocNav({ onPick }: { onPick?: () => void }) {
@@ -28,14 +28,34 @@ function DocNav({ onPick }: { onPick?: () => void }) {
   );
 }
 
+function sectionId(heading: string, id?: string) {
+  if (id) return id;
+  return heading.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 export function DocsShell({ story }: { story: Story }) {
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState("");
   const path = usePathname();
+  const overview = path === "/docs";
   const index = docLinks.findIndex((item) => item.href === path);
   const current = index >= 0 ? docLinks[index] : null;
   const prev = index > 0 ? docLinks[index - 1] : index === 0 ? { href: "/docs", title: "Overview" } : null;
   const next = index === -1 ? docLinks[0] : docLinks[index + 1];
   useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    const nodes = [...document.querySelectorAll<HTMLElement>("[data-doc-section]")];
+    if (nodes.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const top = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (top) setActive(top.target.id);
+      },
+      { rootMargin: "-90px 0px -65% 0px" },
+    );
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [path]);
   useEffect(() => {
     if (!open) return;
     function onKey(event: KeyboardEvent) {
@@ -58,7 +78,7 @@ export function DocsShell({ story }: { story: Story }) {
             <Link href="/docs">Docs</Link>
             {current ? <><span aria-hidden="true">/</span><span>{current.group}</span><span aria-hidden="true">/</span><span>{current.title}</span></> : <span>Overview</span>}
           </p>
-          <StoryBody story={story} />
+          <DocArticle story={story} overview={overview} />
           {(prev || next) && (
             <nav className="docs-pager" aria-label="Adjacent pages">
               {prev ? <Link href={prev.href}><small>Previous</small><b>{prev.title}</b></Link> : <span />}
@@ -66,6 +86,21 @@ export function DocsShell({ story }: { story: Story }) {
             </nav>
           )}
         </main>
+        {story.blocks.length > 0 ? (
+          <aside className="docs-toc" aria-label="On this page">
+            <p>On this page</p>
+            <ul>
+              {story.blocks.map((block) => {
+                const id = sectionId(block.heading, block.id);
+                return (
+                  <li key={id}>
+                    <a href={`#${id}`} aria-current={active === id ? "true" : undefined}>{block.heading}</a>
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+        ) : null}
       </div>
       {open ? (
         <div className="docs-scrim" onClick={() => setOpen(false)}>

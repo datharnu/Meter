@@ -2,7 +2,7 @@ export type Story = {
   eyebrow: string;
   title: string;
   lede: string;
-  blocks: { heading: string; body: string[] }[];
+  blocks: { heading: string; body: string[]; id?: string }[];
 };
 
 export const productMenu = [
@@ -13,10 +13,12 @@ export const productMenu = [
 ] as const;
 
 export const topNav = [
-  { href: "/#try", title: "Try it" },
-  { href: "/#run", title: "The run" },
-  { href: "/#compare", title: "A transfer" },
-  { href: "/#not", title: "What this is not" },
+  { href: "/#journey", title: "The flow" },
+  { href: "/#why", title: "Why now" },
+  { href: "/#audience", title: "Who it's for" },
+  { href: "/#research", title: "Research" },
+  { href: "/#faq", title: "FAQ" },
+  { href: "/docs", title: "Docs" },
 ] as const;
 
 export type DocLink = { href: string; title: string; group: string };
@@ -30,6 +32,7 @@ export const docLinks: DocLink[] = [
   { href: "/docs/run", title: "How a run works", group: "On NEAR" },
   { href: "/docs/contracts", title: "The contracts", group: "On NEAR" },
   { href: "/docs/verify", title: "Verify a run", group: "Trust" },
+  { href: "/docs/evidence", title: "Evidence behind the site", group: "Trust" },
   { href: "/docs/limits", title: "What this is not", group: "Trust" },
 ];
 
@@ -298,6 +301,48 @@ export const docs: Record<string, Story & { group: string }> = {
       },
     ],
   },
+  evidence: {
+    group: "Trust",
+    eyebrow: "Trust",
+    title: "Evidence behind the site",
+    lede: "Industry figures on the homepage link here. Each row says what a source establishes, what it does not establish, and which design choice it informed.",
+    blocks: [
+      {
+        id: "ic3-2025",
+        heading: "FBI IC3 report 2025",
+        body: [
+          "Establishes: 24,768 business email compromise complaints and $3,046,598,558 in reported BEC losses in 2025, per the FBI Internet Crime Report 2025.",
+          "Does not establish: unreported loss, or that Meter would have stopped a specific incident.",
+          "Informs: the recipient is sealed when the meter opens. On the recorded payment run, other.testnet moved 0.00 with ERR_RECIPIENT.",
+        ],
+      },
+      {
+        id: "afp-2026",
+        heading: "AFP payments fraud survey 2026",
+        body: [
+          "Establishes: 76% of responding US organisations experienced attempted or actual payments fraud; 74% experienced business email compromise, per the AFP Payments Fraud and Control Survey 2026.",
+          "Does not establish: that on-chain rules replace treasury policy, dual approval, or payee verification programmes.",
+          "Informs: the homepage demos refusals with exact codes. The proof is a testnet hash, not a survey percentage.",
+        ],
+      },
+      {
+        id: "meter-run-2026-11-10",
+        heading: "Recorded payment run, 10 Nov 2026",
+        body: [
+          "Establishes: app/public/chain.json and m028a47.mtrfc658fd1.testnet on NEAR testnet. A wrong recipient moved 0.00; the sealed line paid 48.00 with a transaction hash.",
+          "Does not establish: mainnet USDC, Circle issuance, or work-quality judgment.",
+          "Informs: one function moves money. If the check throws, the spend is blocked where value moves.",
+        ],
+      },
+      {
+        heading: "Repository copy",
+        body: [
+          "The same table lives at docs/evidence.md in the repo for judges reading GitHub.",
+          "Do not cite a figure on the site without a matching row.",
+        ],
+      },
+    ],
+  },
   limits: {
     group: "Trust",
     eyebrow: "Trust",
@@ -328,7 +373,7 @@ export const docsOverview: Story = {
     {
       heading: "How the docs are split",
       body: [
-        "Get started opens the desk. Concepts are the line and the window. On NEAR is a run and the three contracts. Trust is how to check a receipt, and the limits.",
+        "Get started opens the desk. Concepts are the line and the window. On NEAR is a run and the three contracts. Trust is how to check a receipt, the evidence behind cited figures, and the limits.",
       ],
     },
   ],

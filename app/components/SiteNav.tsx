@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type FocusEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/Icons";
 import { Logo } from "@/components/Logo";
-import { productMenu, topNav } from "@/lib/site";
+import { topNav } from "@/lib/site";
 
 function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -19,8 +20,8 @@ function ThemeToggle() {
   }
   const light = theme === "light";
   return (
-    <button type="button" className="theme-btn" aria-pressed={light} onClick={toggle}>
-      {light ? "Light" : "Dark"}
+    <button type="button" className="theme-btn" aria-pressed={light} aria-label={light ? "Switch to dark" : "Switch to light"} onClick={toggle}>
+      <Icon name={light ? "sun" : "moon"} />
     </button>
   );
 }
@@ -28,122 +29,57 @@ function ThemeToggle() {
 export function SiteNav() {
   const path = usePathname();
   const [menu, setMenu] = useState(false);
-  const [product, setProduct] = useState(false);
   const bar = useRef<HTMLDivElement>(null);
-  const productButton = useRef<HTMLButtonElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
-  const productPanel = useRef<HTMLDivElement>(null);
-  const focusProduct = useRef(false);
-  const pinned = useRef(false);
-  const shown = useRef(false);
-
-  function setShown(next: boolean) {
-    shown.current = next;
-    setProduct(next);
-  }
+  const menuPanel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    pinned.current = false;
     setMenu(false);
-    setShown(false);
   }, [path]);
 
   useEffect(() => {
-    if (!product || !focusProduct.current) return;
-    focusProduct.current = false;
-    productPanel.current?.querySelector("a")?.focus();
-  }, [product]);
+    const wide = window.matchMedia("(min-width: 1200px)");
+    const close = () => { if (wide.matches) setMenu(false); };
+    wide.addEventListener("change", close);
+    return () => wide.removeEventListener("change", close);
+  }, []);
 
   useEffect(() => {
     if (!menu) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
-  }, [menu]);
-
-  useEffect(() => {
-    if (!menu && !product) return;
+    menuPanel.current?.querySelector("a")?.focus({ preventScroll: true });
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      pinned.current = false;
       setMenu(false);
-      setShown(false);
-      (menu ? menuButton : productButton).current?.focus();
+      menuButton.current?.focus();
     }
     function onPointer(event: PointerEvent) {
-      if (bar.current && event.target instanceof Node && !bar.current.contains(event.target)) {
-        pinned.current = false;
-        setMenu(false);
-        setShown(false);
-      }
+      if (bar.current && event.target instanceof Node && !bar.current.contains(event.target)) setMenu(false);
     }
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointer);
     return () => {
+      document.body.style.overflow = previous;
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [menu, product]);
+  }, [menu]);
 
-  function onProductBlur(event: FocusEvent<HTMLDivElement>) {
-    const next = event.relatedTarget;
-    if (!(next instanceof Node) || !event.currentTarget.contains(next)) {
-      pinned.current = false;
-      setShown(false);
-    }
+  function current(href: string) {
+    if (href === "/docs") return path.startsWith("/docs") ? "page" : undefined;
+    return path === href ? "page" : undefined;
   }
 
   return (
     <header className="market-bar" data-open={menu ? "true" : "false"}>
       <div className="market-pill" ref={bar}>
+        <div className="market-top">
         <Link className="market-brand" href="/" aria-label="Meter, home"><Logo /></Link>
         <nav className="market-nav" aria-label="Primary">
           <div className="nav-center">
-            <div
-              className="product-menu"
-              data-open={product ? "true" : "false"}
-              onMouseEnter={() => { if (!pinned.current) setShown(true); }}
-              onMouseLeave={() => { if (!pinned.current) setShown(false); }}
-              onBlur={onProductBlur}
-            >
-              <button
-                ref={productButton}
-                className="product-btn"
-                type="button"
-                data-on={path === "/" || path.startsWith("/product") ? "true" : "false"}
-                aria-expanded={product}
-                aria-controls="product-panel"
-                onClick={() => {
-                  if (shown.current && !pinned.current) {
-                    pinned.current = true;
-                    return;
-                  }
-                  const next = !shown.current;
-                  pinned.current = next;
-                  setShown(next);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key !== "ArrowDown") return;
-                  event.preventDefault();
-                  focusProduct.current = true;
-                  pinned.current = true;
-                  setShown(true);
-                }}
-              >
-                Product
-                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-              </button>
-              <div id="product-panel" ref={productPanel} className="product-panel" role="region" aria-label="Product" inert={!product} aria-hidden={!product}>
-                {productMenu.map((item) => (
-                  <Link key={item.href} href={item.href} title={item.note} aria-current={path === item.href ? "page" : undefined}>
-                    <b>{item.title}</b>
-                    <span>{item.note}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
             {topNav.map((item) => (
-              <Link key={item.href} className="site-link" href={item.href} aria-current={path === item.href || (item.href === "/docs" && path.startsWith("/docs")) ? "page" : undefined}>
+              <Link key={item.href} className="site-link" href={item.href} aria-current={current(item.href)}>
                 {item.title}
               </Link>
             ))}
@@ -154,28 +90,24 @@ export function SiteNav() {
             type="button"
             aria-expanded={menu}
             aria-controls="site-menu"
+            aria-label={menu ? "Close menu" : "Open menu"}
             onClick={() => setMenu((open) => !open)}
           >
-            {menu ? "Close" : "Menu"}
+            <Icon name={menu ? "close" : "menu"} />
           </button>
         </nav>
         <div className="nav-end">
           <ThemeToggle />
-          <Link className="btn" href="/sign-in">Open the desk</Link>
+          <Link className="btn nav-desk" href="/sign-in">Open the desk</Link>
         </div>
-        <div id="site-menu" className="market-links" data-open={menu ? "true" : "false"}>
-          <span className="site-label">Product</span>
-          {productMenu.map((item) => (
-            <Link key={item.href} className="menu-item" href={item.href} title={item.note} onClick={() => setMenu(false)}>
-              <b>{item.title}</b>
-              <span>{item.note}</span>
-            </Link>
-          ))}
+        </div>
+        <div id="site-menu" ref={menuPanel} className="market-links" data-open={menu ? "true" : "false"} aria-hidden={menu ? undefined : true}>
           {topNav.map((item) => (
-            <Link key={item.href} href={item.href} aria-current={path === item.href || path.startsWith(`${item.href}/`) ? "page" : undefined} onClick={() => setMenu(false)}>
+            <Link key={item.href} href={item.href} aria-current={current(item.href)} onClick={() => setMenu(false)}>
               {item.title}
             </Link>
           ))}
+          <Link className="btn market-sheet-cta" href="/sign-in" onClick={() => setMenu(false)}>Open the desk</Link>
         </div>
       </div>
     </header>

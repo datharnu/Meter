@@ -4,8 +4,6 @@ Meter enforces the stored line. It does not judge the work. The parties choose t
 
 A buyer and a vendor already agreed one price. On the recorded run that price is **48.00** of a testnet token, for one sentence. Two companies can write a ceiling and a floor. The sheet shows the price, the recipient, the sentence, and the deadline. The overlap of those two numbers is computed in the browser. It is not an enclave, and a failed overlap creates no meter. A normal transfer would pay whoever is named when it is sent. This contract pays the stored line inside that window, or it moves nothing.
 
-This is a second project beside [Accord](https://github.com/Adityaakr/accord). The screen is one invoice, not a room with tabs.
-
 ![The first screen: the time-gate receipts, then Try the refusal opened on Before the time](docs/home.jpg)
 
 ## Contents
@@ -326,7 +324,7 @@ Contributing: open an issue on [github.com/datharnu/Meter](https://github.com/da
 
 License: [MIT](LICENSE).
 
-The three receipts were recorded on NEAR testnet. The token contract is the one in `contract/token`. Accord is a separate submission.
+The three receipts were recorded on NEAR testnet. The token contract is the one in `contract/token`.
 
 ---
 
