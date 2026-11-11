@@ -14,8 +14,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="shell">
       <nav className="nav">
         <Link className="mark" href="/">Meter</Link>
-        <Link className="item" data-on={on("/")} href="/">Meters</Link>
-        <Link className="item" data-on={on("/new")} href="/new">New</Link>
+        <div className="nav-links">
+          <Link className="item" data-on={on("/")} href="/">Desk</Link>
+          <Link className="item" data-on={on("/new")} href="/new">New slip</Link>
+          <Link className="item" data-on={on("/clause")} href="/clause">The line</Link>
+          <Link className="item" data-on={on("/book")} href="/book">The book</Link>
+          <Link className="item" data-on={on("/key")} href="/key">The key</Link>
+        </div>
         <p>NEAR testnet. Mainnet after an audit.</p>
       </nav>
       <main className="main">{children}</main>

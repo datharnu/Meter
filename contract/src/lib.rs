@@ -1,10 +1,17 @@
 use hex::FromHex;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::store::IterableMap;
-use near_sdk::{env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault, Promise};
+use near_sdk::{env, ext_contract, near, require, AccountId, Allowance, Gas, NearToken, PanicOnDefault, Promise, PromiseOrValue, PublicKey};
 
 mod rule;
 use rule::{decide, fund, refund as rule_refund, sign as rule_sign, Clause, Code, Deal, Who};
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone)]
+pub struct Attempt {
+    pub code: String,
+    pub moved: U128,
+}
 
 #[near(serializers = [borsh, json])]
 #[derive(Clone)]
@@ -20,6 +27,10 @@ pub struct MeterState {
     pub funded: U128,
     pub paid: U128,
     pub refunded: U128,
+    pub agent: Option<PublicKey>,
+    pub revoked: bool,
+    pub refusals: u32,
+    pub attempts: Vec<Attempt>,
 }
 
 #[near(contract_state)]
@@ -65,9 +76,42 @@ impl Contract {
                 funded: U128(0),
                 paid: U128(0),
                 refunded: U128(0),
+                agent: None,
+                revoked: false,
+                refusals: 0,
+                attempts: Vec::new(),
             },
         );
         id
+    }
+
+    /// Buyer installs the only key that can call `release`. The key is limited to that method.
+    /// One yoctoNEAR is required, so this key cannot install another key.
+    #[payable]
+    pub fn install_agent(&mut self, id: u64, public_key: PublicKey) -> Promise {
+        near_sdk::assert_one_yocto();
+        let mut meter = load(&self.meters, id);
+        require!(env::predecessor_account_id() == meter.buyer, "ERR_NOT_BUYER");
+        require!(meter.buyer_signed && meter.vendor_signed, "ERR_NEED_BOTH");
+        require!(meter.agent.is_none() && !meter.revoked, "ERR_AGENT");
+        meter.agent = Some(public_key.clone());
+        self.meters.insert(id, meter);
+        let me = env::current_account_id();
+        let allowance = Allowance::limited(NearToken::from_yoctonear(500_000_000_000_000_000_000_000))
+            .unwrap_or_else(|| env::panic_str("ERR_ALLOWANCE"));
+        Promise::new(me.clone()).add_access_key_allowance(public_key, allowance, me, "release")
+    }
+
+    /// Buyer kill switch. The key is marked dead in this receipt and deleted in the same transaction.
+    #[payable]
+    pub fn revoke_agent(&mut self, id: u64) -> Promise {
+        near_sdk::assert_one_yocto();
+        let mut meter = load(&self.meters, id);
+        require!(env::predecessor_account_id() == meter.buyer, "ERR_NOT_BUYER");
+        let key = meter.agent.take().unwrap_or_else(|| env::panic_str("ERR_NO_AGENT"));
+        meter.revoked = true;
+        self.meters.insert(id, meter);
+        Promise::new(env::current_account_id()).delete_key(key)
     }
 
     pub fn sign(&mut self, id: u64) {
@@ -105,30 +149,53 @@ impl Contract {
         }
     }
 
-    pub fn release(&mut self, id: u64, recipient: AccountId, amount: U128, evidence_hex: String) -> Promise {
-        let meter = load(&self.meters, id);
-        let deal = to_deal(&meter);
-        let evidence = parse_evidence(&evidence_hex).unwrap_or_else(|| env::panic_str("ERR_EVIDENCE"));
-        match decide(&deal, recipient.as_str(), amount.0, &evidence, env::block_timestamp()) {
-            Ok(()) => {}
-            Err(code) => env::panic_str(code.as_str()),
+    pub fn release(&mut self, id: u64, recipient: AccountId, amount: U128, evidence_hex: String) -> PromiseOrValue<String> {
+        require!(env::predecessor_account_id() == env::current_account_id(), "ERR_UNAUTHORIZED");
+        let signer = env::signer_account_pk();
+        let mut meter = load(&self.meters, id);
+        if meter.revoked {
+            env::panic_str("ERR_REVOKED");
         }
-        let mut next = meter.clone();
-        next.paid = amount;
-        self.meters.insert(id, next);
-        ext_ft::ext(self.token.clone())
-            .with_static_gas(Gas::from_tgas(15))
-            .with_attached_deposit(NearToken::from_yoctonear(1))
-            .ft_transfer(recipient, amount, Some(format!("meter {id}")))
-            .then(
-                Self::ext(env::current_account_id())
-                    .with_static_gas(Gas::from_tgas(5))
-                    .on_paid(id, amount),
-            )
+        require!(meter.agent.as_ref() == Some(&signer), "ERR_UNAUTHORIZED");
+        let evidence = parse_evidence(&evidence_hex).unwrap_or_else(|| env::panic_str("ERR_EVIDENCE"));
+        let deal = to_deal(&meter);
+        if let Err(code) = decide(&deal, recipient.as_str(), amount.0, &evidence, env::block_timestamp()) {
+            meter.refusals += 1;
+            meter.attempts.push(Attempt { code: code.as_str().into(), moved: U128(0) });
+            if meter.attempts.len() > 12 {
+                meter.attempts.remove(0);
+            }
+            let burn = meter.refusals >= 5;
+            if burn {
+                meter.revoked = true;
+                meter.agent = None;
+            }
+            let label = code.as_str().to_string();
+            self.meters.insert(id, meter);
+            if burn {
+                return PromiseOrValue::Promise(Promise::new(env::current_account_id()).delete_key(signer));
+            }
+            return PromiseOrValue::Value(label);
+        }
+        meter.paid = amount;
+        meter.attempts.push(Attempt { code: "OK".into(), moved: amount });
+        self.meters.insert(id, meter);
+        PromiseOrValue::Promise(
+            ext_ft::ext(self.token.clone())
+                .with_static_gas(Gas::from_tgas(15))
+                .with_attached_deposit(NearToken::from_yoctonear(1))
+                .ft_transfer(recipient, amount, Some(format!("meter {id}")))
+                .then(
+                    Self::ext(env::current_account_id())
+                        .with_static_gas(Gas::from_tgas(5))
+                        .on_paid(id, amount),
+                ),
+        )
     }
 
     pub fn refund(&mut self, id: u64) -> Promise {
         let meter = load(&self.meters, id);
+        require!(env::predecessor_account_id() == meter.buyer, "ERR_NOT_BUYER");
         let mut deal = to_deal(&meter);
         let amount = match rule_refund(&mut deal, env::block_timestamp()) {
             Ok(amount) => amount,

@@ -19,8 +19,14 @@ export default function MetersPage() {
   }
   return (
     <>
-      <h1 className="page-title">Meters</h1>
-      <p className="lede">The card is a testnet payment, with the transaction hashes. Each row below is a desk meter. The desk does not move tokens.</p>
+      <h1 className="page-title">Desk</h1>
+      <p className="lede">One slip, one price. The card is the testnet run. The rows under it live in this browser and do not move tokens.</p>
+      <ol className="stops">
+        <li><Link href="/new">Write a slip</Link><span>The sheet shows 48.00. The ceiling of 60.00 stays off it.</span></li>
+        <li><Link href="/clause">Try a line</Link><span>Change the account, the figure, or the sentence. A mismatch stays at 0.00.</span></li>
+        <li><Link href="/book">Read the book</Link><span>The same answers, as the transactions from one testnet run.</span></li>
+        <li><Link href="/key">See the key</Link><span>It could call release. The buyer deleted it.</span></li>
+      </ol>
       <ChainPayment />
       {meters.length === 0 ? (
         <div className="empty">

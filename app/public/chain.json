@@ -1,20 +1,71 @@
 {
   "network": "testnet",
-  "contract": "meter3.mtrfc658fd1.testnet",
+  "contract": "m028a47.mtrfc658fd1.testnet",
   "token": "token.mtrfc658fd1.testnet",
   "buyer": "mtrfc658fd1.testnet",
   "vendor": "vendor.mtrfc658fd1.testnet",
   "meterId": 1,
+  "refundMeter": 2,
   "amount": "48000000",
   "evidence": "Field report 04, price column at most 100",
-  "refused": {
-    "hash": "DWHDfaWGb31oF1oVgk3QXhqc6U6REy42KqCcoa69jPSD",
-    "code": "ERR_RECIPIENT"
-  },
-  "paid": {
-    "hash": "3TfyC78Qmn9jhFHhjJSDV8Q5rFb9oFgJudijdJ9c215L",
-    "code": "OK"
-  },
-  "vendorBalance": "48000000",
-  "at": "2026-11-10T22:16:51.377Z"
+  "agentPublicKey": "ed25519:9MF52yXQLeBf65yDBjgt2RiDcdocMe4H2jJgBQcJkPAM",
+  "steps": [
+    {
+      "label": "Wrong recipient refused",
+      "code": "ERR_RECIPIENT",
+      "hash": "DrPqTQnWZSF94vfG8dyg1cPe1vgDxPuW1C7Yh5rjHdVX",
+      "moved": "0"
+    },
+    {
+      "label": "Wrong amount refused",
+      "code": "ERR_AMOUNT",
+      "hash": "CLJXCAbMm4qs37Wp7sKCYFz6ezS7F6f1kKMC2L2CYQG2",
+      "moved": "0"
+    },
+    {
+      "label": "Wrong evidence refused",
+      "code": "ERR_EVIDENCE",
+      "hash": "HxBaTriUzgt81fpVQ9moJvuMqUdYJwzF4oajZqWqKdAj",
+      "moved": "0"
+    },
+    {
+      "label": "Paid vendor.mtrfc658fd1.testnet",
+      "code": "OK",
+      "hash": "BGX34Gq1NRv17qNtdBy2pcFqszP5V1AzBfpxy7bwveSt",
+      "moved": "48000000"
+    },
+    {
+      "label": "Buyer deleted the agent key",
+      "code": "OK",
+      "hash": "HL7KXwCNYgdeMkg5oJ3ttkjUFPFgJ6Lx9YxeKxMhkRfg",
+      "moved": "0"
+    },
+    {
+      "label": "Deleted key was rejected",
+      "code": "AccessKeyDoesNotExist",
+      "hash": null,
+      "moved": "0",
+      "detail": "Access key ed25519:9MF52yXQLeBf65yDBjgt2RiDcdocMe4H2jJgBQcJkPAM does not exist at block height 277132357"
+    },
+    {
+      "label": "Payment after the deadline refused",
+      "code": "ERR_TOO_LATE",
+      "hash": "GZvzNMQgNzSM69BDQXzch8RB34ip8fFcKysQAuFVAEQq",
+      "moved": "0"
+    },
+    {
+      "label": "Balance returned to the buyer",
+      "code": "OK",
+      "hash": "3MuQnuUxot9ZxNqvrfeFTRVW753JjBHfzUPzsu3RBsmj",
+      "moved": "48000000"
+    },
+    {
+      "label": "Buyer deleted the deadline key",
+      "code": "OK",
+      "hash": "2pJ1s5Lm8tk9eacrxQ8cSSXJDDYYQJ1z3iPy5JZBbF78",
+      "moved": "0"
+    }
+  ],
+  "vendorBalance": "96000000",
+  "at": "2026-11-10T23:03:07.524Z"
 }

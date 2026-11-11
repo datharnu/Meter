@@ -1,56 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type Receipt = {
-  network: string;
-  contract: string;
-  token: string;
-  buyer: string;
-  vendor: string;
-  meterId: number;
-  amount: string;
-  evidence: string;
-  refused: { hash: string; code: string };
-  paid: { hash: string; code: string };
-  vendorBalance: string;
-  at: string;
-};
-
-function txUrl(hash: string) {
-  return `https://testnet.nearblocks.io/txns/${hash}`;
-}
+import { formatMoved, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
 export function ChainPayment() {
-  const [state, setState] = useState<"loading" | "empty" | "error" | "ready">("loading");
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let gone = false;
-    setState("loading");
-    fetch("/chain.json")
-      .then(async (response) => {
-        if (response.status === 404) return null;
-        if (!response.ok) throw new Error(String(response.status));
-        return response.json() as Promise<Receipt>;
-      })
-      .then((body) => {
-        if (gone) return;
-        if (!body?.paid?.hash) {
-          setState("empty");
-          return;
-        }
-        setReceipt(body);
-        setState("ready");
-      })
-      .catch(() => {
-        if (!gone) setState("error");
-      });
-    return () => {
-      gone = true;
-    };
-  }, [attempt]);
+  const { state, receipt, reload } = useReceipt();
 
   if (state === "loading") {
     return (
@@ -65,7 +18,7 @@ export function ChainPayment() {
     return (
       <div className="error" role="alert">
         <p>The testnet receipt did not load.</p>
-        <button className="ghost" type="button" onClick={() => setAttempt((n) => n + 1)}>Try again</button>
+        <button className="ghost" type="button" onClick={reload}>Try again</button>
       </div>
     );
   }
@@ -77,30 +30,32 @@ export function ChainPayment() {
     );
   }
   const usdc = (Number(receipt.amount) / 1_000_000).toFixed(2);
+  const older: Array<Step | null> = [
+    receipt.refused?.hash ? { label: "Wrong recipient refused", code: receipt.refused.code, hash: receipt.refused.hash, moved: "0" } : null,
+    receipt.paid?.hash ? { label: `Paid ${receipt.vendor}`, code: receipt.paid.code, hash: receipt.paid.hash, moved: receipt.amount } : null,
+  ];
+  const steps = receipt.steps?.length ? receipt.steps : older.filter((step): step is Step => step != null);
   return (
     <article className="sheet sheet-pad chain">
       <div className="kicker">
-        <span>Testnet payment</span>
+        <span>Testnet proof</span>
         <span>Meter {receipt.meterId}</span>
       </div>
       <p className="amount">{usdc}<span>tUSDC</span></p>
-      <div className="stamp" data-kind="paid">Paid</div>
-      <div className="attempt">
-        <div>
-          <b>Wrong recipient refused</b>
-          <small className="mono">{receipt.refused.code}</small>
+      {steps.map((step) => (
+        <div className="attempt" key={`${step.code}-${step.hash ?? step.label}`}>
+          <div>
+            <b>{step.label}</b>
+            <small className="mono">{step.code}{step.moved != null ? ` · ${formatMoved(step.moved)}` : ""}</small>
+            {step.detail ? <small className="detail">{step.detail}</small> : null}
+          </div>
+          {step.hash ? (
+            <a className="ellipsis hash" href={txUrl(step.hash)} title={step.hash}>{step.hash}</a>
+          ) : null}
         </div>
-        <a className="ellipsis hash" href={txUrl(receipt.refused.hash)} title={receipt.refused.hash}>{receipt.refused.hash}</a>
-      </div>
-      <div className="attempt">
-        <div>
-          <b>Paid {receipt.vendor}</b>
-          <small className="mono">{receipt.paid.code} · vendor holds {usdc}</small>
-        </div>
-        <a className="ellipsis hash" href={txUrl(receipt.paid.hash)} title={receipt.paid.hash}>{receipt.paid.hash}</a>
-      </div>
+      ))}
       <p className="note">
-        {receipt.evidence}. The token account is {receipt.token}. It is a test token with a public mint, not Circle USDC. The meter account {receipt.contract} has no access key. Mainnet waits on an audit.
+        {receipt.evidence}. The paying key can call release and nothing else. The buyer deleted it. The token is {receipt.token}, a test token with a public mint, not Circle USDC. Mainnet waits on an audit.
       </p>
     </article>
   );
