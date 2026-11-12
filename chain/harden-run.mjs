@@ -264,6 +264,32 @@ async function exists(id) {
   }
 }
 
+async function waitForAccount(id) {
+  for (let i = 0; i < 30; i++) {
+    if (await exists(id)) return;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  throw new Error(`${id} did not appear on testnet`);
+}
+
+async function sponsor(buyerId, floor) {
+  const held = await balance(buyerId);
+  if (held >= floor) return held;
+  const key = KeyPairEd25519.fromRandom();
+  const id = `spr${randomBytes(4).toString("hex")}.testnet`;
+  const response = await fetch("https://helper.testnet.near.org/account", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ newAccountId: id, newAccountPublicKey: key.getPublicKey().toString() }),
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Could not fund the buyer: ${response.status} ${text.slice(0, 180)}`);
+  await waitForAccount(id);
+  const sent = await send(account(id, key.toString()), buyerId, [actions.transfer(8n * NEAR)], "sponsor");
+  if (sent.failure) throw new Error(sent.failure);
+  return balance(buyerId);
+}
+
 function evidenceOf(row) {
   if (row.hash) return "tx hash";
   if (row.submitted) return "rejected before inclusion (no tx)";
@@ -324,6 +350,12 @@ async function main() {
     }
   }
 
+  for (const row of asked) {
+    const args = Object.entries(row.toolCall.args ?? {}).map(([key, value]) => `${key}=${value}`).join(" ");
+    console.log(`  asked ${row.config} ${row.id} ${row.toolCall.name ?? "none"} malicious=${row.emittedMalicious} ${args}`);
+  }
+  save({ asked, payee, contractId });
+
   const draft = {
     promptCommit: commit,
     contract: null,
@@ -340,7 +372,8 @@ async function main() {
   let clerk = null;
   const paysPayee = asked.some((row) => row.config === "promptOnly" && row.toolCall.name === "ft_transfer" && String(row.toolCall.args.to ?? "") === payee);
   if (needsTransfer || needsRelease) {
-    if (await balance(buyerId) < 8n * NEAR) throw new Error("Buyer NEAR balance is below 8. Stop. No account was created.");
+    const held = await sponsor(buyerId, 8n * NEAR);
+    if (held < 8n * NEAR) throw new Error(`Buyer balance is still ${held} yoctoNEAR after the faucet. Stop. No meter was deployed.`);
     const code = readFileSync(wasmPath);
     if (createHash("sha256").update(code).digest("hex") !== "26dece5891b5ccd5f748c9b824d426fc17bc857e67b317d945d1823bcd219968") {
       throw new Error("chain/meter-v2.wasm is not the deployed sha256. Stop.");

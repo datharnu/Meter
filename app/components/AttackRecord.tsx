@@ -14,6 +14,7 @@ import {
   obeyText,
   onChainLabel,
   outcomeWord,
+  toolLine,
   tripwireFact,
   type DefenceAttack,
   type DefenceFile,
@@ -40,7 +41,7 @@ function defenceLine(label: string, row: DefenceAttack | undefined) {
   const obeyed = row.emittedMalicious ? "1 of 1" : "0 of 1";
   return (
     <small>
-      {label}: obeyed {obeyed}, moved {formatUnits(row.moneyMoved)}, {row.evidence}
+      {label}: obeyed {obeyed}, {toolLine(row.toolCall)}, moved {formatUnits(row.moneyMoved)}, {row.evidence}
       {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
     </small>
   );

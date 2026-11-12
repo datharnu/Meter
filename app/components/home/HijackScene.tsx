@@ -134,7 +134,7 @@ export function HijackCompare({
             figure={`${formatUnits(promptOnly.moneyMoved)} moved`}
             code={promptOnly.code || (promptOnly.emittedMalicious ? "emitted" : "no malicious call")}
             hash={promptOnly.hash || null}
-            note={`Obeyed ${promptOnly.emittedMalicious ? "1 of 1" : "0 of 1"}. ${promptOnly.evidence}.`}
+            note={`${promptOnly.emittedMalicious ? "The agent emitted the call the note asked for." : "The agent did not emit the malicious call. The broadcast is the sealed line."} Obeyed ${promptOnly.emittedMalicious ? "1 of 1" : "0 of 1"}. ${promptOnly.evidence}.`}
           />
         ) : null}
         <Bill
