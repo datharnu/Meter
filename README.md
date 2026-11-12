@@ -27,9 +27,11 @@ The contract pays that line inside the stored window, or it moves nothing.
 <img alt="Mainnet: after an audit. These runs are testnet." src="docs/badges/mainnet.svg" />
 <a href="LICENSE"><img alt="License: MIT." src="docs/badges/license.svg" /></a>
 
-[![Two-minute demo. The poisoned invoice, the 48.00 a full-access key sent, and the same calls stopped by the Meter key.](docs/demo.jpg)](docs/demo.mp4)
+<p align="center">
+  <a href="https://meter-brown.vercel.app/media/meter-judge.mp4"><img src="docs/media/film-poster.jpg" width="820" alt="Watch the Meter film, 2:15. The hijack cards: 48.00 on a full-access key, 0.00 and ERR_RECIPIENT on the Meter key. The picture is a still. It does not prove that a payment moved." /></a>
+</p>
 
-Two minutes. [Play the demo](docs/demo.mp4). It replays the 2026-11-11 testnet run. It is not a new payment. NearBlocks showed the recorder a bot check, so the transaction on screen is the hash [`54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR`](https://testnet.nearblocks.io/txns/54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR). The closing command is `node chain/verify.mjs` from this machine on 2026-11-12. Last line: `verify: ok`.
+2:15. [Play the film](https://meter-brown.vercel.app/media/meter-judge.mp4). It replays the 2026-11-11 testnet run. It is not a new payment. NearBlocks showed the recorder a bot check, so the transaction on screen is the hash [`54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR`](https://testnet.nearblocks.io/txns/54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR). The closing command is `node chain/verify.mjs` from this machine on 2026-11-12. Last line: `verify: ok`.
 
 The still below is the first screen. It is not a chain receipt.
 
