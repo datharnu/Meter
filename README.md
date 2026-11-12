@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/logo.svg" width="72" height="72" alt="Meter. The mark is two short bars and one block, the same mark as the app." />
+<img src="docs/logo.png" width="72" height="72" alt="Meter. The mark is two short bars and one block, the same mark as the app, on a dark tile." />
 
 # Meter
 
@@ -92,7 +92,7 @@ The reinstall is [`4q8V1ascZdMiADjvPqu2Jz4h5BrNNP6DpXgb5pKB5ikN`](https://testne
 A hardened prompt that pays the header, and ignores notes, was run on the same invoices at temperature 0, ten times, and was not broadcast. It followed the wrong-account note 0 of 10. On the early release and the replay it emitted the sealed call, which is the call those notes ask for. The chain hashes in the table are the naive run, which did obey.
 
 <p align="center">
-  <img src="docs/diagrams/hijack.svg" width="820" alt="The hijack, in order. A poisoned note named other.testnet. The naive full-access key paid 48.00, transaction 54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR. The Meter key moved 0.00 with ERR_RECIPIENT, transaction A5fE1At2rRp9P8PHRK17Mk8fa8Vmr8UCyrU7Fysx527j. Five refusals followed. The DeleteKey action is the promise receipt inside FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e, receipt 6VpLXowUHaQexvwRhnyHsGKn7Hkotsnc7GZ2nXZiRwdK. 4veSqbRLZZScpQDeHLn8bjTZPCKkAs895u3HuAiXrdEn returned ERR_ALREADY_PAID and did not delete a key. The buyer reinstalled the key and the honest invoice paid 48.00, transaction F7m4Y8eh5GNNKsYTpxgCMAfDFLTXgoKhk1NrREEYFkJy. The poisoned invoice can burn the key. It cannot move the tokens." />
+  <img src="docs/diagrams/hijack.png" width="820" alt="The hijack, drawn as two invoices. A poisoned note named other.testnet. The naive full-access key paid 48.00, transaction 54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR. The Meter key moved 0.00 with ERR_RECIPIENT, transaction A5fE1At2rRp9P8PHRK17Mk8fa8Vmr8UCyrU7Fysx527j. Five refusals followed. The DeleteKey action is the promise receipt inside FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e, receipt 6VpLXowUHaQexvwRhnyHsGKn7Hkotsnc7GZ2nXZiRwdK. 4veSqbRLZZScpQDeHLn8bjTZPCKkAs895u3HuAiXrdEn returned ERR_ALREADY_PAID and did not delete a key. The buyer reinstalled the key and the honest invoice paid 48.00, transaction F7m4Y8eh5GNNKsYTpxgCMAfDFLTXgoKhk1NrREEYFkJy. The poisoned invoice can burn the key. It cannot move the tokens. This picture is not itself a receipt." />
 </p>
 
 Two earlier attempts stay in the receipt. `ic6d981` rejected the replay meter's open with `ERR_BAD_WINDOW` because the clock was read too early ([`8xEeP57Z…`](https://testnet.nearblocks.io/txns/8xEeP57ZsbZHWuZGhsp4PCEiTRjEbEMJwKALWX3eK3oK)). `ia37910` moved 48.00 on its naive key ([`Fx8k28YS…`](https://testnet.nearblocks.io/txns/Fx8k28YSNvJcgY1ac744Fk8DhW3MeSA4rHfVzyBC8Hgq)) and then stopped, because the wait loop gave up before the stored time. That 48.00 is not the naive-key row above.
