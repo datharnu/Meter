@@ -41,29 +41,81 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function rpc(url, method, params) {
-  let last;
-  for (let attempt = 0; attempt < 4; attempt++) {
+// A row the RPC still will not serve after retries. Distinct from a pruned tx.
+export const RATE_LIMIT_LABEL = "not decoded: rate limited (429)";
+const MAX_TRIES = 5;
+
+function gapMs() {
+  const n = Number(process.env.METER_RPC_GAP_MS);
+  return Number.isFinite(n) && n >= 0 ? n : 200;
+}
+
+function backoffMs(attempt) {
+  const n = Number(process.env.METER_RPC_BACKOFF_MS);
+  const base = Number.isFinite(n) && n >= 0 ? n : 400;
+  return base * 2 ** attempt;
+}
+
+function rateLimitError() {
+  const error = new Error(RATE_LIMIT_LABEL);
+  error.rateLimited = true;
+  return error;
+}
+
+function isRateLimited(error) {
+  if (!error || typeof error !== "object") return false;
+  if (error.code === -429 || error.code === 429) return true;
+  return /rate limit/i.test(String(error.message ?? ""));
+}
+
+let nextAt = 0;
+
+async function pace() {
+  const now = Date.now();
+  const wait = Math.max(0, nextAt - now);
+  nextAt = now + wait + gapMs();
+  if (wait) await sleep(wait);
+}
+
+export async function rpcCall(url, method, params) {
+  let last = rateLimitError();
+  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+    await pace();
     const response = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: "rd", method, params }),
     });
-    const body = await response.json();
-    if (!body.error) return body.result;
-    const text = JSON.stringify(body.error);
-    last = text.slice(0, 300);
-    if (/Rate limit|-429/i.test(text) && attempt < 3) {
-      await sleep(1500 * (attempt + 1));
-      continue;
+    const text = await response.text();
+    let body = null;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = null;
     }
-    throw new Error(last);
+    const error = body?.error ?? null;
+    if (response.status === 429 || isRateLimited(error)) {
+      last = rateLimitError();
+      if (attempt < MAX_TRIES - 1) {
+        await sleep(backoffMs(attempt));
+        continue;
+      }
+      throw last;
+    }
+    if (!response.ok) throw new Error((text || `HTTP ${response.status}`).slice(0, 300));
+    if (error) throw new Error(JSON.stringify(error).slice(0, 300));
+    return body?.result;
   }
-  throw new Error(last);
+  throw last;
+}
+
+async function rpc(url, method, params) {
+  return rpcCall(url, method, params);
 }
 
 async function fetchTx(rpcUrls, hash, signers) {
   let last = "not found";
+  let limited = false;
   for (const url of rpcUrls) {
     for (const sender of [...new Set(signers.filter(Boolean))]) {
       try {
@@ -71,9 +123,15 @@ async function fetchTx(rpcUrls, hash, signers) {
         if (result) return result;
       } catch (error) {
         last = error.message ?? String(error);
+        if (error.rateLimited) {
+          // The limit is on this client, not on the signer. The next host gets its own five tries.
+          limited = true;
+          break;
+        }
       }
     }
   }
+  if (limited) throw rateLimitError();
   if (/UNKNOWN_TRANSACTION|doesn't exist/i.test(last)) return null;
   throw new Error(last);
 }
@@ -162,6 +220,37 @@ function comparable(expected, decoded) {
   return false;
 }
 
+export function judgeReceipt(row, decoded, reason) {
+  let status;
+  const fundOkReturn = row.file === "real-token.json" && /fund/i.test(row.label) && row.expected === "OK" && decoded && /^\d+$/.test(String(decoded));
+  if (fundOkReturn) {
+    return { status: "match", decoded, reason: "ft_transfer_call return amount" };
+  }
+
+  const fundPath = /deposit|fund/i.test(row.label) && row.expected === "ERR_TOO_LATE";
+  if (row.expected === "WINDOW_WAIT" || fundPath || (row.expected === "OK" && (row.label?.includes("deleted") || row.label?.includes("revoked") || row.label?.includes("Key revoked")))) {
+    if (!decoded || fundPath) {
+      status = "not decoded";
+      reason = fundPath ? "ft_transfer_call fund path; ERR_TOO_LATE is from the recorded run, not a release return" : reason ?? "admin or non-release transaction";
+    } else if (comparable(row.expected, decoded)) {
+      status = "match";
+    } else {
+      status = "mismatch";
+    }
+  } else if (!decoded) {
+    status = "not decoded";
+  } else if (comparable(row.expected, decoded)) {
+    status = "match";
+  } else {
+    status = "mismatch";
+  }
+
+  if (status === "mismatch") {
+    throw new Error(`Receipt ${row.hash}: expected ${row.expected}, decoded ${decoded} (${row.file} ${row.label})`);
+  }
+  return { status, decoded, reason };
+}
+
 export async function verifyReceiptRows(root, readFileSync, join, rpcUrl) {
   const rpcUrls = [...new Set([ARCHIVAL, rpcUrl].filter(Boolean))];
   const rows = collectRows(root, readFileSync, join);
@@ -185,42 +274,16 @@ export async function verifyReceiptRows(root, readFileSync, join, rpcUrl) {
       reason = hit.reason;
       if (!decoded) reason = hit.reason;
     } catch (error) {
+      if (error.rateLimited) {
+        out.push({ ...row, decoded: null, status: "not decoded", reason: RATE_LIMIT_LABEL });
+        continue;
+      }
       reason = error.message;
     }
 
-    const fundOkReturn = row.file === "real-token.json" && /fund/i.test(row.label) && row.expected === "OK" && decoded && /^\d+$/.test(String(decoded));
-    if (fundOkReturn) {
-      status = "match";
-      matched += 1;
-      out.push({ ...row, decoded, status, reason: "ft_transfer_call return amount" });
-      continue;
-    }
-
-    const fundPath = /deposit|fund/i.test(row.label) && row.expected === "ERR_TOO_LATE";
-    if (row.expected === "WINDOW_WAIT" || fundPath || (row.expected === "OK" && (row.label?.includes("deleted") || row.label?.includes("revoked") || row.label?.includes("Key revoked")))) {
-      if (!decoded || fundPath) {
-        status = "not decoded";
-        reason = fundPath ? "ft_transfer_call fund path; ERR_TOO_LATE is from the recorded run, not a release return" : reason ?? "admin or non-release transaction";
-      } else if (comparable(row.expected, decoded)) {
-        status = "match";
-        matched += 1;
-      } else {
-        status = "mismatch";
-      }
-    } else if (!decoded) {
-      status = "not decoded";
-    } else if (comparable(row.expected, decoded)) {
-      status = "match";
-      matched += 1;
-    } else {
-      status = "mismatch";
-    }
-
-    if (status === "mismatch") {
-      throw new Error(`Receipt ${row.hash}: expected ${row.expected}, decoded ${decoded} (${row.file} ${row.label})`);
-    }
-
-    out.push({ ...row, decoded, status, reason });
+    const judged = judgeReceipt(row, decoded, reason);
+    if (judged.status === "match") matched += 1;
+    out.push({ ...row, decoded: judged.decoded, status: judged.status, reason: judged.reason });
   }
 
   const decodable = out.filter((r) => r.status === "match" || r.status === "mismatch").length;
@@ -234,7 +297,7 @@ export { ARCHIVAL, decodeFromTx, fetchTx };
 export function printReceiptReport(report) {
   console.log(`receipts ${report.matched}/${report.total} match (${report.notDecoded.length} not decoded)`);
   for (const row of report.rows) {
-    const tail = row.status === "match" ? row.decoded : row.status === "not decoded" ? `not decoded, ${row.reason ?? "unknown"}` : `${row.decoded}`;
+    const tail = row.status === "match" ? row.decoded : row.status === "not decoded" ? (String(row.reason ?? "").startsWith("not decoded") ? row.reason : `not decoded, ${row.reason ?? "unknown"}`) : `${row.decoded}`;
     console.log(`  ${row.hash} · ${row.expected} · ${tail}`);
   }
 }

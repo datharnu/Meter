@@ -94,7 +94,7 @@ Receipts: `app/public/inject.json` (`i198b44.mtrfc658fd1.testnet`), `app/public/
 
 ## What is and is not verifiable
 
-`node chain/verify.mjs` re-reads the receipt files against NEAR testnet (archival RPC first), decodes each recorded transaction hash against its receipt code, re-reads contract storage and wasm, and prints `receipts M/N match` before `verify: ok`. **N** grows with `real-token.json` (and other receipts); **M** counts only rows where the tx outcome decodes on the meter contract. Older toy-only runs printed **`52/76`**; with `real-token.json` included, undecoded rows are expected for callback pays, pruned archival txs, and admin actions. The **not decoded** fall into these categories:
+`node chain/verify.mjs` re-reads the receipt files against NEAR testnet (archival RPC first), decodes each recorded transaction hash against its receipt code, re-reads contract storage and wasm, and prints `receipts M/N match` before `verify: ok`. **N** is the number of receipt rows. **M** is how many of those rows decoded on this run, so the fraction is not a fixed score: it moves when the RPC rate-limits. Each call is spaced out and a rate limit is retried up to five times with exponential backoff. A row the RPC still does not serve is listed as `not decoded: rate limited (429)`. That is not a mismatch. A decoded code that differs from the receipt aborts the run, so the last line is `verify: ok` only when every decoded row matches and the state checks pass. Undecoded rows are also expected for callback pays, pruned archival txs, and admin actions. The **not decoded** fall into these categories:
 
 | Category | Reason |
 | --- | --- |
@@ -104,6 +104,7 @@ Receipts: `app/public/inject.json` (`i198b44.mtrfc658fd1.testnet`), `app/public/
 | **Tripwire bundle** | Fifth refusal txs that include `DeleteKey` in the same hash may not expose a final `ERR_*` SuccessValue on the meter contract receipt. |
 | **Unresolvable RPC row** | Hash present in the receipt JSON but no matching outcome on the meter contract after trying listed signers (logged per row). |
 | **Pruned archival tx** | `UNKNOWN_TRANSACTION` on both archival and live RPC — listed as `not decoded: pruned`; does not abort verify. |
+| **Rate limited** | After five tries the RPC still returned HTTP 429 or JSON-RPC `-429`. Listed as `not decoded: rate limited (429)`, which is a different line from `not decoded: pruned`. Does not abort verify. |
 | **Circle USDC pay / refund callbacks** | Hero **OK** pay and refund **OK** often have no `ERR_*` or `OK` SuccessValue on the meter contract receipt (tokens move in a follow-on `ft_transfer` receipt). `verify.mjs` still checks them in `checkRealToken()` from **meter state and USDC balances**, not from decoding that hash alone. |
 
 **Headline claims and how they are checked**
@@ -118,9 +119,9 @@ Receipts: `app/public/inject.json` (`i198b44.mtrfc658fd1.testnet`), `app/public/
 | Second `refund` refused | `CvYFiaiKsepxu25Z2gqvCWMLpisVLEw66w1DzZ9LYEvm` | Yes (panic `ERR_ALREADY_PAID`) | Tx failure + meter state |
 | Early `refund` | `33ajEgYpyvWLT2r1zSCEs8c3npkCDzVYgaroTFrcZxNc` | Yes (panic `ERR_TOO_EARLY`) | Tx failure |
 
-Receipt JSON: `app/public/real-token.json`. The `receipts M/N match` line counts **decoded** rows only; undecoded rows are not failures when state checks pass.
+Receipt JSON: `app/public/real-token.json`. The `receipts M/N match` line counts **decoded** rows only and varies with RPC rate limits. Unserved rows are listed as not decoded. They are not failures when state checks pass.
 
-CI runs this on push to `main`, nightly, and manual dispatch (up to three RPC retries). A row below is `ok` only when that command checks it. `not checked` means the command says so, or the check does not exist.
+CI runs this on push to `main`, nightly, and manual dispatch. Each rate-limited call retries up to five times; the workflow also reruns the whole command up to three times. A row below is `ok` only when that command checks it. `not checked` means the command says so, or the check does not exist.
 
 The payment-record receipts (`m028a47`) are on chain. The source in `contract/` is incomplete and does not build standalone (`mod attest` with no `attest.rs` in that crate).
 
@@ -266,7 +267,7 @@ Only items with a receipt, a transaction hash, or a named unit test in this repo
 
 ## Evidence
 
-`node chain/verify.mjs` re-reads the recorded contracts, including the hijack. It uses no key. It matches each receipt step hash to an on-chain return where decodable, re-reads storage, wasm, and balances, then prints `receipts M/N match` and `verify: ok`. Rows that are not `release` returns (key delete, `ft_transfer_call` fund rejections) list as `not decoded` with a reason. JSON numbers lose precision on nanosecond fields; window fields are read from the raw `get` response.
+`node chain/verify.mjs` re-reads the recorded contracts, including the hijack. It uses no key. It matches each receipt step hash to an on-chain return where decodable, re-reads storage, wasm, and balances, then prints `receipts M/N match` and `verify: ok`. **M** varies from run to run when the RPC rate-limits. Rows the RPC does not serve are listed as `not decoded: rate limited (429)`. Rows that are not `release` returns (key delete, `ft_transfer_call` fund rejections) and pruned transactions list as `not decoded` with their own reason. JSON numbers lose precision on nanosecond fields; window fields are read from the raw `get` response.
 
 ### Time gate
 

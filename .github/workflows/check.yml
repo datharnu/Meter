@@ -24,7 +24,7 @@ jobs:
         run: cargo test
         working-directory: contract-v2
       - name: Desk rule and line hash
-        run: node --test app/lib/rule.test.mjs chain/line.test.mjs
+        run: node --test app/lib/rule.test.mjs chain/line.test.mjs chain/receipt-decode.test.mjs
       - name: Re-read receipts on chain (with RPC retries)
         run: |
           set -e

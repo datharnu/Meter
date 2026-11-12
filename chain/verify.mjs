@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { lineHash } from "./line.mjs";
-import { ARCHIVAL as RECEIPT_ARCHIVAL, decodeFromTx, fetchTx, printReceiptReport, verifyReceiptRows } from "./receipt-decode.mjs";
+import { ARCHIVAL as RECEIPT_ARCHIVAL, RATE_LIMIT_LABEL, decodeFromTx, fetchTx, printReceiptReport, rpcCall, verifyReceiptRows } from "./receipt-decode.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const receipt = JSON.parse(readFileSync(join(root, "app/public/chain.json"), "utf8"));
@@ -16,14 +16,7 @@ const LIVE = process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com";
 const RPC_TRY = [...new Set([ARCHIVAL, LIVE])];
 
 async function rpcAt(url, method, params) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: "v", method, params }),
-  });
-  const body = await response.json();
-  if (body.error) throw new Error(JSON.stringify(body.error).slice(0, 300));
-  return body.result;
+  return rpcCall(url, method, params);
 }
 
 async function rpc(method, params) {
@@ -187,8 +180,13 @@ function requireHash(file) {
 }
 
 async function seen(hash, signers) {
-  const tx = await fetchTx(RPC_TRY, hash, [...new Set(signers.filter(Boolean))]);
-  return Boolean(tx);
+  try {
+    const tx = await fetchTx(RPC_TRY, hash, [...new Set(signers.filter(Boolean))]);
+    return Boolean(tx);
+  } catch (error) {
+    if (error.rateLimited) return false;
+    throw error;
+  }
 }
 
 async function checkRealToken() {
@@ -249,6 +247,10 @@ async function checkRealToken() {
         reason = hit.reason ?? (panic ? "panic in transaction status" : null);
       }
     } catch (error) {
+      if (error.rateLimited) {
+        console.log(`  tx        ${step.hash} · ${step.code ?? "OK"} · ${RATE_LIMIT_LABEL}`);
+        continue;
+      }
       reason = error.message ?? String(error);
     }
     const expected = step.code ?? "OK";
