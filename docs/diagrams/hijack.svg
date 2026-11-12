@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="210" viewBox="0 0 980 210" role="img" aria-labelledby="title desc">
+  <title id="title">The hijack</title>
+  <desc id="desc">A poisoned note named other.testnet. The naive key paid 48.00. The Meter key moved 0.00. Five refusals. The DeleteKey action is inside FSbNMWJt, not 4veSqbRL. The buyer reinstalled the key and the honest invoice paid 48.00.</desc>
+  <rect width="980" height="210" rx="16" fill="#f6f5f2"/>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" fill="#121413">
+    <g>
+      <rect x="16" y="28" width="140" height="154" rx="12" fill="#ffffff" stroke="#121413" stroke-opacity="0.12"/>
+      <text x="86" y="56" text-anchor="middle" font-size="12" fill="#5c615e">1 · Note</text>
+      <text x="86" y="88" text-anchor="middle" font-size="15" font-weight="600">Poisoned</text>
+      <text x="86" y="112" text-anchor="middle" font-size="12">names</text>
+      <text x="86" y="132" text-anchor="middle" font-size="12">other.testnet</text>
+    </g>
+    <text x="168" y="112" font-size="18" fill="#5c615e">’</text>
+    <g>
+      <rect x="184" y="28" width="140" height="154" rx="12" fill="#ffffff" stroke="#146b32"/>
+      <text x="254" y="56" text-anchor="middle" font-size="12" fill="#5c615e">2 · Naive key</text>
+      <text x="254" y="88" text-anchor="middle" font-size="15" font-weight="600" fill="#146b32">PAID</text>
+      <text x="254" y="114" text-anchor="middle" font-size="18" font-weight="600">48.00</text>
+      <text x="254" y="140" text-anchor="middle" font-size="11" fill="#5c615e">54EdKyXM&</text>
+    </g>
+    <text x="336" y="112" font-size="18" fill="#5c615e">’</text>
+    <g>
+      <rect x="352" y="28" width="140" height="154" rx="12" fill="#ffffff" stroke="#9d1230"/>
+      <text x="422" y="56" text-anchor="middle" font-size="12" fill="#5c615e">3 · Meter key</text>
+      <text x="422" y="88" text-anchor="middle" font-size="15" font-weight="600" fill="#9d1230">STOPPED</text>
+      <text x="422" y="114" text-anchor="middle" font-size="18" font-weight="600">0.00</text>
+      <text x="422" y="140" text-anchor="middle" font-size="11" fill="#5c615e">ERR_RECIPIENT</text>
+    </g>
+    <text x="504" y="112" font-size="18" fill="#5c615e">’</text>
+    <g>
+      <rect x="520" y="28" width="140" height="154" rx="12" fill="#ffffff" stroke="#121413" stroke-opacity="0.12"/>
+      <text x="590" y="56" text-anchor="middle" font-size="12" fill="#5c615e">4 · Refusals</text>
+      <text x="590" y="96" text-anchor="middle" font-size="22" font-weight="600">Five</text>
+      <text x="590" y="122" text-anchor="middle" font-size="12">tokens stay</text>
+    </g>
+    <text x="672" y="112" font-size="18" fill="#5c615e">’</text>
+    <g>
+      <rect x="688" y="28" width="140" height="154" rx="12" fill="#ffffff" stroke="#9d1230"/>
+      <text x="758" y="56" text-anchor="middle" font-size="12" fill="#5c615e">5 · DeleteKey</text>
+      <text x="758" y="86" text-anchor="middle" font-size="13" font-weight="600">Inside</text>
+      <text x="758" y="106" text-anchor="middle" font-size="13" font-weight="600">FSbNMWJt&</text>
+      <text x="758" y="132" text-anchor="middle" font-size="11" fill="#5c615e">not 4veSqbRL&</text>
+    </g>
+    <text x="840" y="112" font-size="18" fill="#5c615e">’</text>
+    <g>
+      <rect x="856" y="28" width="108" height="154" rx="12" fill="#ffffff" stroke="#146b32"/>
+      <text x="910" y="56" text-anchor="middle" font-size="12" fill="#5c615e">6 · Reinstall</text>
+      <text x="910" y="88" text-anchor="middle" font-size="15" font-weight="600" fill="#146b32">PAID</text>
+      <text x="910" y="114" text-anchor="middle" font-size="18" font-weight="600">48.00</text>
+      <text x="910" y="140" text-anchor="middle" font-size="11" fill="#5c615e">honest line</text>
+    </g>
+  </g>
+</svg>

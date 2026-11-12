@@ -1,20 +1,23 @@
 "use client";
 
-import { HijackSection } from "@/components/home/HijackSection";
+import { Suspense } from "react";
+import { AttackRecord } from "@/components/AttackRecord";
 import { ReceiptGate } from "@/components/ReceiptGate";
 import { useInject } from "@/lib/useInject";
 
-export default function AttackPage() {
+function AttackBody() {
   const { state, receipt, reload } = useInject();
   return (
-    <>
-      <header className="page-head">
-        <p className="kicker">AI security</p>
-        <h1>The hijack</h1>
-      </header>
-      <ReceiptGate state={state} onRetry={reload} empty="No hijack receipt on this build. node chain/inject.mjs records one.">
-        {receipt ? <HijackSection receipt={receipt} variant="page" /> : null}
-      </ReceiptGate>
-    </>
+    <ReceiptGate state={state} onRetry={reload} empty="No hijack receipt on this build. node chain/inject.mjs records one.">
+      {receipt ? <AttackRecord receipt={receipt} /> : null}
+    </ReceiptGate>
+  );
+}
+
+export default function AttackPage() {
+  return (
+    <Suspense fallback={<p className="note">Reading the hijack receipt.</p>}>
+      <AttackBody />
+    </Suspense>
   );
 }

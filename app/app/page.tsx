@@ -1,14 +1,14 @@
 "use client";
 
 
-import { useState } from "react";
 import Link from "next/link";
 import { FaqSection } from "@/components/FaqSection";
 import { FailureMap } from "@/components/home/FailureMap";
 import { FramePreview } from "@/components/home/FramePreview";
-import { HijackSection } from "@/components/home/HijackSection";
+import { HijackScene } from "@/components/home/HijackScene";
 import { SourceDeck } from "@/components/home/SourceDeck";
 import { StepRail } from "@/components/home/StepRail";
+import { Tripwire } from "@/components/home/Tripwire";
 import { LinePreview } from "@/components/LinePreview";
 import { NearMark } from "@/components/NearMark";
 import { ReceiptGate } from "@/components/ReceiptGate";
@@ -73,7 +73,6 @@ function Headline() {
 export default function HomePage() {
   const { state, receipt, reload } = useReceipt();
   const inject = useInject();
-  const [record, setRecord] = useState<"hijack" | "payment" | "time" | "transfer" | "signed">("hijack");
   const meterOne = inject.receipt ? attackById(inject.receipt, 1) : null;
   const signed = useReceipt("/tee.json");
   const timed = useReceipt("/v2.json");
@@ -124,145 +123,113 @@ export default function HomePage() {
         </ReceiptGate>
         <section id="hijack" className="pitch-section">
           <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build. node chain/inject.mjs records one.">
-            {inject.receipt ? <HijackSection receipt={inject.receipt} variant="home" /> : null}
+            {inject.receipt ? <HijackScene receipt={inject.receipt} /> : null}
           </ReceiptGate>
         </section>
         <StepRail />
+        {inject.receipt ? <Tripwire receipt={inject.receipt} /> : null}
         <section className="pitch-section pitch-try" id="try">
           <SectionHead hue="orange" icon="line" eyebrow="Same rule, this browser" title="Try the refusal" />
           <p className="hero-note">The sealed line is 48.00 to sable.testnet. This clock pays only while 400 ≤ time &lt; 1000. Tap <strong>Before the time</strong>. The answer comes from <span className="mono">app/lib/rule.mjs</span>. Nothing on this page is a transaction.</p>
           <LinePreview />
         </section>
-        <section className="pitch-section" id="receipts">
+        <FailureMap />
+        <section className="craft-tape" id="run">
           <header className="craft-intro">
             <p className="craft-eyebrow">Receipts</p>
-            <h2>The hijack, then the older runs.</h2>
+            <h2>The older runs, each on its own.</h2>
+            <p className="craft-lead">The hijack record is <Link href="/attack">the list of calls</Link>.</p>
           </header>
-          <div className="receipt-tabs" role="tablist" aria-label="Receipts">
-            {([
-              ["hijack", "Hijack"],
-              ["payment", "Payment record"],
-              ["time", "Stored time"],
-              ["transfer", "Against a transfer"],
-              ["signed", "Signed release"],
-            ] as const).map(([id, label]) => (
-              <button key={id} type="button" role="tab" aria-selected={record === id} onClick={() => setRecord(id)}>{label}</button>
-            ))}
-          </div>
-          {record === "hijack" && (
-            <div role="tabpanel">
-              {inject.state === "ready" && inject.receipt ? (
-                <p className="craft-lead">
-                  <span className="mono">{inject.receipt.contract}</span>
-                  {" · "}
-                  Agent obeyed {inject.receipt.baseline?.obeyed}/{inject.receipt.baseline?.runs}. Naive key {formatUnits(inject.receipt.baseline?.moneyMoved ?? "0")} PAID. Meter {formatUnits(meterOne?.moneyMoved ?? "0")} STOPPED.
-                  {" "}
-                  <a href="#hijack">The ladder is above.</a>
-                </p>
-              ) : <p className="note">{inject.state === "error" ? "The hijack receipt did not load." : inject.state === "empty" ? "No hijack receipt in this build." : "Reading the hijack receipt."}</p>}
-            </div>
+          <FramePreview state={state} receipt={receipt} onRetry={reload} />
+          <header className="craft-intro">
+            <p className="craft-eyebrow">Payment record</p>
+            <h2>Every line of the recorded run.</h2>
+            {state === "ready" && receipt ? <p className="mono craft-lead">{receipt.contract} · {when}</p> : null}
+          </header>
+          {state === "ready" && steps.length > 0 ? <Ledger steps={steps} /> : (
+            <p className="note">{state === "error" ? "The run stays hidden until the receipt loads." : state === "empty" ? "No payment record in this build." : "Reading the lines from the receipt."}</p>
           )}
-          {record === "payment" && (
-            <div role="tabpanel">
-              <FramePreview state={state} receipt={receipt} onRetry={reload} />
-              <header className="craft-intro">
-                <p className="craft-eyebrow">Payment record</p>
-                <h2>Every line of the recorded run.</h2>
-                {state === "ready" && receipt ? <p className="mono craft-lead">{receipt.contract} · {when}</p> : null}
-              </header>
-              {state === "ready" && steps.length > 0 ? <Ledger steps={steps} /> : (
-                <p className="note">{state === "error" ? "The run stays hidden until the receipt loads." : state === "empty" ? "No payment record in this build." : "Reading the lines from the receipt."}</p>
-              )}
-              {state === "error" && <button className="text-btn" type="button" onClick={reload}>Try again</button>}
-            </div>
+          {state === "error" && <button className="text-btn" type="button" onClick={reload}>Try again</button>}
+        </section>
+        <section className="craft-time" id="time">
+          <header className="craft-intro">
+            <p className="craft-eyebrow">Stored time</p>
+            <h2>The clock is not the work.</h2>
+            {timed.state === "ready" && timed.receipt ? <p className="craft-lead">{timed.receipt.contract} · {timedWhen}. One nanosecond before the deadline still clears.</p> : null}
+          </header>
+          {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
+          {timed.state === "empty" && <p className="note">No time gate in this build.</p>}
+          {timed.state === "error" && (
+            <p className="alert" role="alert">The time gate did not load. <button className="text-btn" type="button" onClick={timed.reload}>Try again</button></p>
           )}
-          {record === "time" && (
-            <div role="tabpanel" id="time">
-              <header className="craft-intro">
-                <p className="craft-eyebrow">Stored time</p>
-                <h2>The clock is not the work.</h2>
-                {timed.state === "ready" && timed.receipt ? <p className="craft-lead">{timed.receipt.contract} · {timedWhen}. One nanosecond before the deadline still clears.</p> : null}
-              </header>
-              {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
-              {timed.state === "empty" && <p className="note">No time gate in this build.</p>}
-              {timed.state === "error" && (
-                <p className="alert" role="alert">The time gate did not load. <button className="text-btn" type="button" onClick={timed.reload}>Try again</button></p>
-              )}
-              {timed.state === "ready" && (
-                <ol className="craft-spine">
-                  {[tooEarly, unregistered, timedPaid].filter(Boolean).map((step) => step && (
-                    <li key={step.code + (step.hash ?? "")}>
-                      <b>{step.label}</b>
-                      <span className="mono">{formatUnits(step.moved ?? "0")} · {step.code}</span>
-                      {step.hash ? <a className="mono" href={txUrl(step.hash)}>{shortHash(step.hash)}</a> : <span>No transaction</span>}
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-          )}
-          {record === "transfer" && (
-            <div role="tabpanel" className="xfer" id="compare">
-              <header className="craft-intro">
-                <p className="craft-eyebrow">Against a transfer</p>
-                <h2>A transfer, and this run.</h2>
-                {state === "ready" ? <p className="craft-lead">A normal transfer pays the account named at send time. Recorded {when}.</p> : null}
-              </header>
-              <ol>
-                <li>
-                  <b>other.testnet, 48.00</b>
-                  <div>
-                    <span><small>A transfer</small>Pays the account named then</span>
-                    <span><small>This run</small><em>0.00</em> <span className="mono">ERR_RECIPIENT</span>. Which means the wrong account was paid nothing.</span>
-                  </div>
+          {timed.state === "ready" && (
+            <ol className="craft-spine">
+              {[tooEarly, unregistered, timedPaid].filter(Boolean).map((step) => step && (
+                <li key={step.code + (step.hash ?? "")}>
+                  <b>{step.label}</b>
+                  <span className="mono">{formatUnits(step.moved ?? "0")} · {step.code}</span>
+                  {step.hash ? <a className="mono" href={txUrl(step.hash)}>{shortHash(step.hash)}</a> : <span>No transaction</span>}
                 </li>
-                <li>
-                  <b>47.00 instead of 48.00</b>
-                  <div>
-                    <span><small>A transfer</small>The caller picks a new figure</span>
-                    <span><small>This run</small><em>0.00</em> <span className="mono">ERR_AMOUNT</span>. Which means 47.00 did not replace 48.00.</span>
-                  </div>
-                </li>
-                <li>
-                  <b>The terms line changed</b>
-                  <div>
-                    <span><small>A transfer</small>A memo does not hold the money</span>
-                    <span><small>This run</small><em>0.00</em> <span className="mono">ERR_EVIDENCE</span>. Which means the rewritten sentence was paid nothing.</span>
-                  </div>
-                </li>
-                <li>
-                  <b>Same key after delete</b>
-                  <div>
-                    <span><small>A transfer</small>A live key can sign again</span>
-                    <span><small>This run</small>Rejected before a transaction. Which means a deleted key cannot spend.</span>
-                  </div>
-                </li>
-                <li>
-                  <b>After the deadline</b>
-                  <div>
-                    <span><small>A transfer</small>The balance sits</span>
-                    <span><small>This run</small><em>48.00</em> back to the buyer. Which means the lock ended.</span>
-                  </div>
-                </li>
-              </ol>
-            </div>
-          )}
-          {record === "signed" && (
-            <blockquote className="craft-quote" id="signed">
-              <p>The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
-              <footer>
-                <span className="mono">{signed.state === "ready" ? signed.receipt?.model : "Reading the signed release."}</span>
-                {signed.receipt?.contract ? <span className="mono break">{signed.receipt.contract}</span> : null}
-                {signed.state === "ready" ? <span>{signedWhen}</span> : null}
-              </footer>
-              {signed.state === "ready" && signedSteps.length > 0 ? <Ledger steps={signedSteps} /> : (
-                <p className="note">{signed.state === "error" ? "The signed release stays hidden until that receipt loads." : signed.state === "empty" ? "No signed release in this build." : "Reading the signed release."}</p>
-              )}
-              {signed.state === "error" && <button className="text-btn" type="button" onClick={signed.reload}>Try again</button>}
-            </blockquote>
+              ))}
+            </ol>
           )}
         </section>
-        <FailureMap />
+        <section className="xfer" id="compare">
+          <header className="craft-intro">
+            <p className="craft-eyebrow">Against a transfer</p>
+            <h2>A transfer, and this run.</h2>
+            {state === "ready" ? <p className="craft-lead">A normal transfer pays the account named at send time. Recorded {when}.</p> : null}
+          </header>
+          <ol>
+            <li>
+              <b>other.testnet, 48.00</b>
+              <div>
+                <span><small>A transfer</small>Pays the account named then</span>
+                <span><small>This run</small><em>0.00</em> <span className="mono">ERR_RECIPIENT</span>. Which means the wrong account was paid nothing.</span>
+              </div>
+            </li>
+            <li>
+              <b>47.00 instead of 48.00</b>
+              <div>
+                <span><small>A transfer</small>The caller picks a new figure</span>
+                <span><small>This run</small><em>0.00</em> <span className="mono">ERR_AMOUNT</span>. Which means 47.00 did not replace 48.00.</span>
+              </div>
+            </li>
+            <li>
+              <b>The terms line changed</b>
+              <div>
+                <span><small>A transfer</small>A memo does not hold the money</span>
+                <span><small>This run</small><em>0.00</em> <span className="mono">ERR_EVIDENCE</span>. Which means the rewritten sentence was paid nothing.</span>
+              </div>
+            </li>
+            <li>
+              <b>Same key after delete</b>
+              <div>
+                <span><small>A transfer</small>A live key can sign again</span>
+                <span><small>This run</small>Rejected before a transaction. Which means a deleted key cannot spend.</span>
+              </div>
+            </li>
+            <li>
+              <b>After the deadline</b>
+              <div>
+                <span><small>A transfer</small>The balance sits</span>
+                <span><small>This run</small><em>48.00</em> back to the buyer. Which means the lock ended.</span>
+              </div>
+            </li>
+          </ol>
+        </section>
+        <blockquote className="craft-quote" id="signed">
+          <p>The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
+          <footer>
+            <span className="mono">{signed.state === "ready" ? signed.receipt?.model : "Reading the signed release."}</span>
+            {signed.receipt?.contract ? <span className="mono break">{signed.receipt.contract}</span> : null}
+            {signed.state === "ready" ? <span>{signedWhen}</span> : null}
+          </footer>
+          {signed.state === "ready" && signedSteps.length > 0 ? <Ledger steps={signedSteps} /> : (
+            <p className="note">{signed.state === "error" ? "The signed release stays hidden until that receipt loads." : signed.state === "empty" ? "No signed release in this build." : "Reading the signed release."}</p>
+          )}
+          {signed.state === "error" && <button className="text-btn" type="button" onClick={signed.reload}>Try again</button>}
+        </blockquote>
         <section id="audience" className="craft-who">
           <header className="craft-intro">
             <p className="craft-eyebrow">Who it is for</p>
@@ -281,18 +248,24 @@ export default function HomePage() {
           </header>
           <div>
             <div className="proof-panel">
-              <a href={receipt ? `https://testnet.nearblocks.io/address/${receipt.contract}` : "https://testnet.nearblocks.io/address/m028a47.mtrfc658fd1.testnet"}>
-                <span>Payment record</span>
-                <b className="mono break">{receipt?.contract ?? "m028a47.mtrfc658fd1.testnet"}</b>
-              </a>
-              <a href={signed.receipt ? `https://testnet.nearblocks.io/address/${signed.receipt.contract}` : "https://testnet.nearblocks.io/address/m2b2440.mtrfc658fd1.testnet"}>
-                <span>Signed release</span>
-                <b className="mono break">{signed.receipt?.contract ?? "m2b2440.mtrfc658fd1.testnet"}</b>
-              </a>
-              <a href={timed.receipt ? `https://testnet.nearblocks.io/address/${timed.receipt.contract}` : "https://testnet.nearblocks.io/address/m1870dd.mtrfc658fd1.testnet"}>
-                <span>Time gate</span>
-                <b className="mono break">{timed.receipt?.contract ?? "m1870dd.mtrfc658fd1.testnet"}</b>
-              </a>
+              {receipt?.contract ? (
+                <a href={`https://testnet.nearblocks.io/address/${receipt.contract}`}>
+                  <span>Payment record</span>
+                  <b className="mono break">{receipt.contract}</b>
+                </a>
+              ) : <p><span>Payment record</span><b>Reading the receipt.</b></p>}
+              {signed.receipt?.contract ? (
+                <a href={`https://testnet.nearblocks.io/address/${signed.receipt.contract}`}>
+                  <span>Signed release</span>
+                  <b className="mono break">{signed.receipt.contract}</b>
+                </a>
+              ) : <p><span>Signed release</span><b>{signed.state === "error" ? "The receipt did not load." : "Reading the receipt."}</b></p>}
+              {timed.receipt?.contract ? (
+                <a href={`https://testnet.nearblocks.io/address/${timed.receipt.contract}`}>
+                  <span>Time gate</span>
+                  <b className="mono break">{timed.receipt.contract}</b>
+                </a>
+              ) : <p><span>Time gate</span><b>{timed.state === "error" ? "The receipt did not load." : "Reading the receipt."}</b></p>}
             </div>
             <div className="proof-panel proof-panel-alt">
               <Link href="/book"><span>The book</span><b>All three, and a CSV</b></Link>

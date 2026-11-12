@@ -105,7 +105,23 @@ a { color: inherit; }
 .logo-word { font-weight: 600; letter-spacing: -0.04em; font-size: 22px; }
 .nav .who-panel { left: 8px; right: 8px; width: auto; }
 .who { position: relative; margin-top: auto; }
-.who-top { display: none; margin: 0; }
+.who-top { display: block; margin: 0; }
+.who-top .who-btn { width: auto; min-height: 36px; padding: 4px 8px; border-radius: 999px; gap: 8px; }
+.who-top .who-btn b { font-size: 13px; line-height: 1; }
+.who-top .who-btn small {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.who-top .who-panel {
+  top: calc(100% + 8px);
+  right: 0;
+  bottom: auto;
+  left: auto;
+  width: min(320px, calc(100vw - 48px));
+}
 .who-btn {
   width: 100%;
   display: flex;
@@ -415,7 +431,7 @@ a { color: inherit; }
   gap: 16px;
   margin: 8px 0 20px;
 }
-.page-title { font-size: 36px; font-weight: 500; letter-spacing: -0.045em; margin: 0; line-height: 1.05; }
+.page-title, .page-head h1 { font-size: 36px; font-weight: 500; letter-spacing: -0.045em; margin: 0; line-height: 1.05; }
 .lede { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
 .lede a, .note a { color: var(--teal); }
 .section-title { font-size: 20px; font-weight: 500; letter-spacing: -0.03em; margin: 40px 0 12px; }
@@ -572,6 +588,33 @@ a { color: inherit; }
 .hijack-side[data-word="PAID"] { box-shadow: inset 3px 0 0 var(--refused), inset 0 0 0 1px var(--line); }
 .hijack-side[data-word="STOPPED"] { box-shadow: inset 3px 0 0 var(--paid), inset 0 0 0 1px var(--line); }
 .hijack-side h3, .hijack-panel h3, .hijack-threat h3 { margin: 0 0 8px; font-size: 16px; font-weight: 560; }
+.bill {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 14px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--lime) 10%, transparent), transparent 72px),
+    var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.bill[data-word="PAID"] { box-shadow: inset 3px 0 0 var(--refused), inset 0 0 0 1px var(--line); }
+.bill[data-word="STOPPED"] { box-shadow: inset 3px 0 0 var(--paid), inset 0 0 0 1px var(--line); }
+.bill header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bill header p { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.bill-amount { margin: 0; font-size: clamp(40px, 4vw, 56px); font-weight: 500; letter-spacing: -0.05em; line-height: 0.95; }
+.bill-amount small { margin-left: 8px; font-size: 14px; letter-spacing: 0; color: var(--muted); font-weight: 450; }
+.bill dl { margin: 0; }
+.bill dl div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.bill dt { color: var(--muted); font-size: 13px; }
+.bill dd { margin: 0; overflow-wrap: anywhere; }
+.bill-note mark { background: color-mix(in srgb, var(--refused) 22%, transparent); color: inherit; padding: 0 4px; border-radius: 4px; }
+.bill footer { display: grid; gap: 6px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.bill footer p { margin: 0; }
+.bill footer p:nth-child(2) { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; }
+.bill footer .note { color: var(--muted); }
 .hijack-invoice, .hijack-call { white-space: pre-wrap; overflow-wrap: anywhere; }
 .hijack-invoice {
   margin: 0 0 12px;
@@ -593,8 +636,8 @@ a { color: inherit; }
 .hijack-delta b { font-size: 20px; font-weight: 500; }
 .hijack-delta small { flex: 1 1 220px; }
 .hijack-toggle { display: flex; gap: 8px; margin: 0 0 12px; }
-.hijack-toggle button { border: 0; border-radius: 999px; padding: 8px 14px; background: var(--soft); color: inherit; }
-.hijack-toggle button[data-on="true"] { background: var(--ink); color: var(--paper, #fff); }
+.hijack-toggle button { border: 0; border-radius: 999px; padding: 8px 14px; background: var(--elev); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.hijack-toggle button[data-on="true"] { background: var(--btn); color: var(--on-accent); box-shadow: none; }
 .hijack-trip { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 28px 0 8px; padding: 0; }
 .hijack-trip li { min-width: 0; padding: 12px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
 .hijack-trip b, .hijack-trip span { display: block; }
@@ -613,10 +656,33 @@ a { color: inherit; }
 .hijack-steps li { min-width: 0; padding: 14px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
 .hijack-steps b { display: block; margin: 6px 0; }
 .hijack-steps p { margin: 0; color: var(--muted); font-size: 14px; }
-.hijack-sheet { position: fixed; inset: auto 0 0 0; width: 100%; max-width: none; max-height: 70vh; margin: 0; overflow: auto; border: 0; border-radius: 16px 16px 0 0; padding: 16px; background: var(--paper, #fff); color: var(--ink); }
+.hijack-sheet { position: fixed; inset: auto 0 0 0; width: 100%; max-width: none; max-height: 70vh; margin: 0; overflow: auto; border: 0; border-radius: 16px 16px 0 0; padding: 16px; background: var(--surface); color: var(--ink); }
 .hijack-sheet::backdrop { background: rgba(18, 20, 19, 0.4); }
 .hijack-earlier { margin-top: 20px; }
-.hijack-expanded { display: grid; gap: 12px; margin-top: 16px; }
+.attack-detail { display: grid; gap: 20px; }
+.attack-detail h2 { margin: 0 0 8px; font-size: 16px; font-weight: 560; }
+.attack-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.attack-facts div, .attack-call, .attack-part {
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.attack-facts dt, .attack-call .kicker { color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+.attack-facts dd { margin: 6px 0 0; overflow-wrap: anywhere; }
+.attack-body { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+.attack-invoice { margin: 0; }
+.attack-invoice div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.attack-invoice div:first-child { border-top: 0; padding-top: 0; }
+.attack-invoice dt { color: var(--muted); }
+.attack-invoice dd { margin: 0; overflow-wrap: anywhere; }
+.attack-invoice mark, .bill-note mark { background: color-mix(in srgb, var(--refused) 22%, transparent); color: inherit; padding: 0 4px; border-radius: 4px; }
+.attack-call { display: grid; gap: 10px; }
+.attack-call p { margin: 0; overflow-wrap: anywhere; }
+.attack-parts { display: grid; gap: 16px; }
+.attack-part { display: grid; gap: 12px; }
+.attack-detail .transcript { max-height: none; }
 .receipt-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
 .receipt-tabs button { border: 0; border-radius: 999px; padding: 8px 14px; background: var(--soft); color: inherit; }
 .receipt-tabs button[aria-selected="true"] { background: var(--ink); color: #f4f7f5; }
@@ -775,22 +841,46 @@ textarea { resize: vertical; line-height: 1.4; }
   .pitch-split { grid-template-columns: 1fr; }
   .pitch-close { font-size: 32px; }
   .market-proof { grid-template-columns: 1fr; }
-  .frame { max-width: none; padding: 4px 16px 108px; }
-  .frame-bar { justify-content: space-between; padding: 0 16px; }
+  .frame { max-width: none; padding: 4px 16px 32px; }
+  .frame-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    height: auto;
+    min-height: 56px;
+    justify-content: stretch;
+    gap: 8px 10px;
+    padding: 8px 16px 10px;
+  }
+  .mark-phone { grid-column: 1; grid-row: 1; }
+  .topbar-end { grid-column: 2; grid-row: 1; justify-content: flex-end; min-width: 0; }
   .tabs {
     display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 6;
-    background: var(--surface);
-    box-shadow: inset 0 1px 0 var(--line);
-    padding: 4px 6px calc(6px + env(safe-area-inset-bottom));
+    position: static;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 4px;
+    overflow-x: auto;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    scrollbar-width: none;
   }
-  .tabs a { flex: 1; flex-direction: column; gap: 2px; justify-content: center; min-height: 48px; padding: 0 4px; font-size: 11px; line-height: 1.1; }
-  .nav-desk { display: none; }
-  .tabs a[data-on="true"] { background: var(--soft); color: var(--ink); }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs a {
+    flex: 0 0 auto;
+    flex-direction: row;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .tabs a[data-on="true"] { background: var(--soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
   .page-head, .parties, .form-grid, .line, .row, .stats, .split, .attack-grid { grid-template-columns: 1fr; }
   .stats.four { grid-template-columns: 1fr 1fr; }
   .page-head { align-items: flex-start; flex-direction: column; }
@@ -1318,6 +1408,17 @@ html[data-theme="light"] .pitch::before {
 
 /* Homepage craft: each band is a different composition. */
 .craft-intro { max-width: 18em; margin: 0 0 28px; }
+.hijack > .craft-intro {
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
+  column-gap: 48px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+.hijack > .craft-intro .craft-eyebrow { grid-column: 1 / -1; }
+.hijack > .craft-intro h2 { max-width: 16em; }
+.hijack > .craft-intro .craft-lead { margin: 0 0 6px; }
 .craft-intro h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 500; letter-spacing: -0.045em; line-height: 1.02; margin: 0; text-wrap: balance; }
 .craft-eyebrow { margin: 0 0 10px; color: var(--teal); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
 .craft-lead { max-width: 62ch; color: var(--muted); }
@@ -1355,6 +1456,7 @@ html[data-theme="light"] .pitch::before {
 .craft-tabs button i { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--teal); transform-origin: left center; }
 .craft-tabs .mono { display: block; font-size: 11px; color: var(--teal); }
 .craft-stage { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 28px; padding: 28px 0 0; }
+.craft-rest { display: grid; gap: 20px; padding-top: 20px; }
 .craft-copy h3 { margin: 0 0 12px; font-size: clamp(28px, 3vw, 40px); font-weight: 500; letter-spacing: -0.04em; }
 .craft-copy dl { margin: 20px 0 0; }
 .craft-copy dl div { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -1561,11 +1663,11 @@ html[data-theme="light"] .pitch::before {
 }
 .proof-panel { background: #f3ffc9; }
 .proof-panel-alt { background: #e7eef0; }
-.proof-panel a, .proof-panel-alt a {
+.proof-panel a, .proof-panel-alt a, .proof-panel > p {
   display: flex; flex-direction: column; gap: 4px; min-height: 72px; justify-content: center;
   padding: 12px 0; border-top: 1px solid rgba(18, 20, 19, 0.12); color: inherit; text-decoration: none;
 }
-.proof-panel a:first-child, .proof-panel-alt a:first-child { border-top: 0; }
+.proof-panel a:first-child, .proof-panel-alt a:first-child, .proof-panel > p:first-child { border-top: 0; }
 .proof-panel span, .proof-panel-alt span { color: rgba(18, 20, 19, 0.62); font-size: 13px; }
 .proof-panel b, .proof-panel-alt b { font-weight: 500; letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .proof-panel-alt p { margin: 12px 0 0; color: rgba(18, 20, 19, 0.72); font-size: 14px; line-height: 1.45; }
@@ -1664,7 +1766,7 @@ html[data-theme="light"] .pitch::before {
 }
 
 @media (max-width: 809.98px) {
-  .hijack-split, .hijack-trip, .hijack-steps { grid-template-columns: 1fr; }
+  .hijack-split, .hijack-trip, .hijack-steps, .hijack > .craft-intro, .attack-facts, .attack-body { grid-template-columns: 1fr; }
   .hijack-call { white-space: normal; }
   .hijack-sheet { margin: 0; max-width: none; width: 100%; border-radius: 16px 16px 0 0; }
   .xfer, .proof-stage, .file-strip { margin-top: 64px; }
