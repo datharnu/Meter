@@ -34,37 +34,46 @@ export default function MetersPage() {
         </div>
         <Link className="btn" href="/new">New slip</Link>
       </div>
-      <h2 className="section-title">Time gate</h2>
-      <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
-        {timed.receipt && (
-          <>
-            <RunStats steps={timed.receipt.steps ?? []} />
-            <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
-            <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. Release pays only while stored time ≤ block time &lt; deadline. A release before that time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. A deposit at or after the deadline is rejected. The time is a clock, not proof the work was done.</p>
-          </>
-        )}
-      </ReceiptGate>
-      <h2 className="section-title">Payment record</h2>
-      <ReceiptGate state={receipt.state} onRetry={receipt.reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
-        {receipt.receipt && (
-          <>
-            <RunStats steps={receipt.receipt.steps ?? []} />
-            <RunTable receipt={receipt.receipt} steps={receipt.receipt.steps ?? []} />
-            <p className="note">An older contract, <span className="mono break">{receipt.receipt.contract}</span>. A wrong recipient, amount, or sentence moves 0.00. The sealed line pays 48.00. After the deadline the balance returns. That refund is on chain.</p>
-          </>
-        )}
-      </ReceiptGate>
-      <h2 className="section-title">Signed release</h2>
-      <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed release on this build.">
-        {signed.receipt && (
-          <>
-            <RunStats steps={signed.receipt.steps ?? []} />
-            <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
-            <p className="note">Contract <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
-          </>
-        )}
-      </ReceiptGate>
-      <h2 className="section-title">This browser</h2>
+      <section className="desk-band desk-now" aria-labelledby="time-gate">
+        <p className="desk-kicker">Current contract</p>
+        <h2 id="time-gate" className="section-title">Time gate</h2>
+        <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
+          {timed.receipt && (
+            <>
+              <RunStats steps={timed.receipt.steps ?? []} />
+              <RunTable receipt={timed.receipt} steps={timed.receipt.steps ?? []} caption="Lines from the time gate" />
+              <p className="note">Contract <span className="mono break">{timed.receipt.contract}</span>. Release pays only while stored time ≤ block time &lt; deadline. A release before that time moves 0.00. An unregistered recipient stays unpaid. After registration the same line pays 48.00 once. A deposit at or after the deadline is rejected. The time is a clock, not proof the work was done.</p>
+            </>
+          )}
+        </ReceiptGate>
+      </section>
+      <section className="desk-band" aria-labelledby="payment-record">
+        <h2 id="payment-record" className="section-title">Payment record</h2>
+        <ReceiptGate state={receipt.state} onRetry={receipt.reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
+          {receipt.receipt && (
+            <>
+              <RunStats steps={receipt.receipt.steps ?? []} />
+              <RunTable receipt={receipt.receipt} steps={receipt.receipt.steps ?? []} />
+              <p className="note">An older contract, <span className="mono break">{receipt.receipt.contract}</span>. A wrong recipient, amount, or sentence moves 0.00. The sealed line pays 48.00. After the deadline the balance returns. That refund is on chain.</p>
+            </>
+          )}
+        </ReceiptGate>
+      </section>
+      <section className="desk-band desk-cool" aria-labelledby="signed-release">
+        <p className="desk-kicker">Older run</p>
+        <h2 id="signed-release" className="section-title">Signed release</h2>
+        <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed release on this build.">
+          {signed.receipt && (
+            <>
+              <RunStats steps={signed.receipt.steps ?? []} />
+              <RunTable receipt={signed.receipt} steps={signed.receipt.steps ?? []} caption="Lines from the signed release" />
+              <p className="note">Contract <span className="mono break">{signed.receipt.contract}</span>. Model <span className="mono">{signed.receipt.model}</span>. Signer <span className="mono break">{signed.receipt.signer}</span>. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
+            </>
+          )}
+        </ReceiptGate>
+      </section>
+      <section className="desk-band" aria-labelledby="this-browser">
+        <h2 id="this-browser" className="section-title">This browser</h2>
       {meters.length === 0 ? (
         <div className="empty">
           <p>No slip in this browser yet. Seal one and it stays on this desk. It will not move tokens.</p>
@@ -96,6 +105,7 @@ export default function MetersPage() {
           </table>
         </div>
       )}
+      </section>
     </>
   );
 }

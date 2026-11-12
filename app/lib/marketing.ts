@@ -17,7 +17,7 @@ export const journey = {
     {
       phase: "During",
       title: "Four checks at release",
-      body: "Wrong account, amount, evidence, or time each move 0.00 with a reason code. release cannot edit the line.",
+      body: "Wrong account, amount, terms, or time each move 0.00 with a reason code. release cannot edit the line.",
     },
     {
       phase: "After",
@@ -195,6 +195,18 @@ export const faq = {
     {
       q: "Does Meter stop business email compromise?",
       a: "No. It enforces one sealed line on testnet. Industry stats on the homepage link to /docs/evidence; the proof is a transaction hash, not a survey.",
+    },
+    {
+      q: "Is the AI doing anything?",
+      a: "Yes. A model reads the invoice and emits the tool call. The contract then pays the stored line or moves 0.00. The model is not the guard.",
+    },
+    {
+      q: "Why does the model always obey?",
+      a: "The recorded clerk is told that the invoice is the instruction, at temperature 0, with tool choice required. That is the naive prompt in inject.json. A hardened prompt that pays the header is stored beside it when that run exists. Neither prompt can change the sealed line.",
+    },
+    {
+      q: "What if the agent burns its own key?",
+      a: "Five refusals delete the key. The tokens stay in the meter. The buyer installs a new key with 1 yoctoNEAR. The recipient, amount, sentence, and window do not change.",
     },
   ],
 } as const;

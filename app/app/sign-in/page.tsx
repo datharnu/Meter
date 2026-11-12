@@ -4,39 +4,57 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icons";
-import { SiteNav } from "@/components/SiteNav";
+import { NearMark } from "@/components/NearMark";
 import { readTab, writeTab } from "@/components/ProfileDock";
+import { SiteNav } from "@/components/SiteNav";
 
 export default function SignInPage() {
   const router = useRouter();
-  const [named, setNamed] = useState(false);
+  const [named, setNamed] = useState<boolean | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => { setNamed(Boolean(readTab())); }, []);
 
   function enter() {
-    if (!readTab()) writeTab();
-    router.push("/desk");
+    try {
+      if (!readTab()) writeTab();
+      setFailed(false);
+      router.push("/desk");
+    } catch {
+      setFailed(true);
+    }
   }
+
+  const opening = named === null;
 
   return (
     <div className="market">
       <SiteNav />
-      <main id="content" className="market-main market-narrow">
-        <p className="eyebrow"><Icon name="desk" size={14} />This browser</p>
-        <h1>Open the desk in this browser.</h1>
+      <main id="content" className="market-main market-narrow gate">
+        <p className="eyebrow"><span aria-hidden="true"><NearMark variant="tile" /></span>NEAR testnet</p>
+        <h1>Open the desk.</h1>
         <p className="market-lead">
           Slips you seal here stay on this machine. This page does not connect a wallet, and it does not create a key that can spend.
         </p>
-        <div className="panel">
-          <h2>Continue here</h2>
-          <p>Gives this tab a name so the desk can tell one sitting from the next. The name is not a NEAR account. Closing the tab drops it.</p>
-          <button className="btn" type="button" onClick={enter}>{named ? "Back to the desk" : "Continue in this browser"}</button>
+        <div className="gate-choices">
+          <button className="gate-choice gate-choice-now" type="button" onClick={enter} disabled={opening} aria-busy={opening}>
+            <span className="gate-icon" aria-hidden="true"><Icon name="desk" /></span>
+            <span>
+              <b>{opening ? "Opening the desk" : named ? "Back to the desk" : "Continue in this browser"}</b>
+              <small>{named ? "This tab already has a name. It is not a NEAR account." : "Gives this tab a name so the desk can tell one sitting from the next. Closing the tab drops it."}</small>
+            </span>
+            <span className="gate-go" aria-hidden="true">→</span>
+          </button>
+          <Link className="gate-choice" href="/book">
+            <span className="gate-icon" aria-hidden="true"><Icon name="book" /></span>
+            <span>
+              <b>Read the receipts</b>
+              <small>The payment, the refusals, and the deleted key are already on testnet. No name is required.</small>
+            </span>
+            <span className="gate-go" aria-hidden="true">→</span>
+          </Link>
         </div>
-        <div className="panel">
-          <h2>Skip the desk</h2>
-          <p>The payment, the refusals, and the deleted key are already on testnet. No name is required to read them.</p>
-          <Link className="ghost" href="/book">See the proof</Link>
-        </div>
+        {failed && <p className="alert" role="alert">This browser blocked the tab name. The receipts are still open.</p>}
       </main>
     </div>
   );

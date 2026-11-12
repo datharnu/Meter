@@ -96,54 +96,42 @@ export function ProfileDock({ place }: { place: "side" | "top" }) {
       </button>
       {open && (
         <div className="who-panel" id={panelId} role="region" aria-label="This browser">
-          <p className="kicker"><span>This browser</span><button className="text-btn" type="button" onClick={() => setOpen(false)}>Close</button></p>
+          <div className="who-head">
+            <p className="desk-kicker">This browser</p>
+            <button className="text-btn" type="button" onClick={() => setOpen(false)}>Close</button>
+          </div>
           <p className="who-id mono">{tab ? short(tab) : "Not named"}</p>
           <p className="note">A name for this tab. It cannot sign, and it is not a NEAR account.</p>
           {tab && (
-            <button className="ghost" type="button" onClick={() => copy(tab)}>{copied === tab ? "Copied" : "Copy tab name"}</button>
+            <button className="ghost" type="button" onClick={() => copy(tab)}>{copied === tab ? "Copied" : "Copy the name"}</button>
           )}
           <dl className="who-facts">
             <div>
               <dt>Network</dt>
-              <dd>testnet</dd>
+              <dd>NEAR testnet</dd>
+            </div>
+            <div>
+              <dt>Time gate</dt>
+              <dd>
+                <a className="mono" href={`https://testnet.nearblocks.io/address/${timed}`} title={timed}>{timed.split(".").map((part, index, parts) => <span key={part}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>)}</a>
+                <button className="text-btn" type="button" onClick={() => copy(timed)}>{copied === timed ? "Copied" : "Copy"}</button>
+              </dd>
             </div>
             <div>
               <dt>Payment record</dt>
-              <dd className="mono" title={contract}>
-                {contract.split(".").map((part, index, parts) => (
-                  <span key={`${part}-${index}`}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>
-                ))}
+              <dd>
+                <a className="mono" href={`https://testnet.nearblocks.io/address/${contract}`} title={contract}>{contract.split(".").map((part, index, parts) => <span key={part}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>)}</a>
+                <button className="text-btn" type="button" onClick={() => copy(contract)}>{copied === contract ? "Copied" : "Copy"}</button>
               </dd>
             </div>
             <div>
               <dt>Signed release</dt>
-              <dd className="mono" title={signed}>
-                {signed.split(".").map((part, index, parts) => (
-                  <span key={`${part}-${index}`}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>
-                ))}
-              </dd>
-            </div>
-            <div>
-              <dt>Time gate</dt>
-              <dd className="mono" title={timed}>
-                {timed.split(".").map((part, index, parts) => (
-                  <span key={`${part}-${index}`}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>
-                ))}
+              <dd>
+                <a className="mono" href={`https://testnet.nearblocks.io/address/${signed}`} title={signed}>{signed.split(".").map((part, index, parts) => <span key={part}>{part}{index < parts.length - 1 ? <>.<wbr /></> : null}</span>)}</a>
+                <button className="text-btn" type="button" onClick={() => copy(signed)}>{copied === signed ? "Copied" : "Copy"}</button>
               </dd>
             </div>
           </dl>
-          <p className="who-links">
-            <button className="text-btn" type="button" onClick={() => copy(contract)}>{copied === contract ? "Copied" : "Copy record"}</button>
-            <a href={`https://testnet.nearblocks.io/address/${contract}`}>Record</a>
-          </p>
-          <p className="who-links">
-            <button className="text-btn" type="button" onClick={() => copy(signed)}>{copied === signed ? "Copied" : "Copy release"}</button>
-            <a href={`https://testnet.nearblocks.io/address/${signed}`}>Release</a>
-          </p>
-          <p className="who-links">
-            <button className="text-btn" type="button" onClick={() => copy(timed)}>{copied === timed ? "Copied" : "Copy time gate"}</button>
-            <a href={`https://testnet.nearblocks.io/address/${timed}`}>Time gate</a>
-          </p>
           <p className="note">Slips in this browser stay on this machine. The paying key on each contract was deleted. Nothing here is sent to a Meter server.</p>
           <button className="ghost" type="button" onClick={reset}>Clear this browser</button>
         </div>

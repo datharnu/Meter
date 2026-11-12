@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Icon, type IconName } from "@/components/Icons";
 import { Logo } from "@/components/Logo";
+import { NearMark } from "@/components/NearMark";
 import { ProfileDock } from "@/components/ProfileDock";
 import { useDesk } from "@/lib/store";
 
@@ -14,6 +15,7 @@ const links: { href: string; label: string; short: string; icon: IconName }[] = 
   { href: "/clause", label: "The line", short: "Line", icon: "line" },
   { href: "/book", label: "The book", short: "Book", icon: "book" },
   { href: "/key", label: "The key", short: "Key", icon: "key" },
+  { href: "/attack", label: "The hijack", short: "Hijack", icon: "limit" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -43,7 +45,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link className="mark mark-phone" href="/desk"><Logo /></Link>
             <div className="topbar-end">
               <ProfileDock place="top" />
-              <span className="tag" data-kind="neutral"><Icon name="near" size={12} />NEAR testnet</span>
+              <span className="tag" data-kind="neutral"><span aria-hidden="true"><NearMark variant="tile" /></span>NEAR testnet</span>
             </div>
           </div>
         </header>

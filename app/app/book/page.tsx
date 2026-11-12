@@ -52,7 +52,9 @@ export default function BookPage() {
         </div>
         <button className="btn" type="button" onClick={download} disabled={!receipt && !signed.receipt && !timed.receipt}>Download CSV</button>
       </div>
-      <h2 className="section-title">Time gate</h2>
+      <section className="desk-band desk-now" aria-labelledby="book-time">
+        <p className="desk-kicker">Current contract</p>
+        <h2 id="book-time" className="section-title">Time gate</h2>
       <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time gate on this build.">
         {timed.receipt && (
           <>
@@ -64,7 +66,9 @@ export default function BookPage() {
           </>
         )}
       </ReceiptGate>
-      <h2 className="section-title">Payment record</h2>
+      </section>
+      <section className="desk-band" aria-labelledby="book-record">
+      <h2 id="book-record" className="section-title">Payment record</h2>
       <ReceiptGate state={state} onRetry={reload} empty="No testnet receipt yet. The book stays empty until a run is recorded.">
         {receipt && (
           <>
@@ -76,7 +80,10 @@ export default function BookPage() {
           </>
         )}
       </ReceiptGate>
-      <h2 className="section-title">Signed release</h2>
+      </section>
+      <section className="desk-band desk-cool" aria-labelledby="book-signed">
+        <p className="desk-kicker">Older run</p>
+        <h2 id="book-signed" className="section-title">Signed release</h2>
       <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed release on this build.">
         {signed.receipt && (
           <>
@@ -88,6 +95,7 @@ export default function BookPage() {
           </>
         )}
       </ReceiptGate>
+      </section>
     </>
   );
 }

@@ -229,6 +229,9 @@ pub fn accept_token(predecessor_is_token: bool) -> Result<(), Code> {
 }
 
 /// Five recorded refusals is the tripwire. The fifth call is the one that burns the key.
+/// Every `release` error counts, including `ERR_NOT_YET`. `ERR_TRANSFER` does not: the callback
+/// records that code and never calls this. `preview` is a view and does not count. A caller that
+/// is early should preview first, then release once the window is open.
 pub fn record_refusal(refusals: u32) -> (u32, bool) {
     let next = refusals.saturating_add(1);
     (next, next >= 5)

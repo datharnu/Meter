@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ReceiptGate } from "@/components/ReceiptGate";
 import { Icon } from "@/components/Icons";
 import { formatUnits, txUrl, useReceipt } from "@/lib/useReceipt";
@@ -17,11 +18,13 @@ export default function KeyPage() {
       <div className="page-head">
         <div>
           <h1 className="page-title">The paying key</h1>
-          <p className="lede">Each run had one key, added by the buyer. It could call release and nothing else. The buyer deleted each key after that run’s payment. The key is a 0.50 NEAR gas cap and a five-refusal tripwire. The line is what the money follows.</p>
+          <p className="lede">Each run had one key, added by the buyer. It could call release and nothing else. The buyer deleted each key after that run’s payment. The key is a 0.50 NEAR gas cap and a five-refusal tripwire. The line is what the money follows. <Link href="/attack">The hijack</Link> is the run where the contract deleted the key itself.</p>
         </div>
         <span className="tag" data-kind="refused">Deleted</span>
       </div>
-      <h2 className="section-title">Time gate</h2>
+      <section className="desk-band desk-now" aria-labelledby="key-time">
+        <p className="desk-kicker">Current contract</p>
+        <h2 id="key-time" className="section-title">Time gate</h2>
       <ReceiptGate state={timed.state} onRetry={timed.reload} empty="No time-gate key on this build.">
         {timed.receipt && (
           <>
@@ -83,7 +86,9 @@ export default function KeyPage() {
           </>
         )}
       </ReceiptGate>
-      <h2 className="section-title">Payment record</h2>
+      </section>
+      <section className="desk-band" aria-labelledby="key-record">
+      <h2 id="key-record" className="section-title">Payment record</h2>
       <ReceiptGate state={state} onRetry={reload} empty="No key to show until a testnet run records one.">
         {receipt && (
           <>
@@ -150,7 +155,10 @@ export default function KeyPage() {
           </>
         )}
       </ReceiptGate>
-      <h2 className="section-title">Signed release</h2>
+      </section>
+      <section className="desk-band desk-cool" aria-labelledby="key-signed">
+        <p className="desk-kicker">Older run</p>
+        <h2 id="key-signed" className="section-title">Signed release</h2>
       <ReceiptGate state={signed.state} onRetry={signed.reload} empty="No signed-release key on this build.">
         {signed.receipt && (
           <>
@@ -193,6 +201,7 @@ export default function KeyPage() {
           </>
         )}
       </ReceiptGate>
+      </section>
     </>
   );
 }

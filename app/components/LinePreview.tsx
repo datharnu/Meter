@@ -85,7 +85,7 @@ export function LinePreview() {
             <textarea value={evidence} onChange={(event) => { setEvidence(event.target.value); setPicked(""); }} rows={4} />
           </label>
         </form>
-        <aside className="panel sticky-side" aria-live="polite">
+        <aside className="panel band-now sticky-side" aria-live="polite">
           <p className="kicker"><span>Answer</span><span>Browser copy</span></p>
           {parsed == null ? (
             <p className="alert" role="alert">Write the figure as dollars and cents, like 48.00.</p>

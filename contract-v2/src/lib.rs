@@ -151,14 +151,21 @@ impl Contract {
         self.meters.insert(id, meter);
     }
 
-    /// Buyer installs the only key that can call `release`. The key is limited to that method.
+    /// Buyer installs the only live key that can call `release`. The key is limited to that method.
+    /// After the tripwire or `revoke_agent`, the same call puts a new key on the same line.
+    /// 2026-11-11: this used to require `!revoked`, so five refusals left a funded line with no key
+    /// until the deadline. Reinstall clears the counter only. Recipient, amount, sentence, and the window stay.
     #[payable]
     pub fn install_agent(&mut self, id: u64, public_key: PublicKey) -> Promise {
         near_sdk::assert_one_yocto();
         let mut meter = load(&self.meters, id);
         require!(env::predecessor_account_id() == meter.buyer, "ERR_NOT_BUYER");
         require!(meter.buyer_signed && meter.vendor_signed, "ERR_NEED_BOTH");
-        require!(meter.agent.is_none() && !meter.revoked, "ERR_AGENT");
+        require!(meter.agent.is_none(), "ERR_AGENT");
+        if meter.revoked {
+            meter.revoked = false;
+            meter.refusals = 0;
+        }
         meter.agent = Some(public_key.clone());
         self.meters.insert(id, meter);
         let me = env::current_account_id();
@@ -315,6 +322,7 @@ impl Contract {
         self.meters.get(&id).cloned()
     }
 
+    /// `ERR_NOT_YET` counts. `ERR_TRANSFER` never enters here. The fifth call deletes `signer`.
     fn refuse(&mut self, id: u64, mut meter: MeterState, code: &str, signer: PublicKey) -> PromiseOrValue<String> {
         let (refusals, burn) = record_refusal(meter.refusals);
         meter.refusals = refusals;

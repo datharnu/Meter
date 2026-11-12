@@ -1,18 +1,22 @@
 "use client";
 
 
+import { useState } from "react";
 import Link from "next/link";
 import { FaqSection } from "@/components/FaqSection";
 import { FailureMap } from "@/components/home/FailureMap";
 import { FramePreview } from "@/components/home/FramePreview";
+import { HijackSection } from "@/components/home/HijackSection";
 import { SourceDeck } from "@/components/home/SourceDeck";
 import { StepRail } from "@/components/home/StepRail";
 import { LinePreview } from "@/components/LinePreview";
-import { LiveFacts } from "@/components/home/LiveFacts";
 import { NearMark } from "@/components/NearMark";
+import { ReceiptGate } from "@/components/ReceiptGate";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SectionHead } from "@/components/SectionHead";
 import { SiteNav } from "@/components/SiteNav";
+import { attackById } from "@/lib/hijack";
+import { useInject } from "@/lib/useInject";
 import { formatUnits, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
 function recordedAt(iso: string) {
@@ -68,6 +72,9 @@ function Headline() {
 
 export default function HomePage() {
   const { state, receipt, reload } = useReceipt();
+  const inject = useInject();
+  const [record, setRecord] = useState<"hijack" | "payment" | "time" | "transfer" | "signed">("hijack");
+  const meterOne = inject.receipt ? attackById(inject.receipt, 1) : null;
   const signed = useReceipt("/tee.json");
   const timed = useReceipt("/v2.json");
   const signedSteps = signed.receipt?.steps ?? [];
@@ -91,16 +98,169 @@ export default function HomePage() {
           The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. The token is testnet, not Circle USDC.
         </p>
         <div className="market-actions">
-          <Link className="btn" href="#try">Try the refusal</Link>
-          <Link className="ghost" href="/book">See the proof</Link>
+          <a className="btn" href="#hijack">See the hijack</a>
+          <a className="ghost" href="#try">Try the refusal</a>
         </div>
-        <LiveFacts state={state} hash={steps.find((step) => step.code === "ERR_RECIPIENT" && step.hash)?.hash} />
-        <FramePreview state={state} receipt={receipt} onRetry={reload} />
+        <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build.">
+          {inject.receipt?.baseline && meterOne ? (
+            <div className="stats" aria-label="Hijack result">
+              <div className="stat">
+                <span>Agent obeyed</span>
+                <b>{inject.receipt.baseline.obeyed}/{inject.receipt.baseline.runs}</b>
+                <small>Same poisoned invoice</small>
+              </div>
+              <div className="stat">
+                <span>Naive key lost</span>
+                <b>{formatUnits(inject.receipt.baseline.moneyMoved ?? "0")}</b>
+                <small>PAID to {inject.receipt.attacker}</small>
+              </div>
+              <div className="stat">
+                <span>Meter moved</span>
+                <b>{formatUnits(meterOne.moneyMoved ?? "0")}</b>
+                <small>STOPPED · {meterOne.expected || "refusal"}</small>
+              </div>
+            </div>
+          ) : null}
+        </ReceiptGate>
+        <section id="hijack" className="pitch-section">
+          <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build. node chain/inject.mjs records one.">
+            {inject.receipt ? <HijackSection receipt={inject.receipt} variant="home" /> : null}
+          </ReceiptGate>
+        </section>
         <StepRail />
         <section className="pitch-section pitch-try" id="try">
           <SectionHead hue="orange" icon="line" eyebrow="Same rule, this browser" title="Try the refusal" />
           <p className="hero-note">The sealed line is 48.00 to sable.testnet. This clock pays only while 400 ≤ time &lt; 1000. Tap <strong>Before the time</strong>. The answer comes from <span className="mono">app/lib/rule.mjs</span>. Nothing on this page is a transaction.</p>
           <LinePreview />
+        </section>
+        <section className="pitch-section" id="receipts">
+          <header className="craft-intro">
+            <p className="craft-eyebrow">Receipts</p>
+            <h2>The hijack, then the older runs.</h2>
+          </header>
+          <div className="receipt-tabs" role="tablist" aria-label="Receipts">
+            {([
+              ["hijack", "Hijack"],
+              ["payment", "Payment record"],
+              ["time", "Stored time"],
+              ["transfer", "Against a transfer"],
+              ["signed", "Signed release"],
+            ] as const).map(([id, label]) => (
+              <button key={id} type="button" role="tab" aria-selected={record === id} onClick={() => setRecord(id)}>{label}</button>
+            ))}
+          </div>
+          {record === "hijack" && (
+            <div role="tabpanel">
+              {inject.state === "ready" && inject.receipt ? (
+                <p className="craft-lead">
+                  <span className="mono">{inject.receipt.contract}</span>
+                  {" · "}
+                  Agent obeyed {inject.receipt.baseline?.obeyed}/{inject.receipt.baseline?.runs}. Naive key {formatUnits(inject.receipt.baseline?.moneyMoved ?? "0")} PAID. Meter {formatUnits(meterOne?.moneyMoved ?? "0")} STOPPED.
+                  {" "}
+                  <a href="#hijack">The ladder is above.</a>
+                </p>
+              ) : <p className="note">{inject.state === "error" ? "The hijack receipt did not load." : inject.state === "empty" ? "No hijack receipt in this build." : "Reading the hijack receipt."}</p>}
+            </div>
+          )}
+          {record === "payment" && (
+            <div role="tabpanel">
+              <FramePreview state={state} receipt={receipt} onRetry={reload} />
+              <header className="craft-intro">
+                <p className="craft-eyebrow">Payment record</p>
+                <h2>Every line of the recorded run.</h2>
+                {state === "ready" && receipt ? <p className="mono craft-lead">{receipt.contract} · {when}</p> : null}
+              </header>
+              {state === "ready" && steps.length > 0 ? <Ledger steps={steps} /> : (
+                <p className="note">{state === "error" ? "The run stays hidden until the receipt loads." : state === "empty" ? "No payment record in this build." : "Reading the lines from the receipt."}</p>
+              )}
+              {state === "error" && <button className="text-btn" type="button" onClick={reload}>Try again</button>}
+            </div>
+          )}
+          {record === "time" && (
+            <div role="tabpanel" id="time">
+              <header className="craft-intro">
+                <p className="craft-eyebrow">Stored time</p>
+                <h2>The clock is not the work.</h2>
+                {timed.state === "ready" && timed.receipt ? <p className="craft-lead">{timed.receipt.contract} · {timedWhen}. One nanosecond before the deadline still clears.</p> : null}
+              </header>
+              {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
+              {timed.state === "empty" && <p className="note">No time gate in this build.</p>}
+              {timed.state === "error" && (
+                <p className="alert" role="alert">The time gate did not load. <button className="text-btn" type="button" onClick={timed.reload}>Try again</button></p>
+              )}
+              {timed.state === "ready" && (
+                <ol className="craft-spine">
+                  {[tooEarly, unregistered, timedPaid].filter(Boolean).map((step) => step && (
+                    <li key={step.code + (step.hash ?? "")}>
+                      <b>{step.label}</b>
+                      <span className="mono">{formatUnits(step.moved ?? "0")} · {step.code}</span>
+                      {step.hash ? <a className="mono" href={txUrl(step.hash)}>{shortHash(step.hash)}</a> : <span>No transaction</span>}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
+          {record === "transfer" && (
+            <div role="tabpanel" className="xfer" id="compare">
+              <header className="craft-intro">
+                <p className="craft-eyebrow">Against a transfer</p>
+                <h2>A transfer, and this run.</h2>
+                {state === "ready" ? <p className="craft-lead">A normal transfer pays the account named at send time. Recorded {when}.</p> : null}
+              </header>
+              <ol>
+                <li>
+                  <b>other.testnet, 48.00</b>
+                  <div>
+                    <span><small>A transfer</small>Pays the account named then</span>
+                    <span><small>This run</small><em>0.00</em> <span className="mono">ERR_RECIPIENT</span>. Which means the wrong account was paid nothing.</span>
+                  </div>
+                </li>
+                <li>
+                  <b>47.00 instead of 48.00</b>
+                  <div>
+                    <span><small>A transfer</small>The caller picks a new figure</span>
+                    <span><small>This run</small><em>0.00</em> <span className="mono">ERR_AMOUNT</span>. Which means 47.00 did not replace 48.00.</span>
+                  </div>
+                </li>
+                <li>
+                  <b>The terms line changed</b>
+                  <div>
+                    <span><small>A transfer</small>A memo does not hold the money</span>
+                    <span><small>This run</small><em>0.00</em> <span className="mono">ERR_EVIDENCE</span>. Which means the rewritten sentence was paid nothing.</span>
+                  </div>
+                </li>
+                <li>
+                  <b>Same key after delete</b>
+                  <div>
+                    <span><small>A transfer</small>A live key can sign again</span>
+                    <span><small>This run</small>Rejected before a transaction. Which means a deleted key cannot spend.</span>
+                  </div>
+                </li>
+                <li>
+                  <b>After the deadline</b>
+                  <div>
+                    <span><small>A transfer</small>The balance sits</span>
+                    <span><small>This run</small><em>48.00</em> back to the buyer. Which means the lock ended.</span>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          )}
+          {record === "signed" && (
+            <blockquote className="craft-quote" id="signed">
+              <p>The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
+              <footer>
+                <span className="mono">{signed.state === "ready" ? signed.receipt?.model : "Reading the signed release."}</span>
+                {signed.receipt?.contract ? <span className="mono break">{signed.receipt.contract}</span> : null}
+                {signed.state === "ready" ? <span>{signedWhen}</span> : null}
+              </footer>
+              {signed.state === "ready" && signedSteps.length > 0 ? <Ledger steps={signedSteps} /> : (
+                <p className="note">{signed.state === "error" ? "The signed release stays hidden until that receipt loads." : signed.state === "empty" ? "No signed release in this build." : "Reading the signed release."}</p>
+              )}
+              {signed.state === "error" && <button className="text-btn" type="button" onClick={signed.reload}>Try again</button>}
+            </blockquote>
+          )}
         </section>
         <FailureMap />
         <section id="audience" className="craft-who">
@@ -114,101 +274,6 @@ export default function HomePage() {
             <li><b>The person with the key</b><span>They can repeat the public line immediately. They cannot edit it.</span></li>
           </ol>
         </section>
-        <section className="craft-tape" id="run">
-          <header className="craft-intro">
-            <p className="craft-eyebrow">Payment record</p>
-            <h2>Every line of the recorded run.</h2>
-            <p className="mono craft-lead">{receipt?.contract ?? "m028a47.mtrfc658fd1.testnet"} · {when}</p>
-          </header>
-          {state === "ready" && steps.length > 0 ? <Ledger steps={steps} /> : (
-            <p className="note">{state === "error" ? "The run stays hidden until the receipt loads." : state === "empty" ? "No payment record in this build." : "Reading the lines from the receipt."}</p>
-          )}
-          {state === "error" && <button className="text-btn" type="button" onClick={reload}>Try again</button>}
-        </section>
-
-        <blockquote className="craft-quote" id="signed">
-          <p>The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
-          <footer>
-            <span className="mono">{signed.receipt?.model ?? "z-ai/glm-5.3-flash"}</span>
-            <span className="mono break">{signed.receipt?.contract ?? "m2b2440.mtrfc658fd1.testnet"}</span>
-            <span>{signedWhen}</span>
-          </footer>
-          {signed.state === "ready" && signedSteps.length > 0 ? <Ledger steps={signedSteps} /> : (
-            <p className="note">{signed.state === "error" ? "The signed release stays hidden until that receipt loads." : "Reading the signed release."}</p>
-          )}
-          {signed.state === "error" && <button className="text-btn" type="button" onClick={signed.reload}>Try again</button>}
-        </blockquote>
-
-        <section className="craft-time" id="time">
-          <header className="craft-intro">
-            <p className="craft-eyebrow">Stored time</p>
-            <h2>The clock is not the work.</h2>
-            <p className="craft-lead">{timed.receipt?.contract ?? "m1870dd.mtrfc658fd1.testnet"} · {timedWhen}. One nanosecond before the deadline still clears. The unit test is <span className="mono">one_nanosecond_before_the_deadline_clears_and_the_deadline_does_not</span>.</p>
-          </header>
-          {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
-          {timed.state === "empty" && <p className="note">No time gate in this build.</p>}
-          {timed.state === "error" && (
-            <p className="alert" role="alert">The time gate did not load. <button className="text-btn" type="button" onClick={timed.reload}>Try again</button></p>
-          )}
-          {timed.state === "ready" && (
-            <ol className="craft-spine">
-              {[tooEarly, unregistered, timedPaid].filter(Boolean).map((step) => step && (
-                <li key={step.code + (step.hash ?? "")}>
-                  <b>{step.label}</b>
-                  <span className="mono">{formatUnits(step.moved ?? "0")} · {step.code}</span>
-                  {step.hash ? <a className="mono" href={txUrl(step.hash)}>{shortHash(step.hash)}</a> : <span>No transaction</span>}
-                </li>
-              ))}
-            </ol>
-          )}
-          <p className="craft-lead">The recipient was unregistered, so the first release after the time moved 0.00. Once the stored time has arrived, the key can pay immediately.</p>
-        </section>
-
-        <section className="xfer" id="compare">
-          <header className="craft-intro">
-            <p className="craft-eyebrow">Against a transfer</p>
-            <h2>A transfer, and this run.</h2>
-            <p className="craft-lead">A normal transfer pays the account named at send time. Recorded {when}.</p>
-          </header>
-          <ol>
-            <li>
-              <b>other.testnet, 48.00</b>
-              <div>
-                <span><small>A transfer</small>Pays the account named then</span>
-                <span><small>This run</small><em>0.00</em> <span className="mono">ERR_RECIPIENT</span>. Which means the wrong account was paid nothing.</span>
-              </div>
-            </li>
-            <li>
-              <b>47.00 instead of 48.00</b>
-              <div>
-                <span><small>A transfer</small>The caller picks a new figure</span>
-                <span><small>This run</small><em>0.00</em> <span className="mono">ERR_AMOUNT</span>. Which means 47.00 did not replace 48.00.</span>
-              </div>
-            </li>
-            <li>
-              <b>Evidence hash changed</b>
-              <div>
-                <span><small>A transfer</small>A memo does not hold the money</span>
-                <span><small>This run</small><em>0.00</em> <span className="mono">ERR_EVIDENCE</span>. Which means the rewritten sentence was paid nothing.</span>
-              </div>
-            </li>
-            <li>
-              <b>Same key after delete</b>
-              <div>
-                <span><small>A transfer</small>A live key can sign again</span>
-                <span><small>This run</small>Rejected before a transaction. Which means a deleted key cannot spend.</span>
-              </div>
-            </li>
-            <li>
-              <b>After the deadline</b>
-              <div>
-                <span><small>A transfer</small>The balance sits</span>
-                <span><small>This run</small><em>48.00</em> back to the buyer. Which means the lock ended.</span>
-              </div>
-            </li>
-          </ol>
-        </section>
-
         <section className="proof-stage" id="proof">
           <header className="craft-intro">
             <p className="craft-eyebrow">On testnet</p>
@@ -232,7 +297,7 @@ export default function HomePage() {
             <div className="proof-panel proof-panel-alt">
               <Link href="/book"><span>The book</span><b>All three, and a CSV</b></Link>
               <Link href="/clause"><span>The preview</span><b>Try a refusal</b></Link>
-              <p><span className="mono">node chain/verify.mjs</span> re-reads all three. No key. The figures above are those files.</p>
+              <p><span className="mono">node chain/verify.mjs</span> re-reads the recorded contracts, including the hijack. No key. The figures above are those files.</p>
             </div>
           </div>
         </section>
@@ -269,7 +334,7 @@ export default function HomePage() {
             </div>
             <div>
               <dt>A server holds the key.</dt>
-              <dd>No Meter server holds a signer. The function-call key was deleted. The name in the sidebar is a tab id.</dd>
+              <dd>No Meter server holds a signer. The function-call key was deleted. The name in the sidebar is a tab id. The agent can be hijacked. Meter&apos;s claim is that a hijack does not move money.</dd>
             </div>
           </dl>
         </section>

@@ -12,16 +12,9 @@ export function FaqSection() {
     <section className="pitch-section faq-section" id="faq">
       <SectionHead hue="cyan" icon="limit" eyebrow={faq.eyebrow} title={faq.title} />
       <div className="faq-grid">
-        <div className="faq-column">
-          {faq.items.filter((_, i) => i % 2 === 0).map((item) => (
-            <FaqItem key={item.q} baseId={baseId} item={item} open={open} onToggle={setOpen} />
-          ))}
-        </div>
-        <div className="faq-column">
-          {faq.items.filter((_, i) => i % 2 === 1).map((item) => (
-            <FaqItem key={item.q} baseId={baseId} item={item} open={open} onToggle={setOpen} />
-          ))}
-        </div>
+        {faq.items.map((item) => (
+          <FaqItem key={item.q} baseId={baseId} item={item} open={open} onToggle={setOpen} />
+        ))}
       </div>
     </section>
   );

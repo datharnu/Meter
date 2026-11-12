@@ -11,6 +11,9 @@ const SOURCES = [
     who: "FBI Internet Crime Complaint Center",
     venue: "2025 Internet Crime Report",
     host: "ic3.gov",
+    image: "/research/ic3.jpg",
+    alt: "Cover of the FBI 2025 Internet Crime Report",
+    crop: false,
     href: "https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf",
     external: true,
   },
@@ -20,7 +23,10 @@ const SOURCES = [
     finding: "74% of surveyed organisations were hit by business email compromise in 2025.",
     who: "Association for Financial Professionals",
     venue: "Survey fielded January 2026",
-    host: "AFP Payments Fraud and Control Survey",
+    host: "AFP highlights",
+    image: "/research/afp.jpg",
+    alt: "Cover of the 2026 AFP Payments Fraud and Control Survey, key highlights",
+    crop: false,
     href: "/docs/evidence#afp-2026",
     external: false,
   },
@@ -30,8 +36,11 @@ const SOURCES = [
     finding: "other.testnet moved 0.00. The sealed vendor was paid 48.00 tUSDC.",
     who: "Meter payment record",
     venue: "10 November 2026, 23:03 UTC",
-    host: "m028a47.mtrfc658fd1.testnet",
-    href: "https://testnet.nearblocks.io/txns/DrPqTQnWZSF94vfG8dyg1cPe1vgDxPuW1C7Yh5rjHdVX",
+    host: "testnet.near.rocks",
+    image: "/research/refusal.jpg",
+    alt: "NEAR testnet page for the refusal. The release names other.testnet and moves nothing.",
+    crop: true,
+    href: "https://testnet.near.rocks/tx/DrPqTQnWZSF94vfG8dyg1cPe1vgDxPuW1C7Yh5rjHdVX",
     external: true,
   },
 ] as const;
@@ -41,6 +50,7 @@ export function SourceDeck() {
   const [hold, setHold] = useState(false);
   const [inView, setInView] = useState(false);
   const [reduce, setReduce] = useState(false);
+  const [failed, setFailed] = useState<Record<string, boolean>>({});
   const root = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -89,11 +99,25 @@ export function SourceDeck() {
         <div className="craft-papers" aria-hidden="true">
           {SOURCES.map((source, index) => {
             const depth = (index - active + SOURCES.length) % SOURCES.length;
-            const body = (
+            const body = failed[source.id] ? (
               <>
                 <span className="craft-paper-bar"><i /><i /><i />{source.host}</span>
-                <strong>{source.venue}</strong>
-                <span>{source.finding}</span>
+                <span className="craft-paper-copy">
+                  <strong>{source.venue}</strong>
+                  <span>{source.finding}</span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="craft-paper-bar"><i /><i /><i />{source.host}</span>
+                <span className="craft-shot" data-crop={source.crop ? "top" : undefined}>
+                  <img
+                    src={source.image}
+                    alt={source.alt}
+                    draggable={false}
+                    onError={() => setFailed((current) => ({ ...current, [source.id]: true }))}
+                  />
+                </span>
               </>
             );
             return source.external ? (
