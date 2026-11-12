@@ -87,7 +87,6 @@ function Bill({
       <footer>
         <p className="mono">{toolLine(call)}</p>
         <p>
-          <b>{figure}</b>
           <span className="mono">{code}</span>
           {hash ? <a className="mono" href={txUrl(hash)} title={hash}>{shortHash(hash)}</a> : <span className="muted">No transaction</span>}
         </p>

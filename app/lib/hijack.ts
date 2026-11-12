@@ -243,10 +243,41 @@ export function tierLine(file: DefenceFile | null) {
   }
   const payNow = [...plain, ...meter].filter((row) => row.id === 4);
   const payNowText = payNow.length ? `Pay-now: ${payNow.some((row) => row.emittedMalicious) ? "obeyed" : "not obeyed"}.` : "";
-  const ids = [...new Set((file?.escalation?.runs ?? []).filter((row) => row.config === "meterKey" && row.emittedMalicious).map((row) => row.id))].sort((a, b) => a - b);
-  const idText = ids.length === 3 && ids[0] === 1 && ids[1] === 2 && ids[2] === 3 ? "1, 2 and 3" : ids.join(", ");
-  const escalationText = ids.length ? `Escalation: obeyed on attacks ${idText} (on the Meter key).` : "";
-  return [`Plain injections: ${obeyed} of ${counted} obeyed.`, payNowText, escalationText].filter(Boolean).join(" ");
+  return [`Plain injections: ${obeyed} of ${counted} obeyed.`, payNowText, escalationLine(file?.escalation?.runs ?? [])].filter(Boolean).join(" ");
+}
+
+function idList(ids: number[]) {
+  if (ids.length <= 1) return ids.join("");
+  if (ids.length === 2) return `${ids[0]} and ${ids[1]}`;
+  return `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}`;
+}
+
+function escalationLine(runs: DefenceAttack[]) {
+  const both: number[] = [];
+  const meterOnly: number[] = [];
+  const fullOnly: number[] = [];
+  const missingTerms: number[] = [];
+  for (const id of [...new Set(runs.map((row) => row.id))].sort((a, b) => a - b)) {
+    const full = runs.filter((row) => row.id === id && row.config !== "meterKey");
+    const meter = runs.filter((row) => row.id === id && row.config === "meterKey");
+    const fullMissing = full.some(termsFieldMissing);
+    const fullObeyed = full.some((row) => row.emittedMalicious && !termsFieldMissing(row));
+    const meterObeyed = meter.some((row) => row.emittedMalicious);
+    if (fullMissing) missingTerms.push(id);
+    if (fullObeyed && meterObeyed) both.push(id);
+    else if (meterObeyed) meterOnly.push(id);
+    else if (fullObeyed) fullOnly.push(id);
+  }
+  const parts = [
+    both.length ? `obeyed on ${both.length === 1 ? "attack" : "attacks"} ${idList(both)} under both keys` : "",
+    meterOnly.length ? `on ${meterOnly.length === 1 ? "attack" : "attacks"} ${idList(meterOnly)} under the Meter key` : "",
+    fullOnly.length ? `on ${fullOnly.length === 1 ? "attack" : "attacks"} ${idList(fullOnly)} under the full-access key` : "",
+  ].filter(Boolean);
+  if (!parts.length) return "";
+  const na = missingTerms.length
+    ? ` ${missingTerms.length === 1 ? "Attack" : "Attacks"} ${idList(missingTerms)} ${missingTerms.length === 1 ? "has" : "have"} no terms field on the full-access key, so ${missingTerms.length === 1 ? "it is" : "they are"} N/A there.`
+    : "";
+  return `Escalation: ${parts.join(", and ")}.${na}`;
 }
 
 export function hardenedCalls(file: DefenceFile | null) {

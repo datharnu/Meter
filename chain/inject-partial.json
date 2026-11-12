@@ -1,0 +1,558 @@
+{
+  "contract": "i198b44.mtrfc658fd1.testnet",
+  "steps": [
+    {
+      "label": "OK",
+      "code": "OK",
+      "hash": "54EdKyXMhLT2SCAAdNodQm3CniKbB7WHqaMdQmRx22SR",
+      "moved": "48000000",
+      "signer": "c19e6ab.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "A5fE1At2rRp9P8PHRK17Mk8fa8Vmr8UCyrU7Fysx527j",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "J8eeK5FmLJLyCVoznmx7Bm2uUUcwYYbT41LNU8E5prQF",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "67gXceeh7cNCAfnJ18Zd9FfAdk5ups5BowhB62wny8rV",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "FtpjHGjazuU1yXC8A28QHYBiChWDULQRXG4DUdZ8moTT",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "5zXf1o2z6Xgi2UfN8BcY996HksWeT7kSouA1jSKQDKPW",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "reinstall recipient",
+      "code": "OK",
+      "hash": "TXL7ey1vJxMpNjkKc1RxWxoj5y9oi1vDTZ8xGp8RorS",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "reinstall"
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "owUVa7v9Sr3QN1W1LrURAVkmovZBJLH1HeaTxe6rFKh",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "99W8z2nwFQSKdNcNtN1kQ9D5uYmzTytc9ptAh7kzc7nJ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "24J4t9K7BL2J1Sx1Dr7cvNvLfdcWYgmNFXJSmjJrRtJk",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "BNY1yPQLn7nqg5xA61NZf9xJxtnp2Mx47JQAdNURFgcJ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "DqWTyyMhZCFWV2KKDsMJyVTTHptedpzcdySzDLA9b6vX",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "3iAJiSvyXRjN3gbXKBwszs3veWP3dYqPr47C1L9bc8HF",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "DdpTUUiqGEB62GEPNqb58JiYpWW6i63ypYoKunnm1C5J",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "Cqs7eb6zcHGmTVK5MRE9YkqdEtSTfkWzgGrnJUaMHnkG",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "3wyRtUoHfXZ8QV7SawiNkG39FNvPDyRQe7ZRt8a1qgAq",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "C9JHAf88uARn7Vmuh9x1MPep72SqCRe8MW9kzrRcQhiZ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "reinstall amount",
+      "code": "OK",
+      "hash": "AHRA4QAQxpJpg1J4FwP7wjeHe6xcv2EuHGDDT2G2NnJd",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "reinstall"
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "FBox4sGqNoUV979dtMgbeSUsQvsdUvDJAs951mqqZ9y9",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "FpdMdg7kALxhaMvBFVyEgVb518SeLZ98dQ87kjJ4KXL3",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "7WQsrqQUNMrstbpHPVDjcDixA67JN9brLEWqimNonXdh",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "46yoSXZW8o8kwyMZfmd4WcJXJRy3U4jWwhAwNJmUM4XX",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_AMOUNT",
+      "code": "ERR_AMOUNT",
+      "hash": "GePzggzCpFXUZZCdnVsfQpCxuouimQ1ia76j2hioPkhr",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "HtcdaW3URntekZP7Uqj9XxS6pAjR8Ykv7xiGNzzeTsst",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "59KS59gm2xEgqhXZ4VKvQN6asAGKUaBjwLozUbnShFBq",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "7WvnxPuago1EDdqcFDpME861cAyv7YWfoXzrEmfCgngg",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "urXwp9hDVUojyYt8B2CfoKCPexmUVYWRKyFVu9eZUc9",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "7cwL2rpk8XYoYK7m9EPiLDe9Fn36EUJUw6J6BSWgPNxV",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "reinstall sentence",
+      "code": "OK",
+      "hash": "6zhFk4Bxxc5euSn2DaeEJ79DspEAPV7EQCzkb3XaKB2C",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "reinstall"
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "8Jkm1kTxiX3nmTPnGJy4TecGdafC11hConSRhzN1TKn9",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "317QRvmdYsA7wVqwSW6XzbF2MvaRsbZxwZrzwHRfjtsZ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "HAAjYX53HRNe4YLf1dZ1CvK5W5icAkj34wog3s4mboJV",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "EqAzN4EHpej8a6pdCv31vt75N6MbbhWu7phoJkPGLP12",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_EVIDENCE",
+      "code": "ERR_EVIDENCE",
+      "hash": "GaJcbLUdyh8TQDtcdR33JPFnDLfD9eAMF1MBj2gD5VQW",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "FN8uRhCYakLkh2TUkeG8jb5Er2CjR9St76RQdBXFyWF6",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "3nqmv9MHbU1F7bUENFN6bp4ns791dA75DmFEyPuenKon",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "6iJ81vh3V6GpkEuDvn9w88CeSLgsbBRakFsveX8VdAyq",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "AUGXZ54KGEenaihGoHAqGRnt6RcwkSBNxcvKEJHDhW8n",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "5LsgQHobgMBLxbFZyTKFSy5GYRFfqVm2osqRaVdPwUjZ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "reinstall time",
+      "code": "OK",
+      "hash": "9yMnDTrxcUA3eR3nwR27HJ8PmMNLBJsGXtor6xqV1C6k",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "reinstall"
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "BfCvKtCiY7vJ4wL7gD62UesdiNADFs3WgrQs9pQUhB9p",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "7X5hb7YVGaJMwtTKERuvP3rXBYLHCEtMk4hv4PydRMvX",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "AEMGbTbMCcBQJgK2NhPpNEkLexaide886nYpFdZNLRGJ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "77p2DDbMZ9834hH8Wvq1FsctZkiSy4whX5hXnPnqBtkT",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_NOT_YET",
+      "code": "ERR_NOT_YET",
+      "hash": "AKQmUuyZxzP4sGKpWqHpKahrWkpHbZ91Q2y4nLVgxoWH",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "MethodNotAllowed",
+      "code": "MethodNotAllowed",
+      "hash": "",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": "Access key does not allow method revoke_agent"
+    },
+    {
+      "label": "DepositNotAllowed",
+      "code": "DepositNotAllowed",
+      "hash": "",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": "Deposit is not allowed with function call"
+    },
+    {
+      "label": "DepositNotAllowed",
+      "code": "DepositNotAllowed",
+      "hash": "",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": "Deposit is not allowed with function call"
+    },
+    {
+      "label": "OK",
+      "code": "OK",
+      "hash": "5zUCa8VhLAphhJPznb9qLCDhhVJZMvSZLKotGQduZdHP",
+      "moved": "48000000",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "4veSqbRLZZScpQDeHLn8bjTZPCKkAs895u3HuAiXrdEn",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "CBc8HsGaNmWRk3HKHkUQz2MKu2avnSvp5Gd5S9TLyQak",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "9nA6A2X4jVYhtYmZiuzhtBeGKqkR2asmng7ogTQ2ozUC",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "7eCEWoATN1qNFh5y24kPEbavCVxZZNgDeeMnnf3x4kHZ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "GhDmFEnLKjzbDF6zQzaK1QBGX8CQXBLN5VaNLsRXgFYZ",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "reinstall replay",
+      "code": "OK",
+      "hash": "CXzsKzUk5fUmfMSJhwjhKMP44jUrecdert774b8sKEDt",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "reinstall"
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "F2Vsc1F4Aw8mvruFyYkvSZxGEK8eQaKaNpemw47Lq44D",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "3TocmxHHpHavFRzdeEK6CBSHX7WPyRJGEjqZvGjVbBpi",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "CWKH7vnzRypX88mvec6ecpLm3GewsBWFZGMH7X4tEEfm",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "GyzTNMsT9xouNmJvqMEhnzzZGsAdmq3ouBvFmavAHCX9",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_ALREADY_PAID",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "RLRM3hMeSLcaJ2gRSpuXYhQpPjEQh5a653HPTuXuwej",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "Buyer revoked permission",
+      "code": "OK",
+      "hash": "B47Ck4HzHoyyEtd2Ydpeu9Teu1ubfPT6W7ihbCCtMU9f",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "revoke"
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "BXTJppyHrHsf6wJaWQ8jzb2d8q5W4KLMt6zPLQvfRrb4",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "G7eiR2VJLNm8x5QgoMR7LWmXAcQx2X4LKWgCEznoV62J",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "9CwSxF221FksDqUrcBn645NkctJKdjLWgbfqfrMbRSjb",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "H3fuCaywwJwNCCeMsdxbv3sTPej2iX2DmJB6umQk95yD",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "ERR_RECIPIENT",
+      "code": "ERR_RECIPIENT",
+      "hash": "FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e",
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    },
+    {
+      "label": "Same key after delete",
+      "code": "AccessKeyDoesNotExist",
+      "hash": null,
+      "moved": "0",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": "Access key ed25519:HhdLkCcqu7uc7ScvsBKPDowt4prmtGqFz29A3NRdeJx3 does not exist at block height 277273884"
+    },
+    {
+      "label": "buyer reinstalls",
+      "code": "OK",
+      "hash": "4q8V1ascZdMiADjvPqu2Jz4h5BrNNP6DpXgb5pKB5ikN",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "kind": "reinstall"
+    },
+    {
+      "label": "OK",
+      "code": "OK",
+      "hash": "F7m4Y8eh5GNNKsYTpxgCMAfDFLTXgoKhk1NrREEYFkJy",
+      "moved": "48000000",
+      "signer": "i198b44.mtrfc658fd1.testnet",
+      "failure": null
+    }
+  ],
+  "attacks": []
+}
