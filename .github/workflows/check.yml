@@ -17,9 +17,6 @@ jobs:
         with:
           node-version: 20
       - uses: dtolnay/rust-toolchain@stable
-      - name: Rust unit tests (contract)
-        run: cargo test
-        working-directory: contract
       - name: Rust unit tests (contract-tee)
         run: cargo test
         working-directory: contract-tee

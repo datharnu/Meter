@@ -10,7 +10,7 @@ node --test app/lib/rule.test.mjs chain/line.test.mjs
 cd app && npm install && npm run dev   # http://localhost:3000
 ```
 
-From `contract-v2/`, `contract/`, `contract-tee/`: `cargo test`.
+From `contract-v2/` and `contract-tee/`: `cargo test`. (`contract/` payment-record source does not build standalone; proofs are on chain at `m028a47`.)
 
 ## Receipt files (do not edit for proofs)
 

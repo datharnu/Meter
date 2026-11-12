@@ -94,7 +94,19 @@ Receipts: `app/public/inject.json` (`i198b44.mtrfc658fd1.testnet`), `app/public/
 
 ## What is and is not verifiable
 
-`node chain/verify.mjs` re-reads the receipt files against NEAR testnet (archival RPC first), decodes each recorded transaction hash against its receipt code, re-reads contract storage and wasm, and prints `receipts M/N match` before `verify: ok`. CI runs this on push to `main`, nightly, and manual dispatch (up to three RPC retries). A row below is `ok` only when that command checks it. `not checked` means the command says so, or the check does not exist.
+`node chain/verify.mjs` re-reads the receipt files against NEAR testnet (archival RPC first), decodes each recorded transaction hash against its receipt code, re-reads contract storage and wasm, and prints `receipts M/N match` before `verify: ok`. On the receipts checked in at 2026-11-12, that line is **`receipts 52/76 match (24 not decoded)`**. The **52** are `release` (and similar) outcomes where archival RPC returns a SuccessValue or `ERR_*` failure on the meter contract receipt. The **24 not decoded** fall into these categories:
+
+| Category | Reason |
+| --- | --- |
+| **Buyer key delete / revoke** | Transaction is `DeleteKey` or buyer-signed admin action; no meter `release` return to compare. |
+| **Late deposit at deadline** | Funding goes through `ft_transfer_call`; the token callback returns **`"0"`** on chain. The receipt row uses **`ERR_TOO_LATE` from the run script**, not from a `release` return. |
+| **Abandoned probe runs** | `failureKept` rows such as `WINDOW_WAIT` on `ia37910` are not hero-contract `release` paths. |
+| **Tripwire bundle** | Fifth refusal txs that include `DeleteKey` in the same hash may not expose a final `ERR_*` SuccessValue on the meter contract receipt. |
+| **Unresolvable RPC row** | Hash present in the receipt JSON but no matching outcome on the meter contract after trying listed signers (logged per row). |
+
+CI runs this on push to `main`, nightly, and manual dispatch (up to three RPC retries). A row below is `ok` only when that command checks it. `not checked` means the command says so, or the check does not exist.
+
+The payment-record Rust tree in `contract/` does not currently build standalone (`mod attest` with no `attest.rs` in that crate); the deployed payment record is re-read on testnet at `m028a47` and in `app/public/chain.json`.
 
 | Check | Today | What it means |
 | --- | --- | --- |
@@ -350,12 +362,12 @@ A pool needs more than one buyer and more than one balance. The deployed meter i
 
 | Layer | Choice | Why |
 | --- | --- | --- |
-| Contracts | Rust, `near-sdk` 5.30.0, `near-sys` 0.4.0 | The three recorded accounts are NEAR contracts. The time gate does not enable the `unstable` feature and does not verify a TEE quote. |
+| Contracts | Rust, `near-sdk` 5.30.0, `near-sys` 0.4.0 | The three recorded accounts are NEAR contracts. `contract-tee/` and `contract-v2/` build in CI; `contract/` (payment record sources) does not build standalone—receipts are on chain. The time gate does not enable the `unstable` feature and does not verify a TEE quote. |
 | Hashing | `sha2` 0.10, `unicode-normalization` 0.1 | The line hash has to match in Rust and in `chain/line.mjs`. |
 | App | Next.js 15.5.4, React 19.1.1 | The page is a reader for the three receipts plus a local preview. No wallet library. |
 | Rule shared with the page | `app/lib/rule.mjs` | The homepage and `/clause` call this function. They do not keep a second copy of the checks. |
 | Chain reads | `chain/verify.mjs` against `https://test.rpc.fastnear.com` | A judge can re-read the accounts without a key. |
-| CI | GitHub Actions, Node 20 | `.github/workflows/check.yml` runs the rule tests and the line-hash tests. It does not run `cargo test` and it does not run `verify.mjs`. |
+| CI | GitHub Actions, Node 20, Rust stable | `.github/workflows/check.yml` runs `cargo test` in `contract-tee` and `contract-v2`, `node --test`, and `node chain/verify.mjs` (with RPC retries). |
 
 ## Getting started
 
@@ -384,13 +396,12 @@ Open the desk, then **Continue in this browser**. That writes a tab name into `s
 
 ```bash
 node --test app/lib/rule.test.mjs chain/line.test.mjs
-(cd contract && cargo test)
 (cd contract-tee && cargo test)
 (cd contract-v2 && cargo test)
 node chain/verify.mjs
 ```
 
-CI runs the first command, `node --test`. It does not run `cargo test` or `node chain/verify.mjs`. `contract/src/rule.rs` is the payment-record rule. `contract-v2` covers the window, the late deposit, the unregistered transfer, and the test-only pool file. `verify.mjs` needs a network path to NEAR testnet. `node chain/prove.mjs` deploys a fresh payment-record contract. `FORCE=1 node chain/v2-prove.mjs` deploys another time gate. Neither is required to read the recorded runs.
+CI runs those commands. `contract/src/rule.rs` mirrors the payment-record rule but the `contract/` crate does not build standalone today; proofs live on chain at `m028a47`. `contract-v2` covers the window, the late deposit, the unregistered transfer, and the test-only pool file. `verify.mjs` needs a network path to NEAR testnet. `node chain/prove.mjs` deploys a fresh payment-record contract. `FORCE=1 node chain/v2-prove.mjs` deploys another time gate. Neither is required to read the recorded runs.
 
 > [!WARNING]
 > `npm test` inside `app/` runs `lib/rule.test.mjs` only. The line-hash tests live in `chain/` and are not part of that script. Use the command in the block above from the repo root.
@@ -489,11 +500,21 @@ First commit in this repository: [`cfc4f819`](https://github.com/datharnu/Meter/
 
 ## AI assistance
 
-<!-- TODO: waiting for author wording — see issue in chat before filling this block. -->
+- **Tools:** [TODO: list models, IDEs, or agents used, e.g. Cursor, CLI.]
+- **What AI did:** [TODO: drafting, refactors, test scaffolding, README prose, etc.]
+- **What a human did:** [TODO: contract design, on-chain runs, keys, judging which receipts are canonical, prompt text for hijack runs.]
+- **Verification:** Every payment claim in this README is tied to a hash in `app/public/*.json` or to `node chain/verify.mjs`. [TODO: add your review process before submission.]
 
 ## Track by track
 
-<!-- TODO: organizers' track 06 and 08 requirements were not pasted; add requirement | where shown | honest gap when available. -->
+<!-- TODO: paste organizers' exact text for tracks 06 and 08; the table below is a scaffold only. -->
+
+| Track | Requirement (from organizers) | Where shown | Honest gap |
+| --- | --- | --- | --- |
+| **06** | [TODO: paste track 06 requirement] | Hijack receipts, `verify.mjs`, `/attack` | [TODO] |
+| **06** | [TODO] | `preview` on `/check` and `chain/check.mjs` — **pre-check only**; view call, does not block spend or ask a human | Does not replace treasury controls |
+| **08** | [TODO: paste track 08 requirement] | Sealed line, four checks, testnet hashes | [TODO] |
+| **08** | [TODO] | `real-token.json` / Circle USDC | **Not recorded yet** — see `docs/real-token.SHAPE.md` |
 
 ## Team and license
 
