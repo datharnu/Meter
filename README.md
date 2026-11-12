@@ -8,7 +8,7 @@
 
 **Prompts are a soft guard. The key is the hard guard.**
 
-**Track:** AI Security & Defense. <!-- TODO: hackathon name and rules URL — paste from the hackathon page. -->
+**Track:** AI Security & Defense (also Real-World Money). Built at NEAR HACKATHON, https://nearhackathon.com.
 
 [![check](https://github.com/datharnu/Meter/actions/workflows/check.yml/badge.svg)](https://github.com/datharnu/Meter/actions/workflows/check.yml)
 
@@ -506,7 +506,6 @@ chain/line.mjs             the same line hash as the contract
 
 - Mainnet after an audit. These runs are testnet.
 - Circle USDC run recorded in `app/public/real-token.json` on `medbf5c` (see [docs/real-token.SHAPE.md](docs/real-token.SHAPE.md)). Aborted deploy `mbec276` left ~8 USDC in meters.
-- <!-- TODO: a short GIF of Before the time returning ERR_NOT_YET. docs/home.jpg is a still of the first screen on meter-brown.vercel.app. -->
 
 </details>
 
@@ -518,7 +517,8 @@ chain/line.mjs             the same line hash as the contract
 
 ## Built during the hackathon
 
-First commit in this repository: [`cfc4f819`](https://github.com/datharnu/Meter/commit/cfc4f81934495814b8f6efea0b8cd9497fc77576) on **2026-11-10** (local git: `2026-11-10 22:59:34 +0100`). <!-- TODO: announced hackathon start date from organizers. -->
+First commit in this repository: [`cfc4f819`](https://github.com/datharnu/Meter/commit/cfc4f81934495814b8f6efea0b8cd9497fc77576) on **2026-11-10** (local git: `2026-11-10 22:59:34 +0100`).
+The hackathon window opened 2026-11-01T00:00:00Z and closes 2026-11-14T23:59:00Z. The first commit above falls inside it.
 
 ## AI assistance
 
@@ -542,11 +542,9 @@ Track **08 · Real-World Money:** “Build payroll, invoicing, remittances, merc
 | 08 · stablecoin rails and NEAR Intents | — | Not built. |
 | 08 · “usable tomorrow” | — | Not claimed for production payroll or merchant use. |
 
-Detailed organiser requirements beyond the track descriptions were not seen.
-
 ## Team and license
 
-<!-- TODO: names, roles, and a contact. The git history starts at cfc4f81 on 10 Nov 2026. -->
+Team: Odunayo. Contact: https://x.com/OdunDev
 
 Contributing: open an issue on [github.com/datharnu/Meter](https://github.com/datharnu/Meter). Do not commit `.keys/`.
 
