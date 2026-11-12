@@ -1,10 +1,11 @@
 // Re-read a Meter receipt from public testnet state. No keys.
 
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { lineHash } from "./line.mjs";
+import { printReceiptReport, verifyReceiptRows } from "./receipt-decode.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const receipt = JSON.parse(readFileSync(join(root, "app/public/chain.json"), "utf8"));
@@ -153,10 +154,19 @@ if (timed.lateDeposit) {
 if ((await keysOf(receipt.contract)).length !== 0) throw new Error("Payment record still has an access key");
 await checkInject();
 await checkCode();
+const receiptReport = await verifyReceiptRows(root, readFileSync, join, RPC);
+printReceiptReport(receiptReport);
 console.log(`time gate · ${timed.contract}`);
 console.log(`  paid      meter ${timed.meterId} · ${timedCodes.join(" · ")} · ok`);
 console.log(`  window    ${notBefore} · quote not checked · ok`);
 console.log(`  line      ${recomputed.slice(0, 16)} · token ${pinnedToken} · ok`);
+if (existsSync(join(root, "app/public/real-token.json"))) {
+  const real = JSON.parse(readFileSync(join(root, "app/public/real-token.json"), "utf8"));
+  const live = await codeOf(real.contract);
+  console.log(`real-token · ${real.contract} · code ${live.hash} · file present · ok`);
+} else {
+  console.log("real-token · absent · ok");
+}
 console.log("verify: ok");
 
 function requireHash(file) {
