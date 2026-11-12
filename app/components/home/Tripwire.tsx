@@ -40,7 +40,7 @@ export function Tripwire({ receipt }: { receipt: InjectReceipt }) {
         <li>
           <b>Key deleted</b>
           {burn?.keysAfterBurn === 0 ? (
-            <span>Access-key list empty. {burn.nextCall?.code}. {burn.burnHash ? <a className="mono" href={txUrl(burn.burnHash)}>{shortHash(burn.burnHash)}</a> : null}</span>
+            <span>Access-key list empty. The promise receipt is DeleteKey. {burn.burnHash ? <a className="mono" href={txUrl(burn.burnHash)}>{shortHash(burn.burnHash)}</a> : null} The transaction status is empty.{burn.nextCall?.code ? ` The next call returned ${burn.nextCall.code}.` : ""}</span>
           ) : <span>This receipt does not show an empty key list.</span>}
         </li>
         <li>

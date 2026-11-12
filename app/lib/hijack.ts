@@ -145,7 +145,7 @@ export function onChainLabel(runs: number | undefined, broadcast: number | undef
   const lead = chainPhrase(runs, broadcast);
   const head = lead ? `${lead}.` : `${runs} identical runs, ${broadcast} on chain.`;
   if (broadcast === 1) return `${head} The hash is the one broadcast.`;
-  if (which === "delete") return `${head} Each broadcast has its own hash. The link is the call whose promise deletes the key.`;
+  if (which === "delete") return `${head} Each broadcast has its own hash. The link is the call whose promise receipt is DeleteKey. The transaction status is empty.`;
   return `${head} Each broadcast has its own hash. The link is the first.`;
 }
 
@@ -189,6 +189,14 @@ export type DefenceFile = {
   meterKey?: { attacks?: DefenceAttack[] };
   escalation?: { runs?: DefenceAttack[]; payloads?: unknown[]; model?: string; temperature?: number };
 };
+
+export function escalationAttack(file: DefenceFile | null, id = 1) {
+  const runs = file?.escalation?.runs ?? [];
+  return {
+    full: runs.find((row) => row.id === id && row.config !== "meterKey") ?? null,
+    meter: runs.find((row) => row.id === id && row.config === "meterKey") ?? null,
+  };
+}
 
 export function sampleLine(file: DefenceFile | null) {
   const model = file?.escalation?.model || file?.prompts?.model;
@@ -334,20 +342,22 @@ export function ladderRows(receipt: InjectReceipt): LadderRow[] {
   return (receipt.attacks ?? []).map((attack) => {
     const trial = broadcastTrial(attack);
     const permission = attack.kind === "permission" || Boolean(attack.parts);
-    const codes = permission
-      ? permissionCodes(attack)
-      : trial?.code || attack.expected || "";
     const hash = permission ? null : trial?.hash || attack.payment?.hash || null;
     const shown = hash && hash.length > 0 ? hash : null;
-    const errors = permission ? permissionCodes(attack) : "";
+    const burn = Boolean(shown && attack.burnHash && shown === attack.burnHash);
+    const attempt = trial?.code || attack.expected || "ERR_RECIPIENT";
     return {
       key: String(attack.id ?? attack.title),
       name: attack.title || `Attack ${attack.id}`,
       obeyed: obeyLabel(attack),
-      code: codes,
+      code: permission
+        ? "key permission"
+        : burn
+          ? `attempt ${attempt}; transaction status is empty`
+          : trial?.code || attack.expected || "",
       moved: attack.moneyMoved ?? trial?.moved ?? "0",
       hash: shown,
-      hashNote: shown ? null : permission ? `rejected before inclusion (no tx). ${errors}` : "No transaction in this receipt.",
+      hashNote: shown ? null : permission ? "No transaction. Rejected before inclusion. Not a contract refusal." : "No transaction in this receipt.",
       evidence: shown ? "tx hash" : "rejected before inclusion (no tx)",
       permission,
       attack,
@@ -355,20 +365,32 @@ export function ladderRows(receipt: InjectReceipt): LadderRow[] {
   });
 }
 
-function permissionCodes(attack: InjectAttack) {
-  const parts = attack.parts ?? {};
-  const codes = ["revoke", "deposit", "token"]
-    .map((key) => parts[key]?.expected || parts[key]?.trials?.find((trial) => trial.code)?.code)
-    .filter((code): code is string => Boolean(code));
-  return codes.join(" / ") || "key permission";
-}
-
 export function splitInvoice(invoice: string | undefined) {
   if (!invoice) return null;
-  const marker = "\n\nNote:";
-  const at = invoice.indexOf(marker);
-  if (at < 0) return { head: invoice, note: null as string | null };
-  return { head: invoice.slice(0, at), note: invoice.slice(at + marker.length).trim() };
+  const head: string[] = [];
+  const extra: string[] = [];
+  let note: string | null = null;
+  for (const line of invoice.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (/^invoice$/i.test(trimmed)) {
+      head.push(trimmed);
+      continue;
+    }
+    const at = trimmed.indexOf(":");
+    const label = at >= 1 ? trimmed.slice(0, at).trim() : "";
+    if (/^note$/i.test(label)) {
+      note = trimmed.slice(at + 1).trim();
+      continue;
+    }
+    if (/^(payee|amount|terms)$/i.test(label)) {
+      head.push(trimmed);
+      continue;
+    }
+    // A line with no Payee/Amount/Terms/Note label was dropped, including a fake [SYSTEM] line and a Footer line.
+    extra.push(trimmed);
+  }
+  return { head: head.join("\n"), note, extra };
 }
 
 export function balanceDelta(before: string | undefined, after: string | undefined) {

@@ -27,7 +27,7 @@ const STEPS = [
     short: "The buyer locks 48.00",
     body: "Testnet tUSDC moves onto the contract, up to the stored amount. Extra tokens are sent back. Mint on this token is public.",
     shows: "On the token",
-    detail: "token.mtrfc658fd1.testnet, not Circle USDC.",
+    detail: "Toy token token.mtrfc658fd1.testnet (public mint). The medbf5c run uses Circle testnet USDC.",
     never: "An owner withdraw.",
   },
   {

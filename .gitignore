@@ -7,3 +7,9 @@ node_modules/
 .env
 *.tsbuildinfo
 chain/inject-partial.json
+docs/film/node_modules/
+docs/film/raw/
+docs/film/audio/
+docs/film/probe/
+docs/film/cut/
+docs/film/frames/

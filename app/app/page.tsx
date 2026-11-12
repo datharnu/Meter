@@ -125,7 +125,7 @@ export default function HomePage() {
         <Headline />
         <p className="thesis">Meter enforces the stored line. It does not judge the work.</p>
         <p className="market-lead">
-          The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. The token is testnet, not Circle USDC.
+          The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. The hijack runs use a toy testnet token (public mint). The medbf5c run uses Circle testnet USDC.
         </p>
         <div className="market-actions">
           <a className="btn" href="#hijack">See the hijack</a>
@@ -320,7 +320,7 @@ export default function HomePage() {
             </div>
             <div>
               <dt>This is Circle USDC on mainnet.</dt>
-              <dd>The token is <span className="mono">token.mtrfc658fd1.testnet</span>. Mainnet waits on an audit. The contract has no owner withdraw.</dd>
+              <dd>Not on mainnet. The hijack runs use a toy testnet token (public mint), <span className="mono">token.mtrfc658fd1.testnet</span>. The medbf5c run uses Circle testnet USDC. Mainnet waits on an audit. The contract has no owner withdraw.</dd>
             </div>
             <div>
               <dt>A server holds the key.</dt>

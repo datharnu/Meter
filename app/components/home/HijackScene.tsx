@@ -3,20 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  attackById,
   baselineTrial,
   attackerReached,
-  broadcastTrial,
-  callDestination,
-  hardenedCase,
-  invoiceField,
+  escalationAttack,
   onChainLabel,
   outcomeWord,
-  overpay,
-  termsFieldMissing,
   splitInvoice,
   toolLine,
-  type DefenceAttack,
   type DefenceFile,
   type InjectReceipt,
   type ToolCall,
@@ -38,7 +31,8 @@ function invoiceRows(invoice: string | undefined) {
       return { label: line.slice(0, at).trim(), value: line.slice(at + 1).trim() };
     })
     .filter((row): row is { label: string; value: string } => Boolean(row?.value));
-  return { rows, note: parts.note, raw: parts.head };
+  const extra = parts.extra ?? [];
+  return { rows, note: parts.note, raw: parts.head, extra };
 }
 
 function Bill({
@@ -52,6 +46,7 @@ function Bill({
   note,
   headline,
   subline,
+  caption,
 }: {
   title: string;
   invoice: string | undefined;
@@ -63,6 +58,7 @@ function Bill({
   note: string;
   headline?: string | null;
   subline?: string | null;
+  caption?: string | null;
 }) {
   const paper = invoiceRows(invoice);
   const amount = paper?.rows.find((row) => row.label.toLowerCase() === "amount")?.value;
@@ -72,13 +68,17 @@ function Bill({
         <p>{title}</p>
         <span className="tag" data-kind={word === "PAID" ? "paid" : "refused"}>{word}</span>
       </header>
-      {headline ? <p className="bill-amount bill-attacker">{headline}</p> : <p className="bill-amount">{amount || figure}<small>tUSDC</small></p>}
+      {headline ? <p className="bill-amount bill-attacker">{headline}</p> : <p className="bill-amount">{(word === "STOPPED" ? figure : amount) || figure}<small>tUSDC</small></p>}
       {subline ? <p className="note">{subline}</p> : null}
       {paper && paper.rows.length > 0 ? (
         <dl>
           {paper.rows.filter((row) => row.label.toLowerCase() !== "amount").map((row) => (
             <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
           ))}
+          {paper.extra.map((line) => (
+            <div className="bill-note" key={line}><dt>Injected</dt><dd><mark>{line}</mark></dd></div>
+          ))}
+          {caption ? <p className="note">{caption}</p> : null}
           {paper.note ? <div className="bill-note"><dt>Note</dt><dd><mark>{paper.note}</mark></dd></div> : null}
         </dl>
       ) : (
@@ -96,103 +96,72 @@ function Bill({
   );
 }
 
-export function HijackCompare({
-  receipt,
-  prompt,
-  onPrompt,
-}: {
-  receipt: InjectReceipt;
-  prompt: "naive" | "hardened";
-  onPrompt: (next: "naive" | "hardened") => void;
-}) {
-  const hasHardened = Boolean(receipt.hardened?.cases?.length);
+const CARD_SUBLINE = "Same model. The first card is the weak-prompt baseline. The other two are the same escalated injection against a hardened prompt, on a full-access key and on a Meter key.";
+
+export function HijackCompare({ receipt }: { receipt: InjectReceipt }) {
   const naive = baselineTrial(receipt);
-  const meter = attackById(receipt, 1);
-  const meterTrial = broadcastTrial(meter);
-  const hardBase = prompt === "hardened" ? hardenedCase(receipt, "baseline") : null;
-  const hardMeter = prompt === "hardened" ? hardenedCase(receipt, "1") : null;
-  const leftCall = hardBase?.trials?.[0]?.toolCall ?? naive?.transcript?.toolCall;
-  const rightCall = hardMeter?.trials?.[0]?.toolCall ?? meterTrial?.transcript?.toolCall;
-  const { file: defence } = useDefence();
-  const escalationOnly = defence?.escalation?.runs?.find((item) => item.config === "promptOnly" && item.id === 1) ?? null;
-  const escalationMeter = defence?.escalation?.runs?.find((item) => item.config === "meterKey" && item.id === 1) ?? null;
-  const promptOnly = escalationOnly ?? defence?.promptOnly?.attacks?.find((item) => item.id === 1) ?? null;
+  const { file: defence, state } = useDefence();
+  const { full, meter } = escalationAttack(defence, 1);
   const attacker = receipt.attacker || "";
-  const promptWhere = promptOnly ? promptOnlyWhere(promptOnly, attacker) : null;
-  const promptHeadline = promptOnly ? promptHeadlineFor(promptOnly, attacker) : null;
+  const waiting = state === "loading" || state === "empty";
 
   return (
     <div>
-      {hasHardened ? (
-        <div className="hijack-toggle" role="group" aria-label="Which prompt">
-          <button type="button" data-on={prompt === "naive"} onClick={() => onPrompt("naive")}>No defence</button>
-          <button type="button" data-on={prompt === "hardened"} onClick={() => onPrompt("hardened")}>Hardened prompt</button>
-        </div>
-      ) : null}
-      <div className="hijack-split" data-cols={promptOnly ? "3" : "2"}>
+      <div className="hijack-split" data-cols="3">
         <Bill
           title="No defence"
-          invoice={hardBase?.invoice ?? receipt.baseline?.invoice}
-          call={leftCall}
+          invoice={receipt.baseline?.invoice}
+          call={naive?.transcript?.toolCall}
           word="PAID"
-          figure={`${formatUnits(receipt.baseline?.moneyMoved ?? "0")} sent to ${receipt.attacker || "the other account"}`}
+          figure={formatUnits(receipt.baseline?.moneyMoved ?? "0")}
           code={naive?.code || "OK"}
           hash={naive?.hash || null}
-          note={hardBase ? `Hardened prompt obeyed ${hardBase.obeyed} of ${hardBase.runs}. The hash is the recorded naive call. Not broadcast.` : (onChainLabel(receipt.baseline?.runs, receipt.baseline?.broadcast) || "Broadcast count is not in this receipt.")}
+          note={onChainLabel(receipt.baseline?.runs, receipt.baseline?.broadcast) || "Broadcast count is not in this receipt."}
         />
-        {promptOnly ? (
+        {full ? (
           <Bill
-            title="Prompt-only defence"
-            invoice={promptOnly.invoice}
-            call={promptOnly.toolCall}
-            word={outcomeWord(attackerReached(promptOnly, attacker))}
-            figure={promptHeadline || ""}
-            headline={promptHeadline}
-            subline={promptWhere}
-            code={promptOnly.code || (promptOnly.emittedMalicious ? "emitted" : "no malicious call")}
-            hash={promptOnly.hash || null}
-            note={escalationOnly ? "Escalation, attack 1. One temperature-0 sample." : `${promptOnly.emittedMalicious ? "The agent emitted the call the note asked for." : "The agent did not emit the malicious call. The broadcast is the sealed line."} ${promptOnly.evidence}.`}
+            title="Hardened prompt, full-access key"
+            invoice={full.invoice}
+            call={full.toolCall}
+            word={outcomeWord(attackerReached(full, attacker))}
+            figure={formatUnits(attackerReached(full, attacker))}
+            headline={`to attacker: ${formatUnits(attackerReached(full, attacker))}`}
+            code={full.code || "OK"}
+            hash={full.hash || null}
+            caption="The instruction is split across the note and the footer."
+            note="Escalation attack 1 on h09d6ce. The call paid other.testnet. One temperature-0 sample."
           />
-        ) : null}
-        <Bill
-          title="With Meter"
-          invoice={escalationMeter?.invoice ?? hardMeter?.invoice ?? meterTrial?.transcript?.invoice}
-          call={escalationMeter?.toolCall ?? rightCall}
-          word="STOPPED"
-          headline={escalationMeter ? `${formatUnits(escalationMeter.moneyMoved || "0")} moved` : null}
-          figure={`${formatUnits(escalationMeter?.moneyMoved ?? meter?.moneyMoved ?? "0")} moved`}
-          code={escalationMeter?.code || meterTrial?.code || meter?.expected || "ERR_RECIPIENT"}
-          hash={escalationMeter?.hash || meterTrial?.hash || null}
-          note={escalationMeter ? "Escalation, attack 1. The agent emitted the same wrong recipient. One temperature-0 sample." : hardMeter ? `Hardened prompt obeyed ${hardMeter.obeyed} of ${hardMeter.runs}. The hash is the recorded naive call. Not broadcast.` : (onChainLabel(meter?.runs, meter?.broadcast) || "Broadcast count is not in this receipt.")}
-        />
+        ) : (
+          <PendingBill title="Hardened prompt, full-access key" waiting={waiting} />
+        )}
+        {meter ? (
+          <Bill
+            title="Hardened prompt, Meter key"
+            invoice={meter.invoice}
+            call={meter.toolCall}
+            word="STOPPED"
+            figure={formatUnits(meter.moneyMoved || "0")}
+            code={meter.code || "ERR_RECIPIENT"}
+            hash={meter.hash || null}
+            caption="The instruction is split across the note and the footer."
+            note="Escalation attack 1 on h09d6ce. The contract returned ERR_RECIPIENT and moved 0.00. One temperature-0 sample."
+          />
+        ) : (
+          <PendingBill title="Hardened prompt, Meter key" waiting={waiting} />
+        )}
       </div>
-      <p className="hijack-differ">
-        {prompt === "hardened"
-          ? "The hardened prompt paid the header. The hashes are the recorded naive calls."
-          : "The model obeyed in both. The key is what differed."}
-      </p>
+      <p className="hijack-differ">{CARD_SUBLINE}</p>
     </div>
   );
 }
 
-function promptHeadlineFor(row: DefenceAttack, attacker: string) {
-  const paid = overpay(row);
-  if (paid) return null;
-  if (callDestination(row) !== attacker) return null;
-  return `to attacker: ${formatUnits(attackerReached(row, attacker))}`;
-}
-
-function promptOnlyWhere(row: DefenceAttack, attacker: string) {
-  const paid = overpay(row);
-  if (paid) return `overpaid ${formatUnits(paid.moved)} to the sealed payee, ${paid.times}x the sealed amount`;
-  const dest = callDestination(row);
-  const payee = invoiceField(row.invoice, "Payee");
-  const moved = BigInt(row.moneyMoved || "0");
-  if (termsFieldMissing(row)) return "N/A. This tool has no terms field.";
-  if (row.id === 4 && payee && dest === payee && moved > BigInt(0)) return "paid early, outside the window";
-  if (payee && dest === payee && moved > BigInt(0)) return `${formatUnits(row.moneyMoved)} to the sealed payee, correct`;
-  if (dest === attacker && moved > BigInt(0)) return null;
-  return `${formatUnits(row.moneyMoved || "0")} moved`;
+function PendingBill({ title, waiting }: { title: string; waiting: boolean }) {
+  return (
+    <article className="bill">
+      <header><p>{title}</p></header>
+      <p className="note">{waiting ? "Reading the escalation receipt." : "The escalation receipt did not load."}</p>
+    </article>
+  );
 }
 
 export function useDefence() {
@@ -241,15 +210,13 @@ export function ThreatCard({ note }: { note?: string | null }) {
 }
 
 export function HijackScene({ receipt }: { receipt: InjectReceipt }) {
-  const [prompt, setPrompt] = useState<"naive" | "hardened">("naive");
   return (
     <div className="hijack">
       <header className="craft-intro">
         <p className="craft-eyebrow">The hijack</p>
         <h2>A prompt can be talked into the wrong payment. The Meter key moved 0.00.</h2>
-        <p className="craft-lead">Same model, same poisoned invoice. One clerk holds a full-access key. One holds a Meter key.</p>
       </header>
-      <HijackCompare receipt={receipt} prompt={prompt} onPrompt={setPrompt} />
+      <HijackCompare receipt={receipt} />
       <ThreatCard note={receipt.notYetNote} />
       <p><Link href="/attack">Open the record</Link></p>
     </div>

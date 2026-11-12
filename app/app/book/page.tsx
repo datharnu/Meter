@@ -75,7 +75,7 @@ export default function BookPage() {
             <RunStats steps={steps} />
             <RunTable receipt={receipt} steps={steps} />
             <p className="note">
-              <span className="mono break">{receipt.contract}</span>. The token is <span className="mono break">{receipt.token}</span>, a public-mint test token, not Circle USDC. The refund on this contract is on chain. Every row shares {receipt.at.slice(0, 16).replace("T", " ")} UTC because the receipt records the run, not a clock on each line.
+              <span className="mono break">{receipt.contract}</span>. The token is <span className="mono break">{receipt.token}</span>, a toy testnet token (public mint). The medbf5c run uses Circle testnet USDC. The refund on this contract is on chain. Every row shares {receipt.at.slice(0, 16).replace("T", " ")} UTC because the receipt records the run, not a clock on each line.
             </p>
           </>
         )}

@@ -1,7 +1,7 @@
 export const trustPhrases = [
   { label: "Built on NEAR testnet", icon: "near" as const },
   { label: "token.mtrfc658fd1.testnet", icon: null },
-  { label: "Not Circle USDC", icon: null },
+  { label: "medbf5c: Circle testnet USDC", icon: null },
 ];
 
 export const journey = {
@@ -182,7 +182,7 @@ export const faq = {
     },
     {
       q: "Is this mainnet USDC?",
-      a: "No. The token is token.mtrfc658fd1.testnet. Mainnet waits on an audit.",
+      a: "Not on mainnet. The hijack runs use a toy testnet token (public mint). The medbf5c run uses Circle testnet USDC. Mainnet waits on an audit.",
     },
     {
       q: "Does Meter hold a signer?",

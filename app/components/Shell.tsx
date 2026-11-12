@@ -50,7 +50,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
             <div className="topbar-end">
-              <span className="tag" data-kind="neutral"><span aria-hidden="true"><NearMark variant="tile" /></span>NEAR testnet</span>
+              <span className="tag net-pill" data-kind="neutral"><span aria-hidden="true"><NearMark variant="tile" /></span><span className="net-pill-name">NEAR testnet</span></span>
               <ProfileDock place="top" />
             </div>
           </div>

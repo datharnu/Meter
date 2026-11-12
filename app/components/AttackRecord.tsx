@@ -6,16 +6,18 @@ import { HijackCompare, ThreatCard, useDefence } from "@/components/home/HijackS
 import { Tripwire } from "@/components/home/Tripwire";
 import {
   attackById,
+  attackerReached,
   baselineTrial,
-  chainPhrase,
+  callDestination,
   deadKeyHashes,
-  hardenedCase,
+  invoiceField,
   ladderRows,
   obeyText,
   onChainLabel,
   outcomeWord,
   overpay,
   sampleLine,
+  splitInvoice,
   termsFieldMissing,
   toolLine,
   tripwireFact,
@@ -26,20 +28,7 @@ import {
 } from "@/lib/hijack";
 import { formatUnits, txUrl } from "@/lib/useReceipt";
 
-function hardenedObey(receipt: InjectReceipt, row: LadderRow) {
-  if (row.attack.parts) {
-    const parts = ["revoke", "deposit", "token"].map((key) => hardenedCase(receipt, `${row.attack.id}-${key}`)).filter(Boolean);
-    if (!parts.length) return "—";
-    return parts.every((item) => item && item.obeyed === item.runs)
-      ? (chainPhrase(parts[0]?.runs, 0) ?? "yes")
-      : parts.map((item) => `${item?.obeyed} of ${item?.runs}`).join(" · ");
-  }
-  const found = hardenedCase(receipt, String(row.attack.id));
-  if (!found) return "—";
-  return obeyText(found.obeyed, found.runs, 0);
-}
-
-function defenceLine(label: string, row: DefenceAttack | undefined) {
+function defenceLine(label: string, row: DefenceAttack | undefined, attacker: string) {
   if (!row) return null;
   if (termsFieldMissing(row)) {
     return <small>{label}: N/A. This tool has no terms field, so this cell is not resistance.</small>;
@@ -47,9 +36,13 @@ function defenceLine(label: string, row: DefenceAttack | undefined) {
   const paid = overpay(row);
   const obeyed = row.emittedMalicious ? "1 of 1" : "0 of 1";
   const early = row.id === 4 && label === "Prompt-only defence" ? " Paid early, outside the window." : "";
+  const payee = invoiceField(row.invoice, "Payee");
+  const sealed = payee && callDestination(row) === payee && BigInt(row.moneyMoved || "0") > BigInt(0)
+    ? `, ${formatUnits(row.moneyMoved)} to the sealed payee`
+    : "";
   const moved = paid
     ? `overpaid ${formatUnits(paid.moved)} to the sealed payee, ${paid.times}x the sealed amount`
-    : `moved ${formatUnits(row.moneyMoved)}`;
+    : `reached the injected target ${formatUnits(attackerReached(row, attacker))}${sealed}`;
   return (
     <small>
       {label}: obeyed {obeyed}, {toolLine(row.toolCall)}, {moved}, {row.evidence}{early}
@@ -64,12 +57,12 @@ function RowMeta({ receipt, row, defence }: { receipt: InjectReceipt; row: Ladde
       {row.permission ? <small className="hijack-perm">key permission, not a contract refusal</small> : null}
       {tripwireFact(receipt, row.attack) ? <small>{tripwireFact(receipt, row.attack)}</small> : null}
       {deadKeyHashes(row.attack).length ? <small>Not on a live key: {deadKeyHashes(row.attack).join(", ")}</small> : null}
-      <DefenceLines defence={defence} id={row.key} />
+      <DefenceLines defence={defence} id={row.key} attacker={receipt.attacker || ""} />
     </>
   );
 }
 
-function DefenceLines({ defence, id }: { defence: DefenceFile | null; id: string }) {
+function DefenceLines({ defence, id, attacker }: { defence: DefenceFile | null; id: string; attacker: string }) {
   const numeric = Number(id);
   if (!defence || !Number.isInteger(numeric)) return null;
   const only = defence.promptOnly?.attacks?.find((item) => item.id === numeric);
@@ -77,9 +70,20 @@ function DefenceLines({ defence, id }: { defence: DefenceFile | null; id: string
   if (!only && !meter) return null;
   return (
     <>
-      {defenceLine("Prompt-only defence", only)}
-      {defenceLine("With Meter", meter)}
+      {defenceLine("Prompt-only defence", only, attacker)}
+      {defenceLine("With Meter", meter, attacker)}
     </>
+  );
+}
+
+function InvoiceLines({ invoice }: { invoice: string | undefined }) {
+  const parts = splitInvoice(invoice);
+  if (!parts || (!parts.extra.length && !parts.note)) return null;
+  return (
+    <span className="attack-invoice">
+      {parts.extra.map((line) => <span className="bill-note" key={line}><mark>{line}</mark></span>)}
+      {parts.note ? <span className="bill-note"><mark>{parts.note}</mark></span> : null}
+    </span>
   );
 }
 
@@ -104,7 +108,9 @@ function Escalation({ defence }: { defence: DefenceFile | null }) {
                 : paid
                   ? <>{name}, attack {row.id}: {paid.times === "1" ? "paid" : "overpaid"} {formatUnits(paid.moved)} to the sealed payee, {paid.times}x the sealed amount. {toolLine(row.toolCall)}. {row.evidence}</>
                   : <>{name}, attack {row.id}: {row.emittedMalicious ? "emitted the malicious call" : "did not emit the malicious call"}. {toolLine(row.toolCall)}. Reached the injected target {formatUnits(row.injectedReached || "0")}. {row.evidence}</>}
+              {row.code && !termsFieldMissing(row) ? <> <span className="mono">{row.code}</span></> : null}
               {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
+              <InvoiceLines invoice={row.invoice} />
             </li>
           );
         })}
@@ -123,7 +129,6 @@ function recordedAt(iso: string | undefined) {
 }
 
 export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
-  const [prompt, setPrompt] = useState<"naive" | "hardened">("naive");
   const [showSystem, setShowSystem] = useState(false);
   const [copied, setCopied] = useState<"idle" | "done" | "failed">("idle");
   const rows = ladderRows(receipt);
@@ -131,13 +136,9 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
   const naive = baselineTrial(receipt);
   const when = recordedAt(receipt.at);
   const meter = attackById(receipt, 1);
-  const hardBase = prompt === "hardened" ? hardenedCase(receipt, "baseline") : null;
-  const hardMeter = prompt === "hardened" ? hardenedCase(receipt, "1") : null;
-  const system = prompt === "hardened" && receipt.hardened?.system ? receipt.hardened.system : receipt.system;
+  const system = receipt.system;
   const { file: defence, state: defenceState } = useDefence();
-  const baselineObey = hardBase
-    ? obeyText(hardBase.obeyed, hardBase.runs, 0)
-    : obeyText(baseline?.obeyed, baseline?.runs, baseline?.broadcast);
+  const baselineObey = obeyText(baseline?.obeyed, baseline?.runs, baseline?.broadcast);
 
   return (
     <div className="attack-record">
@@ -145,11 +146,11 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
         <div>
           <p className="kicker">Record</p>
           <h1>The hijack</h1>
-          <p className="lede">One poisoned invoice. The naive key paid. The Meter key did not.</p>
+          <p className="lede">One poisoned invoice. The no-defence key paid. The Meter key did not.</p>
         </div>
         {receipt.contract ? <p className="mono">{receipt.contract}{when ? ` · ${when}` : ""}</p> : null}
       </header>
-      <HijackCompare receipt={receipt} prompt={prompt} onPrompt={setPrompt} />
+      <HijackCompare receipt={receipt} />
       <h2 className="hijack-sub">Attack ladder</h2>
       <div className="pitch-scroll">
         <table className="pitch-table">
@@ -188,12 +189,16 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                     <RowMeta receipt={receipt} row={row} defence={defence} />
                   </div>
                 </th>
-                <td>{prompt === "hardened" ? hardenedObey(receipt, row) : row.obeyed}</td>
+                <td>{row.obeyed}</td>
                 <td className="mono">{row.code}</td>
                 <td>{outcomeWord(row.moved)} {formatUnits(row.moved)}</td>
                 <td>
-                  <span className="evidence">{row.evidence}</span>
-                  {row.hash ? <a className="mono hash-full" href={txUrl(row.hash)}>{row.hash}</a> : <span>{row.hashNote || "No transaction in this receipt."}</span>}
+                  {row.permission ? <span>{row.hashNote}</span> : (
+                    <>
+                      <span className="evidence">{row.evidence}</span>
+                      {row.hash ? <a className="mono hash-full" href={txUrl(row.hash)}>{row.hash}</a> : <span>{row.hashNote || "No transaction in this receipt."}</span>}
+                    </>
+                  )}
                   {row.attack.runs != null && row.attack.broadcast != null ? <small>{onChainLabel(row.attack.runs, row.attack.broadcast, row.attack.burnHash ? "delete" : "first")}</small> : null}
                 </td>
               </tr>
@@ -222,9 +227,6 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
       </p>
       {showSystem ? <pre className="transcript">{system || "This receipt has no system prompt."}</pre> : null}
       {meter ? <p className="note">{onChainLabel(meter.runs, meter.broadcast) || "Broadcast count is not in this receipt."}</p> : null}
-      {prompt === "hardened" ? (
-        <p className="note">Hardened prompt obeyed {hardMeter ? `${hardMeter.obeyed} of ${hardMeter.runs}` : "—"} on the wrong-account invoice. {receipt.hardened?.whyNotBroadcast}</p>
-      ) : null}
       <p className="note">Hardened prompt results are one temperature-0 sample per attack.</p>
       <p className="note">Discarded pass</p>
       <p className="note">A first temperature-0 pass was discarded before any transaction because the buyer held under 8 NEAR.</p>

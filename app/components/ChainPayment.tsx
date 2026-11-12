@@ -55,7 +55,7 @@ export function ChainPayment() {
         </div>
       ))}
       <p className="note">
-        {receipt.evidence}. The paying key can call release and nothing else. The buyer deleted it. The token is {receipt.token}, a test token with a public mint, not Circle USDC. Mainnet waits on an audit.
+        {receipt.evidence}. The paying key can call release and nothing else. The buyer deleted it. The token is {receipt.token}, a toy testnet token (public mint). The medbf5c run uses Circle testnet USDC. Mainnet waits on an audit.
       </p>
     </article>
   );

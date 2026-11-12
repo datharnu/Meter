@@ -155,7 +155,7 @@ export const securityPage: Story = {
       heading: "What the contract refuses",
       body: [
         "There is no owner withdraw. The paying key can call release only, and the function-call key was deleted.",
-        "Mainnet waits on an audit. The token in these runs is token.mtrfc658fd1.testnet. It is not Circle USDC.",
+        "Mainnet waits on an audit. The hijack runs use a toy testnet token (public mint), token.mtrfc658fd1.testnet. The medbf5c run uses Circle testnet USDC.",
       ],
     },
     {

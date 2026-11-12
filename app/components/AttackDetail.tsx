@@ -44,6 +44,9 @@ function InvoicePaper({ invoice }: { invoice: string | undefined }) {
       {rows.map((row) => (
         <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
       ))}
+      {(parts.extra ?? []).map((line) => (
+        <div className="bill-note" key={line}><dt>Injected</dt><dd><mark>{line}</mark></dd></div>
+      ))}
       {parts.note ? <div className="bill-note"><dt>Note</dt><dd><mark>{parts.note}</mark></dd></div> : null}
     </dl>
   );
@@ -75,7 +78,7 @@ function CallCard({ call, code, word, moved, hash, hashNote }: {
       <p>
         <span className="tag" data-kind={word === "PAID" ? "paid" : "refused"}>{word}</span>{" "}
         <b>{moved}</b>{" "}
-        <span className="mono">{code}</span>
+        {code ? <span className="mono">{code}</span> : null}
       </p>
       {hash ? <p><a className="mono" href={txUrl(hash)}>{hash}</a></p> : <p>{hashNote || "No transaction."}</p>}
     </div>
@@ -109,13 +112,15 @@ export function AttackDetail({ receipt, id }: { receipt: InjectReceipt; id: stri
   const moved = isBaseline
     ? `${formatUnits(receipt.baseline?.moneyMoved ?? "0")} sent`
     : `${formatUnits(attack?.moneyMoved ?? trial?.moved ?? "0")} moved`;
-  const code = trial?.code || (isBaseline ? "OK" : row?.code || "No code");
   const hash = isBaseline ? trial?.hash || null : row?.hash || null;
+  const code = attack?.burnHash && hash === attack.burnHash
+    ? `attempt ${trial?.code || attack.expected || "ERR_RECIPIENT"}; transaction status is empty`
+    : trial?.code || (isBaseline ? "OK" : row?.code || "No code");
   const title = isBaseline ? "Naive key" : row?.name || "Attack";
   const lead = isBaseline ? receipt.baseline?.injection : attack?.injection;
   const chain = isBaseline
     ? onChainLabel(receipt.baseline?.runs, receipt.baseline?.broadcast)
-    : onChainLabel(attack?.runs, attack?.broadcast);
+    : onChainLabel(attack?.runs, attack?.broadcast, attack?.burnHash && hash === attack.burnHash ? "delete" : "first");
   const obeyed = hardened
     ? `${hardened.obeyed} of ${hardened.runs}`
     : isBaseline
@@ -162,11 +167,11 @@ export function AttackDetail({ receipt, id }: { receipt: InjectReceipt; id: stri
                   <InvoicePaper invoice={partHard?.invoice ?? partTrial?.transcript?.invoice} />
                   <CallCard
                     call={partHard?.trials?.[0]?.toolCall ?? partTrial?.transcript?.toolCall}
-                    code={partTrial?.code || "No code"}
+                    code=""
                     word="STOPPED"
                     moved="0.00 moved"
-                    hash={partTrial?.hash || null}
-                    hashNote={partTrial?.code ? `rejected before inclusion (no tx). ${partTrial.code}` : "rejected before inclusion (no tx)"}
+                    hash={null}
+                    hashNote="No transaction. Rejected before inclusion. Not a contract refusal."
                   />
                 </div>
                 {partTrial?.failure ? <p className="note">{partTrial.failure}</p> : null}
