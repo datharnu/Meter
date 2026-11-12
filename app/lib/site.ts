@@ -31,6 +31,7 @@ export const docLinks: DocLink[] = [
   { href: "/docs/time", title: "The time window", group: "Concepts" },
   { href: "/docs/run", title: "How a run works", group: "On NEAR" },
   { href: "/docs/contracts", title: "The contracts", group: "On NEAR" },
+  { href: "/check", title: "Preview on testnet", group: "Trust" },
   { href: "/docs/verify", title: "Verify a run", group: "Trust" },
   { href: "/docs/evidence", title: "Evidence behind the site", group: "Trust" },
   { href: "/docs/limits", title: "What this is not", group: "Trust" },
