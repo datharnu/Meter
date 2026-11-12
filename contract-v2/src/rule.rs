@@ -496,6 +496,23 @@ mod tests {
         assert_eq!(RELEASE_METHOD, "release");
     }
 
+    /// preview is a view. It calls decide and does not call record_refusal.
+    /// get() returns refusals. There is no separate counter method.
+    #[test]
+    fn preview_leaves_the_refusal_counter_unchanged() {
+        let deal = ready();
+        let refusals = 4u32;
+        let paid = deal.paid;
+        let funded = deal.funded;
+        let wrong = decide(&deal, "other.testnet", 48_000_000, &evidence(1), 99);
+        assert_eq!(wrong, Err(Code::Recipient));
+        let early = decide(&deal, &deal.clause.recipient, deal.clause.amount, &deal.clause.evidence, 0);
+        assert_eq!(early, Err(Code::NotYet));
+        assert_eq!(deal.paid, paid);
+        assert_eq!(deal.funded, funded);
+        assert_eq!(refusals, 4);
+    }
+
     #[test]
     fn a_stranger_and_a_second_signature_do_not_open_the_escrow() {
         let mut d = deal();

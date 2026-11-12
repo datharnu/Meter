@@ -298,6 +298,11 @@ async function checkCode() {
   const live = await codeOf(current.contract);
   if (live.hash !== current.onchain_code_hash) throw new Error(`On-chain code hash ${live.hash}, receipt says ${current.onchain_code_hash}`);
   if (live.sha256 !== current.wasm_sha256) throw new Error(`Wasm sha256 ${live.sha256}, receipt says ${current.wasm_sha256}`);
+  if (current.wasm_path) {
+    const bytes = readFileSync(join(root, current.wasm_path));
+    const digest = createHash("sha256").update(bytes).digest("hex");
+    if (digest !== current.wasm_sha256) throw new Error(`Committed wasm ${digest}, receipt says ${current.wasm_sha256}`);
+  }
   if (previous?.contract) {
     const old = await codeOf(previous.contract);
     if (old.hash !== previous.onchain_code_hash) throw new Error(`Previous code hash ${old.hash}`);

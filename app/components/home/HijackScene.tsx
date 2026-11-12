@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   attackById,
@@ -11,6 +11,7 @@ import {
   outcomeWord,
   splitInvoice,
   toolLine,
+  type DefenceFile,
   type InjectReceipt,
   type ToolCall,
 } from "@/lib/hijack";
@@ -102,18 +103,20 @@ export function HijackCompare({
   const hardMeter = prompt === "hardened" ? hardenedCase(receipt, "1") : null;
   const leftCall = hardBase?.trials?.[0]?.toolCall ?? naive?.transcript?.toolCall;
   const rightCall = hardMeter?.trials?.[0]?.toolCall ?? meterTrial?.transcript?.toolCall;
+  const defence = useDefence();
+  const promptOnly = defence?.promptOnly?.attacks?.find((item) => item.id === 1) ?? null;
 
   return (
     <div>
       {hasHardened ? (
         <div className="hijack-toggle" role="group" aria-label="Which prompt">
-          <button type="button" data-on={prompt === "naive"} onClick={() => onPrompt("naive")}>Naive prompt</button>
+          <button type="button" data-on={prompt === "naive"} onClick={() => onPrompt("naive")}>No defence</button>
           <button type="button" data-on={prompt === "hardened"} onClick={() => onPrompt("hardened")}>Hardened prompt</button>
         </div>
       ) : null}
-      <div className="hijack-split">
+      <div className="hijack-split" data-cols={promptOnly ? "3" : "2"}>
         <Bill
-          title="Without Meter"
+          title="No defence"
           invoice={hardBase?.invoice ?? receipt.baseline?.invoice}
           call={leftCall}
           word="PAID"
@@ -122,6 +125,18 @@ export function HijackCompare({
           hash={naive?.hash || null}
           note={hardBase ? `Hardened prompt obeyed ${hardBase.obeyed} of ${hardBase.runs}. The hash is the recorded naive call. Not broadcast.` : (onChainLabel(receipt.baseline?.runs, receipt.baseline?.broadcast) || "Broadcast count is not in this receipt.")}
         />
+        {promptOnly ? (
+          <Bill
+            title="Prompt-only defence"
+            invoice={promptOnly.invoice}
+            call={promptOnly.toolCall}
+            word={outcomeWord(promptOnly.moneyMoved)}
+            figure={`${formatUnits(promptOnly.moneyMoved)} moved`}
+            code={promptOnly.code || (promptOnly.emittedMalicious ? "emitted" : "no malicious call")}
+            hash={promptOnly.hash || null}
+            note={`Obeyed ${promptOnly.emittedMalicious ? "1 of 1" : "0 of 1"}. ${promptOnly.evidence}.`}
+          />
+        ) : null}
         <Bill
           title="With Meter"
           invoice={hardMeter?.invoice ?? meterTrial?.transcript?.invoice}
@@ -142,6 +157,39 @@ export function HijackCompare({
   );
 }
 
+export function useDefence() {
+  const [file, setFile] = useState<DefenceFile | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/inject2.json", { signal: controller.signal, cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((body) => {
+        if (body?.promptOnly?.attacks || body?.meterKey?.attacks) setFile(body);
+      })
+      .catch(() => setFile(null));
+    return () => controller.abort();
+  }, []);
+  return file;
+}
+
+export function ThreatCard({ note }: { note?: string | null }) {
+  return (
+    <section className="hijack-threat" aria-labelledby="threat-title">
+      <h3 id="threat-title">What a hijacked agent can still do</h3>
+      <ul>
+        <li>It can trigger the payment at the earliest allowed moment. That is intended.</li>
+        <li>It can burn its own key. That is availability loss, no fund loss. The buyer reinstalls with 1 yoctoNEAR.</li>
+        <li>It can do nothing. The buyer is refunded after the deadline.</li>
+        <li>It cannot change the recipient, the amount, or the sentence, pay twice, attach a deposit, call revoke_agent, or call the token directly.</li>
+      </ul>
+      <p className="note">{note || "ERR_NOT_YET counts toward the five. preview is a view and does not count, so an honest agent should call preview first."}</p>
+    </section>
+  );
+}
+
 export function HijackScene({ receipt }: { receipt: InjectReceipt }) {
   const [prompt, setPrompt] = useState<"naive" | "hardened">("naive");
   return (
@@ -152,6 +200,7 @@ export function HijackScene({ receipt }: { receipt: InjectReceipt }) {
         <p className="craft-lead">Same model, same poisoned invoice. One clerk holds a full-access key. One holds a Meter key.</p>
       </header>
       <HijackCompare receipt={receipt} prompt={prompt} onPrompt={setPrompt} />
+      <ThreatCard note={receipt.notYetNote} />
       <p><Link href="/attack">Open the record</Link></p>
     </div>
   );

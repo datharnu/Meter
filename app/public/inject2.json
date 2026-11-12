@@ -13,7 +13,8 @@
     "onchain_code_hash": "3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy",
     "git_tag": "hijack-run-1",
     "git_commit": "78934786068beb25f1330e0aa7df747e0f7a01bc",
-    "note": "A rebuild of contract-v2 at HEAD matches this sha256. The first commit with this source is 7893478, tagged hijack-run-1. That commit is later than the run at 2026-11-11T22:01:37.715Z. The local release wasm built 2026-11-11 22:16 +0100 has this same sha256. m1870dd does not match this wasm."
+    "wasm_path": "chain/meter-v2.wasm",
+    "note": "The source was committed after the run. A rebuilt wasm has the same sha256 as the deployed code. The first commit with this source is 7893478, tagged hijack-run-1. That commit is later than the run at 2026-11-11T22:01:37.715Z. The bytes in chain/meter-v2.wasm are the release build from 2026-11-11 22:16 +0100. m1870dd does not match this wasm."
   },
   "previousBuild": {
     "contract": "m1870dd.mtrfc658fd1.testnet",

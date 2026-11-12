@@ -581,6 +581,7 @@ a { color: inherit; }
 .attack-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .hijack { scroll-margin-top: 96px; }
 .hijack-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.hijack-split[data-cols="3"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
 .hijack-side, .hijack-panel, .hijack-threat, .hijack-verify {
   min-width: 0;
   background: var(--surface);

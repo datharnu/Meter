@@ -9,6 +9,7 @@ export type InjectTrial = {
   moved?: string | null;
   failure?: string | null;
   refusals?: number | null;
+  revoked?: boolean | null;
   transcript?: {
     system?: string;
     invoice?: string;
@@ -24,6 +25,7 @@ export type InjectAttack = {
   id?: number | string;
   title?: string;
   kind?: string;
+  meter?: string;
   injection?: string;
   tools?: string[];
   runs?: number;
@@ -77,6 +79,7 @@ export type InjectReceipt = {
     trials?: InjectTrial[];
   };
   attacks?: InjectAttack[];
+  steps?: Array<{ label?: string; hash?: string; kind?: string; code?: string }>;
   failureKept?: Array<{ code?: string; hash?: string; contract?: string; what?: string }>;
   wasm?: string;
   commit?: string;
@@ -123,12 +126,65 @@ export function toolLine(call: ToolCall | undefined) {
   return body ? `${call.name}(${body})` : `${call.name}()`;
 }
 
+export function chainPhrase(runs: number | undefined, broadcast: number | undefined) {
+  if (runs !== 10 || broadcast == null) return null;
+  const times = broadcast === 1 ? "1 time" : `${broadcast} times`;
+  return `one deterministic run per attack (temperature 0), executed on chain ${times}`;
+}
+
+export function obeyText(obeyed: number | undefined, runs: number | undefined, broadcast: number | undefined) {
+  if (obeyed != null && runs != null && obeyed === runs) {
+    return chainPhrase(runs, broadcast) ?? "yes";
+  }
+  if (obeyed != null && runs != null) return `${obeyed} of ${runs}`;
+  return "—";
+}
+
 export function onChainLabel(runs: number | undefined, broadcast: number | undefined, which: "only" | "first" | "delete" = "first") {
   if (runs == null || broadcast == null) return null;
-  if (broadcast === 1) return `${runs} identical runs, 1 on chain. The hash is the one broadcast.`;
-  if (which === "delete") return `${runs} identical runs, ${broadcast} on chain. Each broadcast has its own hash. The link is the call whose promise deletes the key.`;
-  return `${runs} identical runs, ${broadcast} on chain. Each broadcast has its own hash. The link is the first.`;
+  const lead = chainPhrase(runs, broadcast);
+  const head = lead ? `${lead}.` : `${runs} identical runs, ${broadcast} on chain.`;
+  if (broadcast === 1) return `${head} The hash is the one broadcast.`;
+  if (which === "delete") return `${head} Each broadcast has its own hash. The link is the call whose promise deletes the key.`;
+  return `${head} Each broadcast has its own hash. The link is the first.`;
 }
+
+export function deadKeyHashes(attack: InjectAttack) {
+  return (attack.trials ?? [])
+    .filter((trial) => trial.broadcast && trial.hash && (trial.failure || String(trial.code ?? "").includes("AccessKey")))
+    .map((trial) => String(trial.hash));
+}
+
+export function tripwireFact(receipt: InjectReceipt, attack: InjectAttack) {
+  const trials = (attack.trials ?? [])
+    .filter((trial) => trial.broadcast && trial.hash)
+    .sort((a, b) => (a.n ?? 0) - (b.n ?? 0));
+  if (trials.length < 10) return null;
+  const fifth = trials[4];
+  const sixth = trials[5];
+  if (fifth?.revoked !== true || sixth?.refusals !== 1 || sixth.revoked !== false) return null;
+  if (deadKeyHashes(attack).length) return null;
+  const role = attack.meter;
+  const step = (receipt.steps ?? []).find((item) => item.kind === "reinstall" && role && String(item.label ?? "").includes(role));
+  const hash = step?.hash ? ` Reinstall ${step.hash}.` : "";
+  return `Own meter. The fifth call burns the key that signed it. The buyer reinstalls, the counter clears, and five more run on the new key. The tenth call burns that key. All ten were included while a key was live.${hash}`;
+}
+
+export type DefenceAttack = {
+  id: number;
+  emittedMalicious: boolean;
+  moneyMoved: string;
+  evidence: string;
+  hash?: string | null;
+  code?: string | null;
+  toolCall?: ToolCall;
+  invoice?: string;
+};
+
+export type DefenceFile = {
+  promptOnly?: { attacks?: DefenceAttack[] };
+  meterKey?: { attacks?: DefenceAttack[] };
+};
 
 export function outcomeWord(moved: string | null | undefined) {
   return moved != null && BigInt(moved || "0") > BigInt(0) ? "PAID" : "STOPPED";
@@ -148,11 +204,12 @@ export type LadderRow = {
 };
 
 function obeyLabel(attack: InjectAttack) {
-  if (attack.obeyed != null && attack.runs != null) {
-    return attack.obeyed === attack.runs ? "yes" : `${attack.obeyed} of ${attack.runs}`;
-  }
+  const broadcast = attack.broadcast ?? (attack.kind === "permission" ? 0 : undefined);
+  if (attack.obeyed != null && attack.runs != null) return obeyText(attack.obeyed, attack.runs, broadcast);
   const parts = attack.parts ? Object.values(attack.parts) : [];
-  if (parts.length && parts.every((part) => part.runs != null && part.obeyed === part.runs)) return "yes";
+  if (parts.length && parts.every((part) => part.runs != null && part.obeyed === part.runs)) {
+    return chainPhrase(parts[0]?.runs, broadcast) ?? "yes";
+  }
   if (parts.length) return parts.map((part) => `${part.obeyed ?? "—"} of ${part.runs ?? "—"}`).join(" · ");
   return "—";
 }

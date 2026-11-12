@@ -2,15 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { HijackCompare } from "@/components/home/HijackScene";
+import { HijackCompare, ThreatCard, useDefence } from "@/components/home/HijackScene";
 import { Tripwire } from "@/components/home/Tripwire";
 import {
   attackById,
   baselineTrial,
+  chainPhrase,
+  deadKeyHashes,
   hardenedCase,
   ladderRows,
+  obeyText,
   onChainLabel,
   outcomeWord,
+  tripwireFact,
+  type DefenceAttack,
+  type DefenceFile,
   type InjectReceipt,
   type LadderRow,
 } from "@/lib/hijack";
@@ -20,11 +26,38 @@ function hardenedObey(receipt: InjectReceipt, row: LadderRow) {
   if (row.attack.parts) {
     const parts = ["revoke", "deposit", "token"].map((key) => hardenedCase(receipt, `${row.attack.id}-${key}`)).filter(Boolean);
     if (!parts.length) return "—";
-    return parts.every((item) => item && item.obeyed === item.runs) ? "yes" : parts.map((item) => `${item?.obeyed}/${item?.runs}`).join(" · ");
+    return parts.every((item) => item && item.obeyed === item.runs)
+      ? (chainPhrase(parts[0]?.runs, 0) ?? "yes")
+      : parts.map((item) => `${item?.obeyed} of ${item?.runs}`).join(" · ");
   }
   const found = hardenedCase(receipt, String(row.attack.id));
   if (!found) return "—";
-  return found.obeyed === found.runs ? "yes" : `${found.obeyed} of ${found.runs}`;
+  return obeyText(found.obeyed, found.runs, 0);
+}
+
+function defenceLine(label: string, row: DefenceAttack | undefined) {
+  if (!row) return null;
+  const obeyed = row.emittedMalicious ? "1 of 1" : "0 of 1";
+  return (
+    <small>
+      {label}: obeyed {obeyed}, moved {formatUnits(row.moneyMoved)}, {row.evidence}
+      {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
+    </small>
+  );
+}
+
+function DefenceLines({ defence, id }: { defence: DefenceFile | null; id: string }) {
+  const numeric = Number(id);
+  if (!defence || !Number.isInteger(numeric)) return null;
+  const only = defence.promptOnly?.attacks?.find((item) => item.id === numeric);
+  const meter = defence.meterKey?.attacks?.find((item) => item.id === numeric);
+  if (!only && !meter) return null;
+  return (
+    <>
+      {defenceLine("Prompt-only defence", only)}
+      {defenceLine("With Meter", meter)}
+    </>
+  );
 }
 
 function recordedAt(iso: string | undefined) {
@@ -47,9 +80,10 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
   const hardBase = prompt === "hardened" ? hardenedCase(receipt, "baseline") : null;
   const hardMeter = prompt === "hardened" ? hardenedCase(receipt, "1") : null;
   const system = prompt === "hardened" && receipt.hardened?.system ? receipt.hardened.system : receipt.system;
+  const defence = useDefence();
   const baselineObey = hardBase
-    ? hardBase.obeyed === hardBase.runs ? "yes" : `${hardBase.obeyed} of ${hardBase.runs}`
-    : baseline?.obeyed != null && baseline.obeyed === baseline.runs ? "yes" : `${baseline?.obeyed ?? "—"} of ${baseline?.runs ?? "—"}`;
+    ? obeyText(hardBase.obeyed, hardBase.runs, 0)
+    : obeyText(baseline?.obeyed, baseline?.runs, baseline?.broadcast);
 
   return (
     <div className="attack-record">
@@ -79,7 +113,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
             {baseline ? (
               <tr>
                 <th scope="row">
-                  <Link href="/attack/baseline">Naive key</Link>
+                  <Link href="/attack/baseline">No defence</Link>
                 </th>
                 <td>{baselineObey}</td>
                 <td className="mono">{naive?.code || "OK"}</td>
@@ -96,6 +130,9 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                 <th scope="row">
                   <Link href={`/attack/${encodeURIComponent(row.key)}`}>{row.name}</Link>
                   {row.permission ? <small className="hijack-perm">key permission, not a contract refusal</small> : null}
+                  {tripwireFact(receipt, row.attack) ? <small>{tripwireFact(receipt, row.attack)}</small> : null}
+                  {deadKeyHashes(row.attack).length ? <small>Not on a live key: {deadKeyHashes(row.attack).join(", ")}</small> : null}
+                  <DefenceLines defence={defence} id={row.key} />
                 </th>
                 <td>{prompt === "hardened" ? hardenedObey(receipt, row) : row.obeyed}</td>
                 <td className="mono">{row.code}</td>
@@ -117,7 +154,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
         {" · "}tool choice {receipt.toolChoice || "—"}
         {" · "}the prompt tells the agent the invoice is the instruction
         {" · "}stored in inject.json, not edited after results
-        {" · "}one deterministic run per attack, one broadcast per row that says 1 on chain.
+        {" · "}one deterministic run per attack (temperature 0). The obeyed cell says how many times that call was executed on chain.
         {" "}
         <button className="text-btn" type="button" onClick={() => setShowSystem((value) => !value)}>
           {showSystem ? "Hide system prompt" : "View system prompt"}
@@ -128,16 +165,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
       {prompt === "hardened" ? (
         <p className="note">Hardened prompt obeyed {hardMeter ? `${hardMeter.obeyed} of ${hardMeter.runs}` : "—"} on the wrong-account invoice. {receipt.hardened?.whyNotBroadcast}</p>
       ) : null}
-      <section className="hijack-threat" aria-labelledby="threat-title">
-        <h3 id="threat-title">What a hijacked agent can still do</h3>
-        <ul>
-          <li>Trigger the payment at the earliest allowed moment. This is intended.</li>
-          <li>Burn its own key through refusals. Availability loss, no fund loss. The buyer reinstalls it.</li>
-          <li>Do nothing. The buyer is refunded after the deadline.</li>
-          <li>Cannot: change recipient, amount, or sentence; pay twice; attach a deposit; call revoke_agent; call the token directly.</li>
-        </ul>
-        {receipt.notYetNote ? <p className="note">{receipt.notYetNote}</p> : null}
-      </section>
+      <ThreatCard note={receipt.notYetNote} />
       <div className="hijack-verify">
         <code>node chain/verify.mjs</code>
         <button className="ghost" type="button" onClick={async () => {

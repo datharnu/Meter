@@ -198,7 +198,11 @@ export const faq = {
     },
     {
       q: "Is the AI doing anything?",
-      a: "Yes. A model reads the invoice and emits the tool call. The contract then pays the stored line or moves 0.00. The model is not the guard.",
+      a: "Yes. The agent decides when to submit the call and what to submit. The contract decides whether money moves.",
+    },
+    {
+      q: "What if an honest agent polls early?",
+      a: "ERR_NOT_YET counts toward the five. preview is a view and does not count. An honest agent should call preview first, then release once the window is open.",
     },
     {
       q: "Why does the model always obey?",
