@@ -23,7 +23,7 @@ The contract pays that line inside the stored window, or it moves nothing.
 [Docs](app/app/docs/page.tsx)
 
 <a href="https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet"><img alt="Network: NEAR testnet. The hijack account is i198b44.mtrfc658fd1.testnet." src="docs/badges/network.svg" /></a>
-<img alt="Token: token.mtrfc658fd1.testnet. Mint is public. This is not Circle USDC." src="docs/badges/token.svg" />
+<img alt="Hijack runs use a toy token (public mint). The medbf5c run uses Circle testnet USDC." src="docs/badges/token.svg" />
 <img alt="Mainnet: after an audit. These runs are testnet." src="docs/badges/mainnet.svg" />
 <a href="LICENSE"><img alt="License: MIT." src="docs/badges/license.svg" /></a>
 
@@ -258,9 +258,9 @@ Only items with a receipt, a transaction hash, or a named unit test in this repo
 
 | Bug | Evidence | Fix |
 | --- | --- | --- |
-| **`install_agent` on a revoked meter** | On `m1870dd` (wasm at commit `853d2db`), a revoked meter returned `ERR_AGENT`. On `i198b44` the tripwire run needs a reinstall after five refusals. | Current wasm (`3cjYWgNv…`, `chain/meter-v2.wasm`): reinstall clears `revoked` and refusals. Test `install_agent_after_the_tripwire_clears_the_counter_and_keeps_the_line` in `contract-v2/src/rule.rs`. |
+| **`install_agent` on a revoked meter** | On `m1870dd` (wasm at commit `853d2db`), a revoked meter returned `ERR_AGENT`. On `i198b44` the tripwire run needs a reinstall after five refusals. | Current wasm ([`3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet), `chain/meter-v2.wasm`): reinstall clears `revoked` and refusals. Test `install_agent_after_the_tripwire_clears_the_counter_and_keeps_the_line` in `contract-v2/src/rule.rs`. |
 | **`ERR_BAD_WINDOW` from an early clock read** | `inject.json` → `failureKept` tx [`8xEeP57ZsbZHWuZGhsp4PCEiTRjEbEMJwKALWX3eK3oK`](https://testnet.nearblocks.io/txns/8xEeP57ZsbZHWuZGhsp4PCEiTRjEbEMJwKALWX3eK3oK) on `ic6d981`. | Run scripts now read block time at each `open` (see `failureKept[].what` in the receipt). |
-| **Unregistered recipient left `paid` at 0** | `m1870dd` first pay after time: `ERR_TRANSFER`, tx `EDasWtLX…`. | `on_released` sets `paid` only after `ft_transfer` succeeds (`contract-v2`). |
+| **Unregistered recipient left `paid` at 0** | `m1870dd` first pay after time: `ERR_TRANSFER`, tx [`EDasWtLXYPKGRRMU6Ng9t4Qu3XHw1L4XXFw282wtFyGk`](https://testnet.nearblocks.io/txns/EDasWtLXYPKGRRMU6Ng9t4Qu3XHw1L4XXFw282wtFyGk). | `on_released` sets `paid` only after `ft_transfer` succeeds (`contract-v2`). |
 
 `ia37910` / `WINDOW_WAIT` is a failed wait loop, not a Meter refusal; see `failureKept` in `inject.json`. Do not count it as a contract bug.
 
@@ -293,7 +293,7 @@ The unregistered release is expected. The token traps with `ERR_NOT_REGISTERED`,
 
 The rows, the delete, and the reinstall are in [The hijack, recorded](#the-hijack-recorded). Contract [`i198b44.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet). This account is not `m1870dd`. The page is `/attack` once `npm run dev` is running.
 
-`ERR_NOT_YET` counts toward the five. `preview` is a view and does not. `ERR_TRANSFER` does not. The No defence clerk is a full-access key on `c19e6ab.mtrfc658fd1.testnet`, because `ft_transfer` requires 1 yoctoNEAR and a function-call key cannot attach a deposit. One of the ten weak-prompt calls was broadcast. [`4veSqbRL…` and `FSbNMWJt…`](#the-hijack-recorded) are not the same event.
+`ERR_NOT_YET` counts toward the five. `preview` is a view and does not. `ERR_TRANSFER` does not. The No defence clerk is a full-access key on `c19e6ab.mtrfc658fd1.testnet`, because `ft_transfer` requires 1 yoctoNEAR and a function-call key cannot attach a deposit. One of the ten weak-prompt calls was broadcast. [`4veSqbRLZZScpQDeHLn8bjTZPCKkAs895u3HuAiXrdEn`](https://testnet.nearblocks.io/txns/4veSqbRLZZScpQDeHLn8bjTZPCKkAs895u3HuAiXrdEn) and [`FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e`](https://testnet.nearblocks.io/txns/FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e) are not the same event; see [The hijack, recorded](#the-hijack-recorded).
 
 ### Payment record
 
@@ -465,8 +465,8 @@ chain/line.mjs             the same line hash as the contract
 
 | What | Evidence |
 | --- | --- |
-| Release before the stored time moves 0.00 | `ERR_NOT_YET`, tx `6jEC64Qs…` |
-| Unregistered recipient moves 0.00, then the same line pays 48.00 | `ERR_TRANSFER` then `OK`, txs `EDasWtLX…` and `BBhEfuMF…` |
+| Release before the stored time moves 0.00 | `ERR_NOT_YET`, tx [`6jEC64QsURimyDBAFEjzkakmBJsU1D4hE8WiwMxk75ia`](https://testnet.nearblocks.io/txns/6jEC64QsURimyDBAFEjzkakmBJsU1D4hE8WiwMxk75ia) |
+| Unregistered recipient moves 0.00, then the same line pays 48.00 | `ERR_TRANSFER` then `OK`, txs [`EDasWtLXYPKGRRMU6Ng9t4Qu3XHw1L4XXFw282wtFyGk`](https://testnet.nearblocks.io/txns/EDasWtLXYPKGRRMU6Ng9t4Qu3XHw1L4XXFw282wtFyGk) and [`BBhEfuMFX18t4TPMfs1ppbiL3D3kv4H4N4vy65vBMQDU`](https://testnet.nearblocks.io/txns/BBhEfuMFX18t4TPMfs1ppbiL3D3kv4H4N4vy65vBMQDU) |
 | Deposit at the deadline is rejected | `ERR_TOO_LATE`, meter 2, `funded` stayed 0 |
 | Wrong recipient, wrong amount, and rewritten terms move 0.00 | payment record, 10 Nov 2026 |
 | Signed release pays only when the signature matches the line | `ERR_ATTEST_LINE` then 48.00 |
