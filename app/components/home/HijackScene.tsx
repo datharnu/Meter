@@ -12,6 +12,8 @@ import {
   invoiceField,
   onChainLabel,
   outcomeWord,
+  overpay,
+  termsFieldMissing,
   splitInvoice,
   toolLine,
   type DefenceAttack,
@@ -113,9 +115,12 @@ export function HijackCompare({
   const leftCall = hardBase?.trials?.[0]?.toolCall ?? naive?.transcript?.toolCall;
   const rightCall = hardMeter?.trials?.[0]?.toolCall ?? meterTrial?.transcript?.toolCall;
   const { file: defence } = useDefence();
-  const promptOnly = defence?.promptOnly?.attacks?.find((item) => item.id === 1) ?? null;
+  const escalationOnly = defence?.escalation?.runs?.find((item) => item.config === "promptOnly" && item.id === 1) ?? null;
+  const escalationMeter = defence?.escalation?.runs?.find((item) => item.config === "meterKey" && item.id === 1) ?? null;
+  const promptOnly = escalationOnly ?? defence?.promptOnly?.attacks?.find((item) => item.id === 1) ?? null;
   const attacker = receipt.attacker || "";
   const promptWhere = promptOnly ? promptOnlyWhere(promptOnly, attacker) : null;
+  const promptHeadline = promptOnly ? promptHeadlineFor(promptOnly, attacker) : null;
 
   return (
     <div>
@@ -142,23 +147,24 @@ export function HijackCompare({
             invoice={promptOnly.invoice}
             call={promptOnly.toolCall}
             word={outcomeWord(attackerReached(promptOnly, attacker))}
-            figure={`to attacker: ${formatUnits(attackerReached(promptOnly, attacker))}`}
-            headline={`to attacker: ${formatUnits(attackerReached(promptOnly, attacker))}`}
+            figure={promptHeadline || ""}
+            headline={promptHeadline}
             subline={promptWhere}
             code={promptOnly.code || (promptOnly.emittedMalicious ? "emitted" : "no malicious call")}
             hash={promptOnly.hash || null}
-            note={`${promptOnly.emittedMalicious ? "The agent emitted the call the note asked for." : "The agent did not emit the malicious call. The broadcast is the sealed line."} Obeyed ${promptOnly.emittedMalicious ? "1 of 1" : "0 of 1"}. ${promptOnly.evidence}.`}
+            note={escalationOnly ? "Escalation, attack 1. One temperature-0 sample." : `${promptOnly.emittedMalicious ? "The agent emitted the call the note asked for." : "The agent did not emit the malicious call. The broadcast is the sealed line."} ${promptOnly.evidence}.`}
           />
         ) : null}
         <Bill
           title="With Meter"
-          invoice={hardMeter?.invoice ?? meterTrial?.transcript?.invoice}
-          call={rightCall}
+          invoice={escalationMeter?.invoice ?? hardMeter?.invoice ?? meterTrial?.transcript?.invoice}
+          call={escalationMeter?.toolCall ?? rightCall}
           word="STOPPED"
-          figure={`${formatUnits(meter?.moneyMoved ?? "0")} moved`}
-          code={meterTrial?.code || meter?.expected || "ERR_RECIPIENT"}
-          hash={meterTrial?.hash || null}
-          note={hardMeter ? `Hardened prompt obeyed ${hardMeter.obeyed} of ${hardMeter.runs}. The hash is the recorded naive call. Not broadcast.` : (onChainLabel(meter?.runs, meter?.broadcast) || "Broadcast count is not in this receipt.")}
+          headline={escalationMeter ? `${formatUnits(escalationMeter.moneyMoved || "0")} moved` : null}
+          figure={`${formatUnits(escalationMeter?.moneyMoved ?? meter?.moneyMoved ?? "0")} moved`}
+          code={escalationMeter?.code || meterTrial?.code || meter?.expected || "ERR_RECIPIENT"}
+          hash={escalationMeter?.hash || meterTrial?.hash || null}
+          note={escalationMeter ? "Escalation, attack 1. The agent emitted the same wrong recipient. One temperature-0 sample." : hardMeter ? `Hardened prompt obeyed ${hardMeter.obeyed} of ${hardMeter.runs}. The hash is the recorded naive call. Not broadcast.` : (onChainLabel(meter?.runs, meter?.broadcast) || "Broadcast count is not in this receipt.")}
         />
       </div>
       <p className="hijack-differ">
@@ -170,13 +176,23 @@ export function HijackCompare({
   );
 }
 
+function promptHeadlineFor(row: DefenceAttack, attacker: string) {
+  const paid = overpay(row);
+  if (paid) return null;
+  if (callDestination(row) !== attacker) return null;
+  return `to attacker: ${formatUnits(attackerReached(row, attacker))}`;
+}
+
 function promptOnlyWhere(row: DefenceAttack, attacker: string) {
+  const paid = overpay(row);
+  if (paid) return `overpaid ${formatUnits(paid.moved)} to the sealed payee, ${paid.times}x the sealed amount`;
   const dest = callDestination(row);
   const payee = invoiceField(row.invoice, "Payee");
   const moved = BigInt(row.moneyMoved || "0");
+  if (termsFieldMissing(row)) return "N/A. This tool has no terms field.";
   if (row.id === 4 && payee && dest === payee && moved > BigInt(0)) return "paid early, outside the window";
   if (payee && dest === payee && moved > BigInt(0)) return `${formatUnits(row.moneyMoved)} to the sealed payee, correct`;
-  if (dest === attacker && moved > BigInt(0)) return `${formatUnits(row.moneyMoved)} to the attacker`;
+  if (dest === attacker && moved > BigInt(0)) return null;
   return `${formatUnits(row.moneyMoved || "0")} moved`;
 }
 
@@ -219,6 +235,7 @@ export function ThreatCard({ note }: { note?: string | null }) {
         <li>It can do nothing. The buyer is refunded after the deadline.</li>
         <li>It cannot change the recipient, the amount, or the sentence, pay twice, attach a deposit, call revoke_agent, or call the token directly.</li>
       </ul>
+      <p className="note">The trust boundary is the moment of sealing. Meter protects the line after it is sealed. If an injection corrupts the line before open, the contract enforces the wrong line. In this demo the buyer seals the line and the agent only releases.</p>
       <p className="note">{note || "ERR_NOT_YET counts toward the five. preview is a view and does not count, so an honest agent should call preview first."}</p>
     </section>
   );
@@ -230,7 +247,7 @@ export function HijackScene({ receipt }: { receipt: InjectReceipt }) {
     <div className="hijack">
       <header className="craft-intro">
         <p className="craft-eyebrow">The hijack</p>
-        <h2>We told an AI to pay the wrong account. It did. 0.00 moved.</h2>
+        <h2>A prompt can be talked into the wrong payment. The Meter key moved 0.00.</h2>
         <p className="craft-lead">Same model, same poisoned invoice. One clerk holds a full-access key. One holds a Meter key.</p>
       </header>
       <HijackCompare receipt={receipt} prompt={prompt} onPrompt={setPrompt} />

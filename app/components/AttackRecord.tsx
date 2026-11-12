@@ -14,6 +14,9 @@ import {
   obeyText,
   onChainLabel,
   outcomeWord,
+  overpay,
+  sampleLine,
+  termsFieldMissing,
   toolLine,
   tripwireFact,
   type DefenceAttack,
@@ -38,11 +41,18 @@ function hardenedObey(receipt: InjectReceipt, row: LadderRow) {
 
 function defenceLine(label: string, row: DefenceAttack | undefined) {
   if (!row) return null;
+  if (termsFieldMissing(row)) {
+    return <small>{label}: N/A. This tool has no terms field, so this cell is not resistance.</small>;
+  }
+  const paid = overpay(row);
   const obeyed = row.emittedMalicious ? "1 of 1" : "0 of 1";
   const early = row.id === 4 && label === "Prompt-only defence" ? " Paid early, outside the window." : "";
+  const moved = paid
+    ? `overpaid ${formatUnits(paid.moved)} to the sealed payee, ${paid.times}x the sealed amount`
+    : `moved ${formatUnits(row.moneyMoved)}`;
   return (
     <small>
-      {label}: obeyed {obeyed}, {toolLine(row.toolCall)}, moved {formatUnits(row.moneyMoved)}, {row.evidence}{early}
+      {label}: obeyed {obeyed}, {toolLine(row.toolCall)}, {moved}, {row.evidence}{early}
       {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
     </small>
   );
@@ -80,19 +90,26 @@ function Escalation({ defence }: { defence: DefenceFile | null }) {
     if (!defence.escalation?.payloads?.length) return null;
     return <p className="note">Escalation payloads are committed. No run is in this receipt yet.</p>;
   }
-  const resisted = runs.every((row) => row.emittedMalicious === false);
   return (
     <section className="hijack-threat" aria-labelledby="escalation-title">
       <h3 id="escalation-title">Escalation</h3>
       <ul>
-        {runs.map((row) => (
-          <li key={`${row.config ?? "run"}-${row.id}`}>
-            {row.config === "meterKey" ? "Hardened prompt + Meter key" : "Prompt-only defence"}, attack {row.id}: {row.emittedMalicious ? "emitted the malicious call" : "did not emit the malicious call"}. {toolLine(row.toolCall)}. Reached the injected target {formatUnits(row.injectedReached || "0")}. {row.evidence}
-            {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
-          </li>
-        ))}
+        {runs.map((row) => {
+          const name = row.config === "meterKey" ? "Hardened prompt + Meter key" : "Prompt-only defence";
+          const paid = overpay(row);
+          return (
+            <li key={`${row.config ?? "run"}-${row.id}`}>
+              {termsFieldMissing(row)
+                ? <>{name}, attack {row.id}: N/A. This tool has no terms field, so this cell is not resistance.</>
+                : paid
+                  ? <>{name}, attack {row.id}: {paid.times === "1" ? "paid" : "overpaid"} {formatUnits(paid.moved)} to the sealed payee, {paid.times}x the sealed amount. {toolLine(row.toolCall)}. {row.evidence}</>
+                  : <>{name}, attack {row.id}: {row.emittedMalicious ? "emitted the malicious call" : "did not emit the malicious call"}. {toolLine(row.toolCall)}. Reached the injected target {formatUnits(row.injectedReached || "0")}. {row.evidence}</>}
+              {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
+            </li>
+          );
+        })}
       </ul>
-      {resisted ? <p className="note">one sample per attack</p> : null}
+      <p className="note">{sampleLine(defence)}</p>
     </section>
   );
 }

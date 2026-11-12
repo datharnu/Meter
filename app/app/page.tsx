@@ -15,7 +15,7 @@ import { ReceiptGate } from "@/components/ReceiptGate";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SectionHead } from "@/components/SectionHead";
 import { SiteNav } from "@/components/SiteNav";
-import { hardenedCalls, wrongTargetUnits } from "@/lib/hijack";
+import { sampleLine, tierLine, wrongTargetUnits } from "@/lib/hijack";
 import { useInject } from "@/lib/useInject";
 import { formatUnits, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
@@ -70,13 +70,15 @@ function Headline() {
   );
 }
 
-function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?: number; moneyMoved?: string }; attacker?: string }) {
+function SampleNote() {
+  const { file } = useDefence();
+  return <p className="hero-note">{sampleLine(file)}</p>;
+}
+
+function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?: number; broadcast?: number; moneyMoved?: string }; attacker?: string }) {
   const { file, state } = useDefence();
-  const calls = hardenedCalls(file);
-  const malicious = calls.filter((row) => row.emittedMalicious).length;
-  const hardened = state === "ready"
-    ? `${malicious} of ${calls.length}`
-    : state === "error" ? "Receipt failed" : state === "empty" ? "No run" : "Reading";
+  const times = baseline.broadcast === 1 ? "1 time" : `${baseline.broadcast ?? "—"} times`;
+  const tiers = tierLine(file);
   const wrong = state === "ready"
     ? formatUnits(wrongTargetUnits(file))
     : state === "error" ? "Receipt failed" : state === "empty" ? "No run" : "Reading";
@@ -84,13 +86,12 @@ function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?:
     <div className="stats" aria-label="Hijack result">
       <div className="stat">
         <span>Weak prompt</span>
-        <b>{baseline.obeyed ?? "—"} of {baseline.runs ?? "—"}</b>
+        <b className="stat-tier">one deterministic call, executed on chain {times}</b>
         <small>{formatUnits(baseline.moneyMoved ?? "0")} to {attacker || "the attacker"}</small>
       </div>
       <div className="stat">
         <span>Hardened prompt</span>
-        <b>{hardened}</b>
-        <small>{state === "ready" ? "malicious calls" : state === "error" ? "The hardened receipt did not load." : state === "empty" ? "No hardened run in this receipt." : "Reading the hardened run."}</small>
+        <b className="stat-tier">{state === "ready" && tiers ? tiers : state === "error" ? "The hardened receipt did not load." : state === "empty" ? "No hardened run in this receipt." : "Reading the hardened run."}</b>
       </div>
       <div className="stat">
         <span>Wrong target</span>
@@ -132,7 +133,7 @@ export default function HomePage() {
         </div>
         <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build.">
           {inject.receipt?.baseline ? <HeroStats baseline={inject.receipt.baseline} attacker={inject.receipt.attacker} /> : null}
-          <p className="hero-note">Hardened prompt results are one temperature-0 sample per attack.</p>
+          <SampleNote />
           <p className="hero-note">Discarded pass</p>
           <p className="hero-note">A first temperature-0 pass was discarded before any transaction because the buyer held under 8 NEAR.</p>
         </ReceiptGate>
