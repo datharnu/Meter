@@ -61,8 +61,11 @@ export default function CheckPage() {
           </div>
         )}
         <p className="note">
-          Defaults are the <span className="mono">poke</span> meter (id 1) on{" "}
-          <span className="mono">medbf5c.mtrfc658fd1.testnet</span> — funded 2.00 USDC, unpaid, deadline 2026-11-20. Do not release or refund it.
+          Defaults are <span className="mono">poke</span> meter <strong>1</strong> on{" "}
+          <span className="mono">medbf5c.mtrfc658fd1.testnet</span> — funded <strong>2.00 USDC</strong>, unpaid, deadline{" "}
+          <strong>2026-11-20T09:53:42.339Z</strong>. This is a live contract: never call <span className="mono">release</span> or{" "}
+          <span className="mono">refund</span> on it from a key. After the deadline anyone can <span className="mono">refund</span> meter 1 and
+          on-chain state (and <span className="mono">preview</span>) may differ from what you see on the 19th or 20th.
         </p>
         <p className="note">CLI: <span className="mono break">node chain/check.mjs</span> with no flags uses the same defaults.</p>
       </main>
