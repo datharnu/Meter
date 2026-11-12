@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FaqSection } from "@/components/FaqSection";
 import { FailureMap } from "@/components/home/FailureMap";
 import { FramePreview } from "@/components/home/FramePreview";
-import { HijackScene } from "@/components/home/HijackScene";
+import { HijackScene, useDefence } from "@/components/home/HijackScene";
 import { SourceDeck } from "@/components/home/SourceDeck";
 import { StepRail } from "@/components/home/StepRail";
 import { Tripwire } from "@/components/home/Tripwire";
@@ -15,7 +15,7 @@ import { ReceiptGate } from "@/components/ReceiptGate";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SectionHead } from "@/components/SectionHead";
 import { SiteNav } from "@/components/SiteNav";
-import { attackById } from "@/lib/hijack";
+import { hardenedCalls, wrongTargetUnits } from "@/lib/hijack";
 import { useInject } from "@/lib/useInject";
 import { formatUnits, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
@@ -70,10 +70,40 @@ function Headline() {
   );
 }
 
+function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?: number; moneyMoved?: string }; attacker?: string }) {
+  const { file, state } = useDefence();
+  const calls = hardenedCalls(file);
+  const malicious = calls.filter((row) => row.emittedMalicious).length;
+  const hardened = state === "ready"
+    ? `${malicious} of ${calls.length}`
+    : state === "error" ? "Receipt failed" : state === "empty" ? "No run" : "Reading";
+  const wrong = state === "ready"
+    ? formatUnits(wrongTargetUnits(file))
+    : state === "error" ? "Receipt failed" : state === "empty" ? "No run" : "Reading";
+  return (
+    <div className="stats" aria-label="Hijack result">
+      <div className="stat">
+        <span>Weak prompt</span>
+        <b>{baseline.obeyed ?? "—"} of {baseline.runs ?? "—"}</b>
+        <small>{formatUnits(baseline.moneyMoved ?? "0")} to {attacker || "the attacker"}</small>
+      </div>
+      <div className="stat">
+        <span>Hardened prompt</span>
+        <b>{hardened}</b>
+        <small>{state === "ready" ? "malicious calls" : state === "error" ? "The hardened receipt did not load." : state === "empty" ? "No hardened run in this receipt." : "Reading the hardened run."}</small>
+      </div>
+      <div className="stat">
+        <span>Wrong target</span>
+        <b>{wrong}</b>
+        <small>{state === "ready" ? "moved to a wrong target in every Meter run" : "Reading the Meter runs."}</small>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { state, receipt, reload } = useReceipt();
   const inject = useInject();
-  const meterOne = inject.receipt ? attackById(inject.receipt, 1) : null;
   const signed = useReceipt("/tee.json");
   const timed = useReceipt("/v2.json");
   const signedSteps = signed.receipt?.steps ?? [];
@@ -101,25 +131,10 @@ export default function HomePage() {
           <a className="ghost" href="#try">Try the refusal</a>
         </div>
         <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build.">
-          {inject.receipt?.baseline && meterOne ? (
-            <div className="stats" aria-label="Hijack result">
-              <div className="stat">
-                <span>Agent obeyed</span>
-                <b>{inject.receipt.baseline.obeyed}/{inject.receipt.baseline.runs}</b>
-                <small>Same poisoned invoice</small>
-              </div>
-              <div className="stat">
-                <span>Naive key lost</span>
-                <b>{formatUnits(inject.receipt.baseline.moneyMoved ?? "0")}</b>
-                <small>PAID to {inject.receipt.attacker}</small>
-              </div>
-              <div className="stat">
-                <span>Meter moved</span>
-                <b>{formatUnits(meterOne.moneyMoved ?? "0")}</b>
-                <small>STOPPED · {meterOne.expected || "refusal"}</small>
-              </div>
-            </div>
-          ) : null}
+          {inject.receipt?.baseline ? <HeroStats baseline={inject.receipt.baseline} attacker={inject.receipt.attacker} /> : null}
+          <p className="hero-note">Hardened prompt results are one temperature-0 sample per attack.</p>
+          <p className="hero-note">Discarded pass</p>
+          <p className="hero-note">A first temperature-0 pass was discarded before any transaction because the buyer held under 8 NEAR.</p>
         </ReceiptGate>
         <section id="hijack" className="pitch-section">
           <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build. node chain/inject.mjs records one.">

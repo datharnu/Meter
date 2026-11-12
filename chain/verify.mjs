@@ -308,6 +308,12 @@ async function checkCode() {
     if (old.hash !== previous.onchain_code_hash) throw new Error(`Previous code hash ${old.hash}`);
     if (old.sha256 !== previous.wasm_sha256) throw new Error(`Previous wasm sha256 ${old.sha256}`);
   }
+  if (file.hardenContract && current.wasm_path) {
+    const deployed = await codeOf(file.hardenContract);
+    const wasmSha = createHash("sha256").update(readFileSync(join(root, current.wasm_path))).digest("hex");
+    if (deployed.sha256 !== wasmSha) throw new Error(`${file.hardenContract} sha256 ${deployed.sha256}, chain/meter-v2.wasm ${wasmSha}`);
+    console.log(`code      ${file.hardenContract} · ${deployed.hash} · sha256 matches ${current.wasm_path} · ok`);
+  }
   console.log(`code      ${current.contract} · ${live.hash} · tag ${current.git_tag} · ok`);
 }
 

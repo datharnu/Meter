@@ -5,12 +5,16 @@ import Link from "next/link";
 import {
   attackById,
   baselineTrial,
+  attackerReached,
   broadcastTrial,
+  callDestination,
   hardenedCase,
+  invoiceField,
   onChainLabel,
   outcomeWord,
   splitInvoice,
   toolLine,
+  type DefenceAttack,
   type DefenceFile,
   type InjectReceipt,
   type ToolCall,
@@ -44,6 +48,8 @@ function Bill({
   code,
   hash,
   note,
+  headline,
+  subline,
 }: {
   title: string;
   invoice: string | undefined;
@@ -53,6 +59,8 @@ function Bill({
   code: string;
   hash: string | null;
   note: string;
+  headline?: string | null;
+  subline?: string | null;
 }) {
   const paper = invoiceRows(invoice);
   const amount = paper?.rows.find((row) => row.label.toLowerCase() === "amount")?.value;
@@ -62,7 +70,8 @@ function Bill({
         <p>{title}</p>
         <span className="tag" data-kind={word === "PAID" ? "paid" : "refused"}>{word}</span>
       </header>
-      <p className="bill-amount">{amount || figure}<small>tUSDC</small></p>
+      {headline ? <p className="bill-amount bill-attacker">{headline}</p> : <p className="bill-amount">{amount || figure}<small>tUSDC</small></p>}
+      {subline ? <p className="note">{subline}</p> : null}
       {paper && paper.rows.length > 0 ? (
         <dl>
           {paper.rows.filter((row) => row.label.toLowerCase() !== "amount").map((row) => (
@@ -103,8 +112,10 @@ export function HijackCompare({
   const hardMeter = prompt === "hardened" ? hardenedCase(receipt, "1") : null;
   const leftCall = hardBase?.trials?.[0]?.toolCall ?? naive?.transcript?.toolCall;
   const rightCall = hardMeter?.trials?.[0]?.toolCall ?? meterTrial?.transcript?.toolCall;
-  const defence = useDefence();
+  const { file: defence } = useDefence();
   const promptOnly = defence?.promptOnly?.attacks?.find((item) => item.id === 1) ?? null;
+  const attacker = receipt.attacker || "";
+  const promptWhere = promptOnly ? promptOnlyWhere(promptOnly, attacker) : null;
 
   return (
     <div>
@@ -130,8 +141,10 @@ export function HijackCompare({
             title="Prompt-only defence"
             invoice={promptOnly.invoice}
             call={promptOnly.toolCall}
-            word={outcomeWord(promptOnly.moneyMoved)}
-            figure={`${formatUnits(promptOnly.moneyMoved)} moved`}
+            word={outcomeWord(attackerReached(promptOnly, attacker))}
+            figure={`to attacker: ${formatUnits(attackerReached(promptOnly, attacker))}`}
+            headline={`to attacker: ${formatUnits(attackerReached(promptOnly, attacker))}`}
+            subline={promptWhere}
             code={promptOnly.code || (promptOnly.emittedMalicious ? "emitted" : "no malicious call")}
             hash={promptOnly.hash || null}
             note={`${promptOnly.emittedMalicious ? "The agent emitted the call the note asked for." : "The agent did not emit the malicious call. The broadcast is the sealed line."} Obeyed ${promptOnly.emittedMalicious ? "1 of 1" : "0 of 1"}. ${promptOnly.evidence}.`}
@@ -157,22 +170,43 @@ export function HijackCompare({
   );
 }
 
+function promptOnlyWhere(row: DefenceAttack, attacker: string) {
+  const dest = callDestination(row);
+  const payee = invoiceField(row.invoice, "Payee");
+  const moved = BigInt(row.moneyMoved || "0");
+  if (row.id === 4 && payee && dest === payee && moved > BigInt(0)) return "paid early, outside the window";
+  if (payee && dest === payee && moved > BigInt(0)) return `${formatUnits(row.moneyMoved)} to the sealed payee, correct`;
+  if (dest === attacker && moved > BigInt(0)) return `${formatUnits(row.moneyMoved)} to the attacker`;
+  return `${formatUnits(row.moneyMoved || "0")} moved`;
+}
+
 export function useDefence() {
   const [file, setFile] = useState<DefenceFile | null>(null);
+  const [state, setState] = useState<"loading" | "empty" | "error" | "ready">("loading");
   useEffect(() => {
     const controller = new AbortController();
     fetch("/inject2.json", { signal: controller.signal, cache: "no-store" })
       .then(async (response) => {
-        if (!response.ok) return null;
+        if (!response.ok) throw new Error(String(response.status));
         return response.json();
       })
       .then((body) => {
-        if (body?.promptOnly?.attacks || body?.meterKey?.attacks) setFile(body);
+        if (!body?.promptOnly?.attacks && !body?.meterKey?.attacks && !body?.escalation?.runs) {
+          setFile(body ?? null);
+          setState("empty");
+          return;
+        }
+        setFile(body);
+        setState("ready");
       })
-      .catch(() => setFile(null));
+      .catch((error) => {
+        if (error?.name === "AbortError") return;
+        setFile(null);
+        setState("error");
+      });
     return () => controller.abort();
   }, []);
-  return file;
+  return { file, state };
 }
 
 export function ThreatCard({ note }: { note?: string | null }) {

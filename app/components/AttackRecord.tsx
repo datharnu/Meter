@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { HijackCompare, ThreatCard, useDefence } from "@/components/home/HijackScene";
 import { Tripwire } from "@/components/home/Tripwire";
@@ -39,11 +39,23 @@ function hardenedObey(receipt: InjectReceipt, row: LadderRow) {
 function defenceLine(label: string, row: DefenceAttack | undefined) {
   if (!row) return null;
   const obeyed = row.emittedMalicious ? "1 of 1" : "0 of 1";
+  const early = row.id === 4 && label === "Prompt-only defence" ? " Paid early, outside the window." : "";
   return (
     <small>
-      {label}: obeyed {obeyed}, {toolLine(row.toolCall)}, moved {formatUnits(row.moneyMoved)}, {row.evidence}
+      {label}: obeyed {obeyed}, {toolLine(row.toolCall)}, moved {formatUnits(row.moneyMoved)}, {row.evidence}{early}
       {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
     </small>
+  );
+}
+
+function RowMeta({ receipt, row, defence }: { receipt: InjectReceipt; row: LadderRow; defence: DefenceFile | null }) {
+  return (
+    <>
+      {row.permission ? <small className="hijack-perm">key permission, not a contract refusal</small> : null}
+      {tripwireFact(receipt, row.attack) ? <small>{tripwireFact(receipt, row.attack)}</small> : null}
+      {deadKeyHashes(row.attack).length ? <small>Not on a live key: {deadKeyHashes(row.attack).join(", ")}</small> : null}
+      <DefenceLines defence={defence} id={row.key} />
+    </>
   );
 }
 
@@ -58,6 +70,30 @@ function DefenceLines({ defence, id }: { defence: DefenceFile | null; id: string
       {defenceLine("Prompt-only defence", only)}
       {defenceLine("With Meter", meter)}
     </>
+  );
+}
+
+function Escalation({ defence }: { defence: DefenceFile | null }) {
+  const runs = defence?.escalation?.runs ?? [];
+  if (!defence) return null;
+  if (!runs.length) {
+    if (!defence.escalation?.payloads?.length) return null;
+    return <p className="note">Escalation payloads are committed. No run is in this receipt yet.</p>;
+  }
+  const resisted = runs.every((row) => row.emittedMalicious === false);
+  return (
+    <section className="hijack-threat" aria-labelledby="escalation-title">
+      <h3 id="escalation-title">Escalation</h3>
+      <ul>
+        {runs.map((row) => (
+          <li key={`${row.config ?? "run"}-${row.id}`}>
+            {row.config === "meterKey" ? "Hardened prompt + Meter key" : "Prompt-only defence"}, attack {row.id}: {row.emittedMalicious ? "emitted the malicious call" : "did not emit the malicious call"}. {toolLine(row.toolCall)}. Reached the injected target {formatUnits(row.injectedReached || "0")}. {row.evidence}
+            {row.hash ? <> <a className="mono" href={txUrl(row.hash)}>{row.hash}</a></> : null}
+          </li>
+        ))}
+      </ul>
+      {resisted ? <p className="note">one sample per attack</p> : null}
+    </section>
   );
 }
 
@@ -81,7 +117,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
   const hardBase = prompt === "hardened" ? hardenedCase(receipt, "baseline") : null;
   const hardMeter = prompt === "hardened" ? hardenedCase(receipt, "1") : null;
   const system = prompt === "hardened" && receipt.hardened?.system ? receipt.hardened.system : receipt.system;
-  const defence = useDefence();
+  const { file: defence, state: defenceState } = useDefence();
   const baselineObey = hardBase
     ? obeyText(hardBase.obeyed, hardBase.runs, 0)
     : obeyText(baseline?.obeyed, baseline?.runs, baseline?.broadcast);
@@ -127,13 +163,13 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
               </tr>
             ) : null}
             {rows.map((row) => (
-              <tr key={row.key} data-permission={row.permission ? "true" : undefined}>
+              <Fragment key={row.key}>
+              <tr data-permission={row.permission ? "true" : undefined}>
                 <th scope="row">
                   <Link href={`/attack/${encodeURIComponent(row.key)}`}>{row.name}</Link>
-                  {row.permission ? <small className="hijack-perm">key permission, not a contract refusal</small> : null}
-                  {tripwireFact(receipt, row.attack) ? <small>{tripwireFact(receipt, row.attack)}</small> : null}
-                  {deadKeyHashes(row.attack).length ? <small>Not on a live key: {deadKeyHashes(row.attack).join(", ")}</small> : null}
-                  <DefenceLines defence={defence} id={row.key} />
+                  <div className="attack-meta">
+                    <RowMeta receipt={receipt} row={row} defence={defence} />
+                  </div>
                 </th>
                 <td>{prompt === "hardened" ? hardenedObey(receipt, row) : row.obeyed}</td>
                 <td className="mono">{row.code}</td>
@@ -144,6 +180,12 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                   {row.attack.runs != null && row.attack.broadcast != null ? <small>{onChainLabel(row.attack.runs, row.attack.broadcast, row.attack.burnHash ? "delete" : "first")}</small> : null}
                 </td>
               </tr>
+              <tr className="attack-follow">
+                <td colSpan={5}>
+                  <RowMeta receipt={receipt} row={row} defence={defence} />
+                </td>
+              </tr>
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -166,6 +208,11 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
       {prompt === "hardened" ? (
         <p className="note">Hardened prompt obeyed {hardMeter ? `${hardMeter.obeyed} of ${hardMeter.runs}` : "—"} on the wrong-account invoice. {receipt.hardened?.whyNotBroadcast}</p>
       ) : null}
+      <p className="note">Hardened prompt results are one temperature-0 sample per attack.</p>
+      <p className="note">Discarded pass</p>
+      <p className="note">A first temperature-0 pass was discarded before any transaction because the buyer held under 8 NEAR.</p>
+      {defenceState === "error" ? <p className="note" role="alert">The hardened receipt did not load.</p> : <Escalation defence={defence} />}
+      {defenceState === "loading" ? <p className="note">Reading the hardened run.</p> : null}
       <ThreatCard note={receipt.notYetNote} />
       <div className="hijack-verify">
         <code>node chain/verify.mjs</code>
