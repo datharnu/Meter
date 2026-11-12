@@ -1,6 +1,6 @@
 # FAQ
 
-Answers refer to the **time-gate** build in `contract-v2` (`chain/meter-v2.wasm`) and the recorded runs in `app/public/*.json`. Toy runs use `token.mtrfc658fd1.testnet`, not Circle USDC.
+Answers refer to the **time-gate** build in `contract-v2` (`chain/meter-v2.wasm`) and the recorded runs in `app/public/*.json`. The payment-record receipts (`m028a47`) are on chain; the source in `contract/` is incomplete and does not build standalone. Toy runs use `token.mtrfc658fd1.testnet`, not Circle USDC.
 
 ## Why not a plain escrow or timelock?
 

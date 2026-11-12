@@ -106,7 +106,7 @@ Receipts: `app/public/inject.json` (`i198b44.mtrfc658fd1.testnet`), `app/public/
 
 CI runs this on push to `main`, nightly, and manual dispatch (up to three RPC retries). A row below is `ok` only when that command checks it. `not checked` means the command says so, or the check does not exist.
 
-The payment-record Rust tree in `contract/` does not currently build standalone (`mod attest` with no `attest.rs` in that crate); the deployed payment record is re-read on testnet at `m028a47` and in `app/public/chain.json`.
+The payment-record receipts (`m028a47`) are on chain. The source in `contract/` is incomplete and does not build standalone (`mod attest` with no `attest.rs` in that crate).
 
 | Check | Today | What it means |
 | --- | --- | --- |
@@ -362,7 +362,7 @@ A pool needs more than one buyer and more than one balance. The deployed meter i
 
 | Layer | Choice | Why |
 | --- | --- | --- |
-| Contracts | Rust, `near-sdk` 5.30.0, `near-sys` 0.4.0 | The three recorded accounts are NEAR contracts. `contract-tee/` and `contract-v2/` build in CI; `contract/` (payment record sources) does not build standalone—receipts are on chain. The time gate does not enable the `unstable` feature and does not verify a TEE quote. |
+| Contracts | Rust, `near-sdk` 5.30.0, `near-sys` 0.4.0 | The three recorded accounts are NEAR contracts. `contract-tee/` and `contract-v2/` build in CI. The payment-record receipts (`m028a47`) are on chain; the source in `contract/` is incomplete and does not build standalone. The time gate does not enable the `unstable` feature and does not verify a TEE quote. |
 | Hashing | `sha2` 0.10, `unicode-normalization` 0.1 | The line hash has to match in Rust and in `chain/line.mjs`. |
 | App | Next.js 15.5.4, React 19.1.1 | The page is a reader for the three receipts plus a local preview. No wallet library. |
 | Rule shared with the page | `app/lib/rule.mjs` | The homepage and `/clause` call this function. They do not keep a second copy of the checks. |
@@ -401,7 +401,7 @@ node --test app/lib/rule.test.mjs chain/line.test.mjs
 node chain/verify.mjs
 ```
 
-CI runs those commands. `contract/src/rule.rs` mirrors the payment-record rule but the `contract/` crate does not build standalone today; proofs live on chain at `m028a47`. `contract-v2` covers the window, the late deposit, the unregistered transfer, and the test-only pool file. `verify.mjs` needs a network path to NEAR testnet. `node chain/prove.mjs` deploys a fresh payment-record contract. `FORCE=1 node chain/v2-prove.mjs` deploys another time gate. Neither is required to read the recorded runs.
+CI runs those commands. The payment-record receipts (`m028a47`) are on chain; the source in `contract/` is incomplete and does not build standalone. `contract-v2` covers the window, the late deposit, the unregistered transfer, and the test-only pool file. `verify.mjs` needs a network path to NEAR testnet. `node chain/prove.mjs` deploys a fresh payment-record contract. `FORCE=1 node chain/v2-prove.mjs` deploys another time gate. Neither is required to read the recorded runs.
 
 > [!WARNING]
 > `npm test` inside `app/` runs `lib/rule.test.mjs` only. The line-hash tests live in `chain/` and are not part of that script. Use the command in the block above from the repo root.
@@ -417,7 +417,7 @@ CI runs those commands. `contract/src/rule.rs` mirrors the payment-record rule b
 | Path | What it is |
 | --- | --- |
 | [`contract-v2/`](contract-v2) | The time-gate contract. This source matches the wasm on `i198b44`. `m1870dd` matches commit `853d2db`, the previous build. |
-| [`contract/`](contract) | The payment-record contract. No stored release time. |
+| [`contract/`](contract) | Incomplete payment-record sources (does not build); receipts on chain at `m028a47`. |
 | [`contract-tee/`](contract-tee) | The signed release. Quote check is not in this build. |
 | [`chain/`](chain) | Prove, late-deposit, and verify scripts, plus the receipt copies. |
 | [`app/`](app) | The Next.js reader, the desk, and the preview. |
@@ -500,21 +500,27 @@ First commit in this repository: [`cfc4f819`](https://github.com/datharnu/Meter/
 
 ## AI assistance
 
-- **Tools:** [TODO: list models, IDEs, or agents used, e.g. Cursor, CLI.]
-- **What AI did:** [TODO: drafting, refactors, test scaffolding, README prose, etc.]
-- **What a human did:** [TODO: contract design, on-chain runs, keys, judging which receipts are canonical, prompt text for hijack runs.]
-- **Verification:** Every payment claim in this README is tied to a hash in `app/public/*.json` or to `node chain/verify.mjs`. [TODO: add your review process before submission.]
+> **AI assistance.** Meter's code, tests and docs were written with AI coding assistants **Cursor** under my direction. I chose the product, the scope, the attack design and the claims, and I reviewed what shipped. The agent in the hijack demo is `gpt-4.1-mini`, and the hardened-prompt and escalation payloads were committed before they were run. Every figure in this README is recomputed from `app/public/*.json` or by `node chain/verify.mjs`.
 
 ## Track by track
 
-<!-- TODO: paste organizers' exact text for tracks 06 and 08; the table below is a scaffold only. -->
+Track **06 · AI Security & Defense:** “Build spending limits, policy engines, sandboxed wallets, reputation and scam detection. Give AI money without giving it the keys to everything.”
 
-| Track | Requirement (from organizers) | Where shown | Honest gap |
-| --- | --- | --- | --- |
-| **06** | [TODO: paste track 06 requirement] | Hijack receipts, `verify.mjs`, `/attack` | [TODO] |
-| **06** | [TODO] | `preview` on `/check` and `chain/check.mjs` — **pre-check only**; view call, does not block spend or ask a human | Does not replace treasury controls |
-| **08** | [TODO: paste track 08 requirement] | Sealed line, four checks, testnet hashes | [TODO] |
-| **08** | [TODO] | `real-token.json` / Circle USDC | **Not recorded yet** — see `docs/real-token.SHAPE.md` |
+Track **08 · Real-World Money:** “Build payroll, invoicing, remittances, merchant payments and stablecoin rails for real businesses. Something a normal company could use tomorrow.”
+
+| Requirement (quoted phrase) | Where Meter shows it | Honest gap |
+| --- | --- | --- |
+| 06 · “without giving it the keys” | Release-only function-call key, 0.50 NEAR gas allowance, no deposit — [https://meter-brown.vercel.app/attack](https://meter-brown.vercel.app/attack), `app/public/inject.json`, `app/public/inject2.json` | One narrow payment rule on one method, not a general wallet or account guard. |
+| 06 · policy engine | Stored-line checks in `release` (recipient, amount, sentence, window) — homepage **Try the refusal**, `node chain/verify.mjs` | Pins one obligation; no policy language beyond the sealed fields. |
+| 06 · spending limits | — | No per-day or per-payment budget caps. |
+| 06 · reputation and scam detection | — | Not built. |
+| 06 · pre-check (`preview`) | `preview` on chain; [`/check`](app/app/check/page.tsx), `node chain/check.mjs` — view only, same args as `release` | Does not block a spend and does not ask a human; does not increment the tripwire. |
+| 06 · TEE attestation | Earlier signed-release contract `m2b2440`, `app/public/tee.json` | Intel quote not checked; not part of the time-gate / hijack contracts. |
+| 08 · invoicing for a real company | Sealed line between two parties (example slip), payment-record receipt `m028a47` | `token.mtrfc658fd1.testnet` with public mint, not Circle mainnet; no wallet connect, no vendor accept flow, no audit. |
+| 08 · stablecoin rails and NEAR Intents | — | Not built. |
+| 08 · “usable tomorrow” | — | Not claimed for production payroll or merchant use. |
+
+Detailed organiser requirements beyond the track descriptions were not seen.
 
 ## Team and license
 

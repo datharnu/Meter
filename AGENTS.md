@@ -10,7 +10,7 @@ node --test app/lib/rule.test.mjs chain/line.test.mjs
 cd app && npm install && npm run dev   # http://localhost:3000
 ```
 
-From `contract-v2/` and `contract-tee/`: `cargo test`. (`contract/` payment-record source does not build standalone; proofs are on chain at `m028a47`.)
+From `contract-v2/` and `contract-tee/`: `cargo test`. The payment-record receipts (`m028a47`) are on chain; the source in `contract/` is incomplete and does not build standalone.
 
 ## Receipt files (do not edit for proofs)
 
@@ -21,7 +21,7 @@ From `contract-v2/` and `contract-tee/`: `cargo test`. (`contract/` payment-reco
 | `app/public/v2.json` | `m1870dd` time gate (previous build) |
 | `app/public/inject.json` | `i198b44` hijack (toy token) |
 | `app/public/inject2.json` | `h3743c5`, `h09d6ce`, wasm provenance |
-| `app/public/real-token.json` | TODO: Circle USDC run — only when present |
+| `app/public/real-token.json` | Circle USDC run — not in repo until recorded (see `docs/real-token.SHAPE.md`) |
 
 ## Claim → evidence
 
