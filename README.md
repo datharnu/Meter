@@ -514,7 +514,7 @@ Track **08 · Real-World Money:** “Build payroll, invoicing, remittances, merc
 | 06 · policy engine | Stored-line checks in `release` (recipient, amount, sentence, window) — homepage **Try the refusal**, `node chain/verify.mjs` | Pins one obligation; no policy language beyond the sealed fields. |
 | 06 · spending limits | — | No per-day or per-payment budget caps. |
 | 06 · reputation and scam detection | — | Not built. |
-| 06 · pre-check (`preview`) | `preview` on chain; [`/check`](app/app/check/page.tsx), `node chain/check.mjs` — view only, same args as `release` | Does not block a spend and does not ask a human; does not increment the tripwire. |
+| 06 · pre-check (`preview`) | `preview` on chain; [meter-brown.vercel.app/check](https://meter-brown.vercel.app/check), `node chain/check.mjs` — view only, same args as `release` | Does not block a spend and does not ask a human; does not increment the tripwire. |
 | 06 · TEE attestation | Earlier signed-release contract `m2b2440`, `app/public/tee.json` | Intel quote not checked; not part of the time-gate / hijack contracts. |
 | 08 · invoicing for a real company | Sealed line between two parties (example slip), payment-record receipt `m028a47` | `token.mtrfc658fd1.testnet` with public mint, not Circle mainnet; no wallet connect, no vendor accept flow, no audit. |
 | 08 · stablecoin rails and NEAR Intents | — | Not built. |
