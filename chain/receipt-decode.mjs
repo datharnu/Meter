@@ -1,5 +1,7 @@
 // Decode Meter return codes from archived transactions. No keys.
 
+import { existsSync } from "node:fs";
+
 const ARCHIVAL = "https://archival-rpc.testnet.fastnear.com";
 
 function parseReturn(status) {
@@ -35,15 +37,29 @@ function decodeFromTx(result, contract) {
   return { decoded: last.code, reason: hits.length > 1 ? `${hits.length} contract outcomes; used last` : null };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function rpc(url, method, params) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: "rd", method, params }),
-  });
-  const body = await response.json();
-  if (body.error) throw new Error(JSON.stringify(body.error).slice(0, 300));
-  return body.result;
+  let last;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: "rd", method, params }),
+    });
+    const body = await response.json();
+    if (!body.error) return body.result;
+    const text = JSON.stringify(body.error);
+    last = text.slice(0, 300);
+    if (/Rate limit|-429/i.test(text) && attempt < 3) {
+      await sleep(1500 * (attempt + 1));
+      continue;
+    }
+    throw new Error(last);
+  }
+  throw new Error(last);
 }
 
 async function fetchTx(rpcUrls, hash, signers) {
@@ -58,6 +74,7 @@ async function fetchTx(rpcUrls, hash, signers) {
       }
     }
   }
+  if (/UNKNOWN_TRANSACTION|doesn't exist/i.test(last)) return null;
   throw new Error(last);
 }
 
@@ -76,6 +93,29 @@ function collectRows(root, readFileSync, join) {
   };
 
   const load = (name) => JSON.parse(readFileSync(join(root, "app/public", name), "utf8"));
+
+  if (existsSync(join(root, "app/public/real-token.json"))) {
+    const data = load("real-token.json");
+    for (const step of data.steps ?? []) {
+      add("real-token.json", { ...step, buyer: data.buyer, vendor: data.vendor }, data.contract);
+    }
+    for (const step of data.refundRun ?? []) {
+      add("real-token.json", { ...step, buyer: data.buyer, vendor: data.vendor }, data.contract);
+    }
+    if (data.earlyRefundRun?.hash) {
+      add(
+        "real-token.json",
+        {
+          label: "Refund before deadline",
+          hash: data.earlyRefundRun.hash,
+          code: data.earlyRefundRun.code ?? "ERR_TOO_EARLY",
+          signer: data.earlyRefundRun.signer ?? data.buyer,
+          buyer: data.buyer,
+        },
+        data.contract,
+      );
+    }
+  }
 
   for (const name of ["chain.json", "tee.json", "v2.json"]) {
     const data = load(name);
@@ -134,12 +174,26 @@ export async function verifyReceiptRows(root, readFileSync, join, rpcUrl) {
     let reason = null;
     try {
       const tx = await fetchTx(rpcUrls, row.hash, [...row.signers, row.contract]);
+      if (!tx) {
+        status = "not decoded";
+        reason = "not decoded: pruned";
+        out.push({ ...row, decoded: null, status, reason });
+        continue;
+      }
       const hit = decodeFromTx(tx, row.contract);
       decoded = hit.decoded;
       reason = hit.reason;
       if (!decoded) reason = hit.reason;
     } catch (error) {
       reason = error.message;
+    }
+
+    const fundOkReturn = row.file === "real-token.json" && /fund/i.test(row.label) && row.expected === "OK" && decoded && /^\d+$/.test(String(decoded));
+    if (fundOkReturn) {
+      status = "match";
+      matched += 1;
+      out.push({ ...row, decoded, status, reason: "ft_transfer_call return amount" });
+      continue;
     }
 
     const fundPath = /deposit|fund/i.test(row.label) && row.expected === "ERR_TOO_LATE";
@@ -174,6 +228,8 @@ export async function verifyReceiptRows(root, readFileSync, join, rpcUrl) {
 
   return { rows: out, matched, total: out.length, decodable, notDecoded };
 }
+
+export { ARCHIVAL, decodeFromTx, fetchTx };
 
 export function printReceiptReport(report) {
   console.log(`receipts ${report.matched}/${report.total} match (${report.notDecoded.length} not decoded)`);

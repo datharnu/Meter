@@ -21,7 +21,7 @@ From `contract-v2/` and `contract-tee/`: `cargo test`. The payment-record receip
 | `app/public/v2.json` | `m1870dd` time gate (previous build) |
 | `app/public/inject.json` | `i198b44` hijack (toy token) |
 | `app/public/inject2.json` | `h3743c5`, `h09d6ce`, wasm provenance |
-| `app/public/real-token.json` | Circle USDC run — not in repo until recorded (see `docs/real-token.SHAPE.md`) |
+| `app/public/real-token.json` | `medbf5c` Circle testnet USDC — hero meter 4, refund meter 3, poke meter 1 (see `docs/real-token.SHAPE.md`) |
 
 ## Claim → evidence
 
@@ -41,6 +41,7 @@ No work-quality judge, no mainnet USDC in toy runs, no Meter-held signer. See [d
 ## Judge poke (read-only)
 
 ```bash
+node chain/check.mjs   # defaults: poke meter 1 on medbf5c (Circle USDC)
 node chain/check.mjs --meter <contract> --id <n> --recipient X --amount <base units> --sentence "..."
 ```
 

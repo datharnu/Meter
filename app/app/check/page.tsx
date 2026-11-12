@@ -4,10 +4,10 @@ import { useState } from "react";
 import { SiteNav } from "@/components/SiteNav";
 
 const DEFAULT = {
-  meter: "i198b44.mtrfc658fd1.testnet",
-  id: "7",
-  recipient: "other.testnet",
-  amount: "48000000",
+  meter: "medbf5c.mtrfc658fd1.testnet",
+  id: "1",
+  recipient: "u2bfe17.mtrfc658fd1.testnet",
+  amount: "2000000",
   sentence: "Field report 04, price column at most 100",
 };
 
@@ -60,7 +60,11 @@ export default function CheckPage() {
             )}
           </div>
         )}
-        <p className="note">CLI: <span className="mono break">node chain/check.mjs --meter … --id … --recipient … --amount … --sentence …</span></p>
+        <p className="note">
+          Defaults are the <span className="mono">poke</span> meter (id 1) on{" "}
+          <span className="mono">medbf5c.mtrfc658fd1.testnet</span> — funded 2.00 USDC, unpaid, deadline 2026-11-20. Do not release or refund it.
+        </p>
+        <p className="note">CLI: <span className="mono break">node chain/check.mjs</span> with no flags uses the same defaults.</p>
       </main>
     </div>
   );

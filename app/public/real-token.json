@@ -1,0 +1,79 @@
+{
+  "network": "testnet",
+  "contract": "medbf5c.mtrfc658fd1.testnet",
+  "token": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
+  "buyer": "mtrfc658fd1.testnet",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "recipient": "u2bfe17.mtrfc658fd1.testnet",
+  "meterId": 4,
+  "amount": "2000000",
+  "evidence": "Field report 04, price column at most 100",
+  "sentence": "Field report 04, price column at most 100",
+  "notBefore": "1794477402339409664",
+  "deadline": "1794484422339409664",
+  "lineHash": "38df77ba192c6306c0e1a6dad8ec513781468051a532fba28b738ccb59002fa0",
+  "agentPublicKey": "ed25519:HhYArGqrbP2wqMvF13CcrRzzxqGtq1bHnUwQt4bvMBZC",
+  "pokeMeterId": 1,
+  "pokeDeadline": "2026-11-20T09:53:42.339Z",
+  "refundMeter": 3,
+  "steps": [
+    {
+      "label": "Fund via ft_transfer_call",
+      "code": "OK",
+      "hash": "YXs2Bj9exKViMqXyJxBjX1ws8mYANSCj1PsckEC5BN2",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet"
+    },
+    {
+      "label": "Release before the stored time",
+      "code": "ERR_NOT_YET",
+      "hash": "4XhELzwtLbEY9tLWXmnaKV4Kv7uCoMPiAGZFUzSHcQy7",
+      "moved": "0",
+      "signer": "medbf5c.mtrfc658fd1.testnet"
+    },
+    {
+      "label": "Wrong recipient other.testnet",
+      "code": "ERR_RECIPIENT",
+      "hash": "4aVwvUN1P4atnZUAiBRw5TaM8sCUywxoVqv2D62JrfdM",
+      "moved": "0",
+      "signer": "medbf5c.mtrfc658fd1.testnet"
+    },
+    {
+      "label": "Paid u2bfe17.mtrfc658fd1.testnet",
+      "code": "OK",
+      "hash": "GLNMWqTrhH3mjteKvMU6sMQ2nJfqX1fkdRjC7fKw7T7E",
+      "moved": "2000000",
+      "signer": "medbf5c.mtrfc658fd1.testnet"
+    },
+    {
+      "label": "Second release moved nothing",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "4S2zGN5xadSQ9d5LrzB2NCsuvJ8gH2FkmvpmVx7g55zH",
+      "moved": "0",
+      "signer": "medbf5c.mtrfc658fd1.testnet"
+    }
+  ],
+  "refundRun": [
+    {
+      "label": "Refund after deadline",
+      "code": "OK",
+      "hash": "2ND722QNPuXGn6L4AstHFV7bFk2QHuBhKnqRABCmJx1V",
+      "moved": "2000000",
+      "signer": "mtrfc658fd1.testnet"
+    },
+    {
+      "label": "Second refund refused",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "CvYFiaiKsepxu25Z2gqvCWMLpisVLEw66w1DzZ9LYEvm",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet"
+    }
+  ],
+  "earlyRefundRun": {
+    "meterId": 2,
+    "hash": "33ajEgYpyvWLT2r1zSCEs8c3npkCDzVYgaroTFrcZxNc",
+    "code": "ERR_TOO_EARLY",
+    "signer": "mtrfc658fd1.testnet"
+  },
+  "at": "2026-11-12T09:57:56.510Z"
+}

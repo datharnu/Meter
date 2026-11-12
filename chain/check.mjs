@@ -1,17 +1,43 @@
 #!/usr/bin/env node
 // View-only preview: same args as release. No key. Does not count toward the tripwire.
+// With no flags, defaults to the poke meter on the Circle USDC run (real-token.json).
 
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ARCHIVAL = "https://archival-rpc.testnet.fastnear.com";
 const RPC = process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com";
 
+function loadDefaults() {
+  const path = join(root, "app/public/real-token.json");
+  if (!existsSync(path)) return null;
+  const real = JSON.parse(readFileSync(path, "utf8"));
+  return {
+    meter: real.contract,
+    id: String(real.pokeMeterId),
+    recipient: real.recipient,
+    amount: real.amount,
+    sentence: real.sentence,
+    pokeDeadline: real.pokeDeadline,
+  };
+}
+
 function usage() {
-  console.error(`Usage: node chain/check.mjs --meter <account> --id <u64> --recipient <account> --amount <base units> --sentence <text>`);
+  console.error(`Usage: node chain/check.mjs [--meter <account> --id <u64> --recipient <account> --amount <base units> --sentence <text>]`);
+  console.error("With no arguments, uses the poke meter from app/public/real-token.json.");
   process.exit(1);
 }
 
 function parseArgs(argv) {
+  if (argv.length <= 2) {
+    const defaults = loadDefaults();
+    if (!defaults) usage();
+    console.log(`defaults · poke meter ${defaults.id} on ${defaults.meter} · deadline ${defaults.pokeDeadline}`);
+    return defaults;
+  }
   const out = {};
   for (let i = 2; i < argv.length; i += 2) {
     const key = argv[i];
@@ -22,10 +48,10 @@ function parseArgs(argv) {
   if (!out.meter || !out.id || !out.recipient || !out.amount || !out.sentence) usage();
   return {
     meter: out.meter,
-    id: Number(out.id),
+    id: out.id,
     recipient: out.recipient,
     amount: out.amount,
-    evidence_hex: createHash("sha256").update(Buffer.from(out.sentence.normalize("NFC"), "utf8")).digest("hex"),
+    sentence: out.sentence,
   };
 }
 
@@ -47,10 +73,10 @@ async function preview(args) {
     method_name: "preview",
     args_base64: Buffer.from(
       JSON.stringify({
-        id: args.id,
+        id: Number(args.id),
         recipient: args.recipient,
         amount: args.amount,
-        evidence_hex: args.evidence_hex,
+        evidence_hex: createHash("sha256").update(Buffer.from(args.sentence.normalize("NFC"), "utf8")).digest("hex"),
       }),
     ).toString("base64"),
     finality: "final",
@@ -62,7 +88,7 @@ const args = parseArgs(process.argv);
 
 for (const url of [ARCHIVAL, RPC]) {
   try {
-    const code = await preview({ ...args, meter: args.meter });
+    const code = await preview(args);
     const move = code === "OK" ? "would move the stored amount if release were signed" : "0.00 would move";
     console.log(`preview: ${code}`);
     console.log(move);

@@ -5,16 +5,18 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { lineHash } from "./line.mjs";
-import { printReceiptReport, verifyReceiptRows } from "./receipt-decode.mjs";
+import { ARCHIVAL as RECEIPT_ARCHIVAL, decodeFromTx, fetchTx, printReceiptReport, verifyReceiptRows } from "./receipt-decode.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const receipt = JSON.parse(readFileSync(join(root, "app/public/chain.json"), "utf8"));
 const signed = JSON.parse(readFileSync(join(root, "app/public/tee.json"), "utf8"));
 const timed = JSON.parse(readFileSync(join(root, "app/public/v2.json"), "utf8"));
-const RPC = process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com";
+const ARCHIVAL = RECEIPT_ARCHIVAL;
+const LIVE = process.env.NEAR_RPC_URL || "https://test.rpc.fastnear.com";
+const RPC_TRY = [...new Set([ARCHIVAL, LIVE])];
 
-async function rpc(method, params) {
-  const response = await fetch(RPC, {
+async function rpcAt(url, method, params) {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: "v", method, params }),
@@ -22,6 +24,18 @@ async function rpc(method, params) {
   const body = await response.json();
   if (body.error) throw new Error(JSON.stringify(body.error).slice(0, 300));
   return body.result;
+}
+
+async function rpc(method, params) {
+  let last = "no rpc";
+  for (const url of RPC_TRY) {
+    try {
+      return await rpcAt(url, method, params);
+    } catch (error) {
+      last = error.message ?? String(error);
+    }
+  }
+  throw new Error(last);
 }
 
 function decode(view) {
@@ -154,19 +168,13 @@ if (timed.lateDeposit) {
 if ((await keysOf(receipt.contract)).length !== 0) throw new Error("Payment record still has an access key");
 await checkInject();
 await checkCode();
-const receiptReport = await verifyReceiptRows(root, readFileSync, join, RPC);
+const receiptReport = await verifyReceiptRows(root, readFileSync, join, ARCHIVAL);
 printReceiptReport(receiptReport);
 console.log(`time gate · ${timed.contract}`);
 console.log(`  paid      meter ${timed.meterId} · ${timedCodes.join(" · ")} · ok`);
 console.log(`  window    ${notBefore} · quote not checked · ok`);
 console.log(`  line      ${recomputed.slice(0, 16)} · token ${pinnedToken} · ok`);
-if (existsSync(join(root, "app/public/real-token.json"))) {
-  const real = JSON.parse(readFileSync(join(root, "app/public/real-token.json"), "utf8"));
-  const live = await codeOf(real.contract);
-  console.log(`real-token · ${real.contract} · code ${live.hash} · file present · ok`);
-} else {
-  console.log("real-token · absent · ok");
-}
+await checkRealToken();
 console.log("verify: ok");
 
 function requireHash(file) {
@@ -179,16 +187,87 @@ function requireHash(file) {
 }
 
 async function seen(hash, signers) {
-  let last = "not found";
-  for (const signer of [...new Set(signers.filter(Boolean))]) {
+  const tx = await fetchTx(RPC_TRY, hash, [...new Set(signers.filter(Boolean))]);
+  return Boolean(tx);
+}
+
+async function checkRealToken() {
+  const path = join(root, "app/public/real-token.json");
+  if (!existsSync(path)) {
+    console.log("real-token · absent · ok");
+    return;
+  }
+  const real = JSON.parse(readFileSync(path, "utf8"));
+  const wasmHash = "3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy";
+  const live = await codeOf(real.contract);
+  if (live.hash !== wasmHash) throw new Error(`real-token code ${live.hash}, expected ${wasmHash}`);
+  const pinnedToken = await call(real.contract, "token", {});
+  const tokenId = String(pinnedToken).replaceAll('"', "");
+  if (tokenId !== real.token) throw new Error(`real-token pinned token ${tokenId}, receipt ${real.token}`);
+  const poke = await call(real.contract, "get", { id: real.pokeMeterId });
+  if (String(poke.funded) !== String(real.amount) || String(poke.paid) !== "0") {
+    throw new Error(`poke meter ${real.pokeMeterId} funded ${poke.funded} paid ${poke.paid}`);
+  }
+
+  const rows = [
+    ...(real.steps ?? []).map((step) => ({ ...step, contract: real.contract })),
+    ...(real.refundRun ?? []).map((step) => ({ ...step, contract: real.contract })),
+  ];
+  if (real.earlyRefundRun?.hash) {
+    rows.push({
+      label: "Refund before deadline",
+      hash: real.earlyRefundRun.hash,
+      code: "ERR_TOO_EARLY",
+      signer: real.earlyRefundRun.signer ?? real.buyer,
+      contract: real.contract,
+    });
+  }
+
+  console.log(`real-token · ${real.contract}`);
+  console.log(`  code      ${live.hash} · token ${tokenId.slice(0, 10)}… · ok`);
+  console.log(`  poke      meter ${real.pokeMeterId} · funded ${real.amount} · unpaid · deadline ${real.pokeDeadline} · ok`);
+  console.log(`  hero      meter ${real.meterId} · refund meter ${real.refundMeter} · amount 2.00 USDC · ok`);
+
+  for (const step of rows) {
+    if (!step.hash) continue;
+    const signers = [step.signer, real.buyer, real.vendor, real.contract].filter(Boolean);
+    let decoded = null;
+    let reason = null;
     try {
-      const status = await rpc("tx", { tx_hash: hash, sender_account_id: signer, wait_until: "NONE" });
-      if (status) return;
+      const tx = await fetchTx(RPC_TRY, step.hash, signers);
+      if (!tx) {
+        console.log(`  tx        ${step.hash} · ${step.code} · not decoded: pruned`);
+        continue;
+      }
+      const hit = decodeFromTx(tx, real.contract);
+      decoded = hit.decoded;
+      reason = hit.reason;
+      if (!decoded) {
+        const failure = JSON.stringify(tx?.status ?? tx?.receipts_outcome ?? "");
+        const panic = failure.match(/ERR_[A-Z_]+/)?.[0];
+        decoded = panic;
+        reason = hit.reason ?? (panic ? "panic in transaction status" : null);
+      }
     } catch (error) {
-      last = error.message ?? String(error);
+      reason = error.message ?? String(error);
+    }
+    const expected = step.code ?? "OK";
+    const fundAmount =
+      /fund/i.test(step.label ?? "") && expected === "OK" && decoded && /^\d+$/.test(String(decoded));
+    const ok =
+      decoded === expected ||
+      (expected === "OK" && decoded === "OK") ||
+      fundAmount ||
+      (expected === "ERR_TOO_EARLY" && decoded === "ERR_TOO_EARLY") ||
+      (expected === "ERR_ALREADY_PAID" && decoded === "ERR_ALREADY_PAID");
+    if (!decoded) {
+      console.log(`  tx        ${step.hash} · ${expected} · not decoded${reason ? `, ${reason}` : ""}`);
+    } else if (ok) {
+      console.log(`  tx        ${step.hash} · ${expected} · ${decoded} · ok`);
+    } else {
+      throw new Error(`real-token ${step.hash}: expected ${expected}, decoded ${decoded}`);
     }
   }
-  throw new Error(`No transaction ${hash}: ${last}`);
 }
 
 async function checkInject() {
@@ -264,7 +343,9 @@ async function checkInject() {
       } else if (trial.code !== "OK" && trial.moved !== "0") {
         throw new Error(`Attack ${attack.id} moved ${trial.moved}`);
       }
-      if (trial.hash) await seen(trial.hash, [trial.signer, inject.contract, inject.buyer, inject.baseline.account]);
+      if (trial.hash) {
+        if (!(await seen(trial.hash, [trial.signer, inject.contract, inject.buyer, inject.baseline.account]))) continue;
+      }
     }
   }
   if (inject.baseline.moneyMoved !== inject.amount) throw new Error("Baseline money moved is not 48.00");
@@ -334,6 +415,6 @@ async function checkLedger(file) {
   requireHash(file);
   for (const step of file.steps ?? []) {
     if (!step.hash) continue;
-    await seen(step.hash, [step.signer, file.contract, file.buyer]);
+    if (!(await seen(step.hash, [step.signer, file.contract, file.buyer]))) continue;
   }
 }

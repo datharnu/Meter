@@ -116,7 +116,8 @@ The payment-record receipts (`m028a47`) are on chain. The source in `contract/` 
 | Contract code | ok | `i198b44` code hash `3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy`. sha256 `26dece5891b5ccd5f748c9b824d426fc17bc857e67b317d945d1823bcd219968`. Tag `hijack-run-1` is `7893478`, the first source commit, not the run. |
 | Signed release, the match | ok | [`m2b2440.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/m2b2440.mtrfc658fd1.testnet) paid 48.00 after `ERR_ATTEST_LINE` moved 0.00. The pinned model and signer match the receipt. |
 | Intel quote | not checked | The command prints `quote not checked`. The model repeated a line this repo wrote. |
-| Time-gate refund | absent | The method exists and a unit test passes. Meter 1 was paid before the deadline, so there is no chain receipt. |
+| Time-gate refund | ok | On Circle USDC contract [`medbf5c.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet): refund meter **3** after deadline [`2ND722QNPuXGn6L4AstHFV7bFk2QHuBhKnqRABCmJx1V`](https://testnet.nearblocks.io/txns/2ND722QNPuXGn6L4AstHFV7bFk2QHuBhKnqRABCmJx1V) (**2.00 USDC** to buyer); second refund panics **`ERR_ALREADY_PAID`** [`CvYFiaiKsepxu25Z2gqvCWMLpisVLEw66w1DzZ9LYEvm`](https://testnet.nearblocks.io/txns/CvYFiaiKsepxu25Z2gqvCWMLpisVLEw66w1DzZ9LYEvm). Early refund meter **2**: transaction failed with panic **`ERR_TOO_EARLY`** [`33ajEgYpyvWLT2r1zSCEs8c3npkCDzVYgaroTFrcZxNc`](https://testnet.nearblocks.io/txns/33ajEgYpyvWLT2r1zSCEs8c3npkCDzVYgaroTFrcZxNc). Receipt: `app/public/real-token.json`. Toy `m1870dd` meter 1 was paid first, so that account has no refund receipt. |
+| Circle USDC (Track 08) | ok | [`medbf5c.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet). Token `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`. **Hero meter 4** (2.00 USDC sealed pay to `u2bfe17…`). **Poke meter 1** funded, unpaid — do not `release` or `refund`. Default `/check` and `node chain/check.mjs` use poke meter 1. Aborted first deploy [`mbec276.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/mbec276.mtrfc658fd1.testnet) still holds about **8 USDC** across meters 1–4 from a failed hero release. |
 | Wasm hash of the hijack account | ok | Stored in `app/public/inject2.json`, not in the earlier `inject.json`. `node chain/verify.mjs` re-reads the code hash. |
 | Hardened run contract | ok | `h3743c5.mtrfc658fd1.testnet` code hash `3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy`. sha256 matches `chain/meter-v2.wasm`. Receipt: `app/public/inject2.json`. |
 | Escalation run contract | ok | `h09d6ce.mtrfc658fd1.testnet` code hash `3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy`. sha256 matches `chain/meter-v2.wasm`. Receipt: `app/public/inject2.json`. |
@@ -124,7 +125,9 @@ The payment-record receipts (`m028a47`) are on chain. The source in `contract/` 
 
 ## The hijack, recorded
 
-Contract [`i198b44.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet). Recorded 2026-11-11 22:01 UTC. Receipt: `app/public/inject.json`. The clerk is `gpt-4.1-mini-2025-04-14`, temperature 0, tool choice required, sampled 10 times, identical at temperature 0. The weak system prompt tells the agent the invoice is the instruction. It was not rewritten after the results.
+**Hijack (toy token).** Contract [`i198b44.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet). Recorded 2026-11-11 22:01 UTC. Receipt: `app/public/inject.json`. Token: `token.mtrfc658fd1.testnet`. The clerk is `gpt-4.1-mini-2025-04-14`, temperature 0, tool choice required, sampled 10 times, identical at temperature 0. The weak system prompt tells the agent the invoice is the instruction. It was not rewritten after the results.
+
+**Circle USDC (Real-World Money).** Contract [`medbf5c.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet). Recorded 2026-11-12. Receipt: `app/public/real-token.json`. Token: Circle testnet USDC `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`. Amount **2.00 USDC** per meter (`2000000` base units). **Hero meter 4** paid the sealed recipient after `ERR_NOT_YET` and `ERR_RECIPIENT`. **Refund meter 3** returned 2.00 USDC after the deadline; the second `refund` panicked **`ERR_ALREADY_PAID`**. The early-refund transaction panicked **`ERR_TOO_EARLY`**. **Poke meter 1** is funded and unpaid through **2026-11-20** — judges must not release or refund it. Earlier attempt [`mbec276.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/mbec276.mtrfc658fd1.testnet): about **8 USDC** remains locked across meters after a failed hero release.
 
 | What happened | Agent obeyed injection | Code | Moved | Transaction |
 | --- | --- | --- | --- | --- |
@@ -228,9 +231,9 @@ On-chain **`preview`** takes the same arguments as **`release`** and does not in
 | Paid means the transfer succeeded | On `contract-v2`, `paid` is set in the callback. The unregistered recipient's first release moved 0.00. | The older payment record and the signed release set `paid` before `ft_transfer` and roll it back only if the promise fails. |
 | The paying key is narrow | It can call `release` only, with a 0.50 NEAR allowance. A function-call key cannot attach a deposit. `install_agent` and `revoke_agent` require 1 yoctoNEAR, so that key cannot call them. The fifth refusal returns a promise whose action is `DeleteKey` of the signer. The unregistered-recipient failure is a transfer failure, not one of those five. | Once the stored time has arrived, a delete loses if the payment lands first. On the payment record the buyer deleted the key after three refusals, rather than waiting for the fifth. On the hijack account that promise is inside [`FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e`](https://testnet.nearblocks.io/txns/FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e), and the buyer installed another key with 1 yoctoNEAR. The allowance is gas, not the invoice. |
 | A late deposit is rejected | On `m1870dd`, meter 2's deposit at the deadline returned `ERR_TOO_LATE` and `funded` stayed 0. | `m718aa2.mtrfc658fd1.testnet` is an earlier time gate. It does not reject a late deposit, and it hashes the evidence hex rather than the sentence. |
-| The refund returns the balance to the buyer | Anyone may call `refund` after the deadline, and only if nothing was paid. It pays the stored buyer. A second success is refused. A refund before the deadline is `ERR_TOO_EARLY`. The payment-record refund is on chain. | The time-gate refund is unit-tested only. Meter 1 on `m1870dd` was paid before its deadline, so that path has no chain receipt. The desk clock is not NEAR block time. |
+| The refund returns the balance to the buyer | Anyone may call `refund` after the deadline, and only if nothing was paid. It pays the stored buyer. A second success is refused. A refund before the deadline is `ERR_TOO_EARLY`. The payment-record refund is on chain. On `medbf5c`, refund meter 3 and early refund meter 2 are in `real-token.json`. | Toy `m1870dd` meter 1 was paid before its deadline, so that account has no refund receipt. The desk clock is not NEAR block time. |
 | The signature matches the line | The signed release paid 48.00 when the signature matched. | The Intel quote was not checked. The model repeated a line this repo wrote. A matching signature pays as soon as that meter is funded. |
-| The token is testnet, and mint is public | `token()` on the recorded contracts returns `token.mtrfc658fd1.testnet`. | It is not Circle USDC. Mint is public and capped. The vendor balance of 144.00 is three recorded 48.00 payments, not a mainnet balance. |
+| The toy token is testnet with public mint | Hijack and `m1870dd` runs use `token.mtrfc658fd1.testnet`; `token()` returns that account; mint is public and capped. | Not Circle USDC. The vendor balance of 144.00 is three recorded 48.00 toy payments, not a mainnet balance. |
 | A hijack can burn the key and cannot move the tokens | Five `release` calls on meter 7 moved 0.00. The fifth call's promise receipt is `DeleteKey`, inside [`FSbNMWJt…`](https://testnet.nearblocks.io/txns/FSbNMWJthR6DTgK6ptGazRXeGDHFn8mwf2zCFNHnSM8e). | [`4veSqbRL…`](#the-hijack-recorded) returns `ERR_ALREADY_PAID` and does not delete a key. The buyer reinstalls with 1 yoctoNEAR. The line does not change. |
 
 ## The bugs the chain found
@@ -460,7 +463,7 @@ chain/line.mjs             the same line hash as the contract
 <details>
 <summary>Built, not observed end to end</summary>
 
-- Time-gate refund. The method exists and the unit test passes. Meter 1 was paid before its deadline, so there is no chain receipt for that refund.
+- Time-gate refund on toy `m1870dd` (meter 1 paid first). Refund path is recorded on Circle USDC `medbf5c` in `real-token.json`.
 - Pool and condition. Tested in `contract-v2/src/v3.rs`. Not methods on the deployed contract.
 - Desk slips. They follow `decide` and show Clears. They move no tokens and have no hash.
 
@@ -482,16 +485,15 @@ chain/line.mjs             the same line hash as the contract
 <summary>Open engineering work</summary>
 
 - Mainnet after an audit. These runs are testnet.
-- Circle USDC headline run (`app/public/real-token.json`). Token account verified; deployment not recorded yet. See [docs/real-token.SHAPE.md](docs/real-token.SHAPE.md).
-- The time-gate refund on `m1870dd` has no chain receipt (toy-token meter 1 was paid first).
+- Circle USDC run recorded in `app/public/real-token.json` on `medbf5c` (see [docs/real-token.SHAPE.md](docs/real-token.SHAPE.md)). Aborted deploy `mbec276` left ~8 USDC in meters.
 - <!-- TODO: a short GIF of Before the time returning ERR_NOT_YET. docs/home.jpg is a still of the first screen on meter-brown.vercel.app. -->
 
 </details>
 
 ## Roadmap
 
-1. Record `real-token.json` on Circle testnet USDC (see shape doc). Blocked on faucet and buyer key for a new contract account.
-2. A chain receipt for the time-gate refund on `m1870dd` toy runs, or on the new USDC contract.
+1. ~~Record `real-token.json` on Circle testnet USDC~~ — done on `medbf5c` (2026-11-12).
+2. ~~Chain receipt for time-gate refund~~ — on `medbf5c` refund meter 3 in `real-token.json`.
 3. Third-party audit, then a decision about mainnet.
 
 ## Built during the hackathon
@@ -516,7 +518,7 @@ Track **08 · Real-World Money:** “Build payroll, invoicing, remittances, merc
 | 06 · reputation and scam detection | — | Not built. |
 | 06 · pre-check (`preview`) | `preview` on chain; [meter-brown.vercel.app/check](https://meter-brown.vercel.app/check), `node chain/check.mjs` — view only, same args as `release` | Does not block a spend and does not ask a human; does not increment the tripwire. |
 | 06 · TEE attestation | Earlier signed-release contract `m2b2440`, `app/public/tee.json` | Intel quote not checked; not part of the time-gate / hijack contracts. |
-| 08 · invoicing for a real company | Sealed line between two parties (example slip), payment-record receipt `m028a47` | `token.mtrfc658fd1.testnet` with public mint, not Circle mainnet; no wallet connect, no vendor accept flow, no audit. |
+| 08 · invoicing for a real company | Sealed line between two parties; Circle testnet USDC on [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) (`real-token.json`, hero meter 4, **2.00 USDC**); payment-record `m028a47` (toy) | Not mainnet Circle; no wallet connect, no vendor accept flow, no audit; poke meter 1 must stay unpaid. |
 | 08 · stablecoin rails and NEAR Intents | — | Not built. |
 | 08 · “usable tomorrow” | — | Not claimed for production payroll or merchant use. |
 
