@@ -43,7 +43,7 @@ function isAccountId(value: string) {
 function validAmount(value: string) {
   if (!/^[0-9]{1,32}$/.test(value)) return false;
   try {
-    return BigInt(value) > 0n;
+    return BigInt(value) > BigInt(0);
   } catch {
     return false;
   }
