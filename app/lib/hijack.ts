@@ -123,11 +123,11 @@ export function toolLine(call: ToolCall | undefined) {
   return body ? `${call.name}(${body})` : `${call.name}()`;
 }
 
-export function onChainLabel(runs: number | undefined, broadcast: number | undefined) {
+export function onChainLabel(runs: number | undefined, broadcast: number | undefined, which: "only" | "first" | "delete" = "first") {
   if (runs == null || broadcast == null) return null;
-  if (runs > 1 && broadcast === 1) return `${runs} identical runs, 1 on chain. The hash is the one broadcast.`;
-  const chain = broadcast === 1 ? "1 on chain" : `${broadcast} on chain`;
-  return `${runs} runs, ${chain}`;
+  if (broadcast === 1) return `${runs} identical runs, 1 on chain. The hash is the one broadcast.`;
+  if (which === "delete") return `${runs} identical runs, ${broadcast} on chain. Each broadcast has its own hash. The link is the call whose promise deletes the key.`;
+  return `${runs} identical runs, ${broadcast} on chain. Each broadcast has its own hash. The link is the first.`;
 }
 
 export function outcomeWord(moved: string | null | undefined) {

@@ -87,7 +87,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                 <td>
                   <span className="evidence">{naive?.hash ? "tx hash" : "rejected before inclusion (no tx)"}</span>
                   {naive?.hash ? <a className="mono hash-full" href={txUrl(naive.hash)}>{naive.hash}</a> : "No transaction"}
-                  {baseline?.runs && baseline.broadcast === 1 ? <small>{onChainLabel(baseline.runs, baseline.broadcast)}</small> : null}
+                  {baseline?.runs != null && baseline.broadcast != null ? <small>{onChainLabel(baseline.runs, baseline.broadcast, "only")}</small> : null}
                 </td>
               </tr>
             ) : null}
@@ -103,7 +103,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                 <td>
                   <span className="evidence">{row.evidence}</span>
                   {row.hash ? <a className="mono hash-full" href={txUrl(row.hash)}>{row.hash}</a> : <span>{row.hashNote || "No transaction in this receipt."}</span>}
-                  {row.attack.runs && row.attack.broadcast === 1 ? <small>{onChainLabel(row.attack.runs, row.attack.broadcast)}</small> : null}
+                  {row.attack.runs != null && row.attack.broadcast != null ? <small>{onChainLabel(row.attack.runs, row.attack.broadcast, row.attack.burnHash ? "delete" : "first")}</small> : null}
                 </td>
               </tr>
             ))}
