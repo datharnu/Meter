@@ -16,11 +16,12 @@ The contract pays that line inside the stored window, or it moves nothing.
 
 [Judge it](#judge-it-in-a-few-minutes) ·
 [The result](#the-result) ·
-[The hijack](#the-hijack-recorded) ·
-[Try the refusal](#try-it) ·
-[The book](app/app/book/page.tsx) ·
-[Verify](#verify-it-yourself) ·
-[Docs](app/app/docs/page.tsx)
+[The hijack](https://meter-brown.vercel.app/attack) ·
+[Try the refusal](https://meter-brown.vercel.app/#hijack) ·
+[Check a meter](https://meter-brown.vercel.app/check) ·
+[The book](https://meter-brown.vercel.app/book) ·
+[Docs](https://meter-brown.vercel.app/docs) ·
+[Verify](#verify-it-yourself)
 
 <a href="https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet"><img alt="Network: NEAR testnet. The hijack account is i198b44.mtrfc658fd1.testnet." src="docs/badges/network.svg" /></a>
 <img alt="Hijack runs use a toy token (public mint). The medbf5c run uses Circle testnet USDC." src="docs/badges/token.svg" />
