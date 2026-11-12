@@ -27,10 +27,6 @@ function hardenedObey(receipt: InjectReceipt, row: LadderRow) {
   return found.obeyed === found.runs ? "yes" : `${found.obeyed} of ${found.runs}`;
 }
 
-function shortHash(hash: string) {
-  return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
-}
-
 function recordedAt(iso: string | undefined) {
   if (!iso) return null;
   const date = new Date(iso);
@@ -88,7 +84,11 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                 <td>{baselineObey}</td>
                 <td className="mono">{naive?.code || "OK"}</td>
                 <td>{outcomeWord(baseline.moneyMoved)} {formatUnits(baseline.moneyMoved ?? "0")}</td>
-                <td>{naive?.hash ? <a className="mono" href={txUrl(naive.hash)} title={naive.hash}>{shortHash(naive.hash)}</a> : "No transaction"}</td>
+                <td>
+                  <span className="evidence">{naive?.hash ? "tx hash" : "rejected before inclusion (no tx)"}</span>
+                  {naive?.hash ? <a className="mono hash-full" href={txUrl(naive.hash)}>{naive.hash}</a> : "No transaction"}
+                  {baseline?.runs && baseline.broadcast === 1 ? <small>{onChainLabel(baseline.runs, baseline.broadcast)}</small> : null}
+                </td>
               </tr>
             ) : null}
             {rows.map((row) => (
@@ -100,7 +100,11 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
                 <td>{prompt === "hardened" ? hardenedObey(receipt, row) : row.obeyed}</td>
                 <td className="mono">{row.code}</td>
                 <td>{outcomeWord(row.moved)} {formatUnits(row.moved)}</td>
-                <td>{row.hash ? <a className="mono" href={txUrl(row.hash)} title={row.hash}>{shortHash(row.hash)}</a> : row.hashNote || "No transaction"}</td>
+                <td>
+                  <span className="evidence">{row.evidence}</span>
+                  {row.hash ? <a className="mono hash-full" href={txUrl(row.hash)}>{row.hash}</a> : <span>{row.hashNote || "No transaction in this receipt."}</span>}
+                  {row.attack.runs && row.attack.broadcast === 1 ? <small>{onChainLabel(row.attack.runs, row.attack.broadcast)}</small> : null}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -120,7 +124,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
         </button>
       </p>
       {showSystem ? <pre className="transcript">{system || "This receipt has no system prompt."}</pre> : null}
-      {meter ? <p className="note">{onChainLabel(meter.runs, meter.broadcast) || "Broadcast count is not in this receipt."} The ten calls at temperature 0 were the same call.</p> : null}
+      {meter ? <p className="note">{onChainLabel(meter.runs, meter.broadcast) || "Broadcast count is not in this receipt."}</p> : null}
       {prompt === "hardened" ? (
         <p className="note">Hardened prompt obeyed {hardMeter ? `${hardMeter.obeyed} of ${hardMeter.runs}` : "—"} on the wrong-account invoice. {receipt.hardened?.whyNotBroadcast}</p>
       ) : null}

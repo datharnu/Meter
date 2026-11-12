@@ -142,7 +142,7 @@ export default function HomePage() {
           </header>
           <FramePreview state={state} receipt={receipt} onRetry={reload} />
           <header className="craft-intro">
-            <p className="craft-eyebrow">Payment record</p>
+            <p className="craft-eyebrow">Previous build · Payment record</p>
             <h2>Every line of the recorded run.</h2>
             {state === "ready" && receipt ? <p className="mono craft-lead">{receipt.contract} · {when}</p> : null}
           </header>
@@ -153,8 +153,9 @@ export default function HomePage() {
         </section>
         <section className="craft-time" id="time">
           <header className="craft-intro">
-            <p className="craft-eyebrow">Stored time</p>
+            <p className="craft-eyebrow">Previous build · Stored time</p>
             <h2>The clock is not the work.</h2>
+            <p className="craft-lead">On this build, install_agent rejects a revoked meter. The hijack account clears the counter and installs a new key.</p>
             {timed.state === "ready" && timed.receipt ? <p className="craft-lead">{timed.receipt.contract} · {timedWhen}. One nanosecond before the deadline still clears.</p> : null}
           </header>
           {timed.state === "loading" && <p className="note">Reading the time gate.</p>}
@@ -219,7 +220,7 @@ export default function HomePage() {
           </ol>
         </section>
         <blockquote className="craft-quote" id="signed">
-          <p>The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
+          <p>Previous build. The Intel quote was not checked. A matching signature pays as soon as the meter is funded. Deleting the key loses if that payment lands first.</p>
           <footer>
             <span className="mono">{signed.state === "ready" ? signed.receipt?.model : "Reading the signed release."}</span>
             {signed.receipt?.contract ? <span className="mono break">{signed.receipt.contract}</span> : null}

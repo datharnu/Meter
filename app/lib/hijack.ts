@@ -40,7 +40,7 @@ export type InjectAttack = {
   reinstallHash?: string | null;
   recoveryPublicKey?: string | null;
   note?: string;
-  parts?: Record<string, { trials?: InjectTrial[]; summary?: string; obeyed?: number; runs?: number }>;
+  parts?: Record<string, { trials?: InjectTrial[]; summary?: string; obeyed?: number; runs?: number; expected?: string }>;
 };
 
 export type HardenedCase = {
@@ -125,8 +125,9 @@ export function toolLine(call: ToolCall | undefined) {
 
 export function onChainLabel(runs: number | undefined, broadcast: number | undefined) {
   if (runs == null || broadcast == null) return null;
+  if (runs > 1 && broadcast === 1) return `${runs} identical runs, 1 on chain. The hash is the one broadcast.`;
   const chain = broadcast === 1 ? "1 on chain" : `${broadcast} on chain`;
-  return `${runs} identical runs, ${chain}`;
+  return `${runs} runs, ${chain}`;
 }
 
 export function outcomeWord(moved: string | null | undefined) {
@@ -141,6 +142,7 @@ export type LadderRow = {
   moved: string;
   hash: string | null;
   hashNote: string | null;
+  evidence: "tx hash" | "rejected before inclusion (no tx)";
   permission: boolean;
   attack: InjectAttack;
 };
@@ -163,14 +165,17 @@ export function ladderRows(receipt: InjectReceipt): LadderRow[] {
       ? permissionCodes(attack)
       : trial?.code || attack.expected || "";
     const hash = permission ? null : trial?.hash || attack.payment?.hash || null;
+    const shown = hash && hash.length > 0 ? hash : null;
+    const errors = permission ? permissionCodes(attack) : "";
     return {
       key: String(attack.id ?? attack.title),
       name: attack.title || `Attack ${attack.id}`,
       obeyed: obeyLabel(attack),
       code: codes,
       moved: attack.moneyMoved ?? trial?.moved ?? "0",
-      hash: hash && hash.length > 0 ? hash : null,
-      hashNote: permission ? "no tx · rejected before inclusion" : null,
+      hash: shown,
+      hashNote: shown ? null : permission ? `rejected before inclusion (no tx). ${errors}` : "No transaction in this receipt.",
+      evidence: shown ? "tx hash" : "rejected before inclusion (no tx)",
       permission,
       attack,
     };
@@ -180,9 +185,9 @@ export function ladderRows(receipt: InjectReceipt): LadderRow[] {
 function permissionCodes(attack: InjectAttack) {
   const parts = attack.parts ?? {};
   const codes = ["revoke", "deposit", "token"]
-    .map((key) => parts[key]?.trials?.find((trial) => trial.code)?.code)
+    .map((key) => parts[key]?.expected || parts[key]?.trials?.find((trial) => trial.code)?.code)
     .filter((code): code is string => Boolean(code));
-  return [...new Set(codes)].join(" · ") || "key permission";
+  return codes.join(" / ") || "key permission";
 }
 
 export function splitInvoice(invoice: string | undefined) {

@@ -416,6 +416,70 @@ mod tests {
         assert_eq!(decide(&d, "sable.testnet", 48_000_000, &evidence(1), 500), Err(Code::NotLocked));
     }
 
+    /// The state change inside `install_agent` after the tripwire.
+    /// A revoked meter is accepted. The counter clears. The line does not change.
+    /// 2026-11-11: the previous build required `!revoked` and returned `ERR_AGENT`.
+    fn reinstall_after_revoke(meter: &Reinstall) -> Result<Reinstall, &'static str> {
+        if meter.agent.is_some() {
+            return Err("ERR_AGENT");
+        }
+        let mut next = meter.clone();
+        if next.revoked {
+            next.revoked = false;
+            next.refusals = 0;
+        }
+        next.agent = Some("ed25519:reinstall");
+        Ok(next)
+    }
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct Reinstall {
+        revoked: bool,
+        refusals: u32,
+        agent: Option<&'static str>,
+        recipient: &'static str,
+        amount: u128,
+        sentence: &'static str,
+        not_before_ns: u64,
+        deadline_ns: u64,
+        funded: u128,
+    }
+
+    #[test]
+    fn install_agent_after_the_tripwire_clears_the_counter_and_keeps_the_line() {
+        let burned = Reinstall {
+            revoked: true,
+            refusals: 5,
+            agent: None,
+            recipient: "sable.testnet",
+            amount: 48_000_000,
+            sentence: "Field report 04, price column at most 100",
+            not_before_ns: 100,
+            deadline_ns: 1_000,
+            funded: 48_000_000,
+        };
+        let installed = reinstall_after_revoke(&burned).unwrap();
+        assert!(!installed.revoked);
+        assert_eq!(installed.refusals, 0);
+        assert_eq!(installed.agent, Some("ed25519:reinstall"));
+        assert_eq!(installed.recipient, burned.recipient);
+        assert_eq!(installed.amount, burned.amount);
+        assert_eq!(installed.sentence, burned.sentence);
+        assert_eq!(installed.not_before_ns, burned.not_before_ns);
+        assert_eq!(installed.deadline_ns, burned.deadline_ns);
+        assert_eq!(installed.funded, burned.funded);
+
+        let mut deal = ready();
+        assert_eq!(deal.clause.recipient, "sable.testnet");
+        assert_eq!(deal.funded, installed.funded);
+        assert_eq!(begin_release(&mut deal, installed.recipient, installed.amount, &evidence(1), 500).unwrap(), 48_000_000);
+        finish_release(&mut deal, true);
+        assert_eq!(deal.paid, 48_000_000);
+
+        let live = Reinstall { agent: Some("ed25519:still-there"), revoked: true, ..burned };
+        assert_eq!(reinstall_after_revoke(&live), Err("ERR_AGENT"));
+    }
+
     #[test]
     fn a_different_token_is_rejected_and_the_fifth_refusal_burns() {
         assert_eq!(accept_token(false), Err(Code::WrongToken));

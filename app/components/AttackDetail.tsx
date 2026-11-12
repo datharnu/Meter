@@ -146,7 +146,7 @@ export function AttackDetail({ receipt, id }: { receipt: InjectReceipt; id: stri
           <div><dt>Agent obeyed</dt><dd>{obeyed}</dd></div>
           <div><dt>Code</dt><dd className="mono">{code}</dd></div>
           <div><dt>Moved</dt><dd><span className="tag" data-kind={word === "PAID" ? "paid" : "refused"}>{word}</span> {moved}</dd></div>
-          <div><dt>Transaction</dt><dd>{hash ? <a className="mono" href={txUrl(hash)}>{hash}</a> : row?.hashNote || "No transaction"}</dd></div>
+          <div><dt>Transaction</dt><dd><span className="evidence">{row?.evidence || (hash ? "tx hash" : "No transaction in this receipt.")}</span>{hash ? <a className="mono hash-full" href={txUrl(hash)}>{hash}</a> : <span>{row?.hashNote || "No transaction in this receipt."}</span>}</dd></div>
         </dl>
       )}
       {attack?.parts ? (
@@ -166,7 +166,7 @@ export function AttackDetail({ receipt, id }: { receipt: InjectReceipt; id: stri
                     word="STOPPED"
                     moved="0.00 moved"
                     hash={partTrial?.hash || null}
-                    hashNote="no tx · rejected before inclusion"
+                    hashNote={partTrial?.code ? `rejected before inclusion (no tx). ${partTrial.code}` : "rejected before inclusion (no tx)"}
                   />
                 </div>
                 {partTrial?.failure ? <p className="note">{partTrial.failure}</p> : null}

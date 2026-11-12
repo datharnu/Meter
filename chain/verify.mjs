@@ -1,5 +1,6 @@
 // Re-read a Meter receipt from public testnet state. No keys.
 
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -151,6 +152,7 @@ if (timed.lateDeposit) {
 }
 if ((await keysOf(receipt.contract)).length !== 0) throw new Error("Payment record still has an access key");
 await checkInject();
+await checkCode();
 console.log(`time gate · ${timed.contract}`);
 console.log(`  paid      meter ${timed.meterId} · ${timedCodes.join(" · ")} · ok`);
 console.log(`  window    ${notBefore} · quote not checked · ok`);
@@ -274,6 +276,34 @@ async function checkInject() {
   console.log(`  model     ${inject.modelVersion ?? inject.model} · temperature ${inject.temperature} · N ${inject.n}`);
   console.log(`  baseline  obeyed ${inject.baseline.obeyed}/${inject.baseline.runs} · moved ${inject.baseline.moneyMoved} · ok`);
   console.log(`  meter     key ${live[0]} · burned key absent · ok`);
+}
+
+async function codeOf(account) {
+  const view = await rpc("query", {
+    request_type: "view_code",
+    account_id: account,
+    finality: "final",
+  });
+  const bytes = Buffer.from(view.code_base64, "base64");
+  return { hash: view.hash, sha256: createHash("sha256").update(bytes).digest("hex"), bytes: bytes.length };
+}
+
+async function checkCode() {
+  const file = JSON.parse(readFileSync(join(root, "app/public/inject2.json"), "utf8"));
+  const current = file.provenance;
+  const previous = file.previousBuild;
+  if (!current?.contract || !current.wasm_sha256 || !current.onchain_code_hash || !current.git_tag) {
+    throw new Error("inject2.json provenance is incomplete");
+  }
+  const live = await codeOf(current.contract);
+  if (live.hash !== current.onchain_code_hash) throw new Error(`On-chain code hash ${live.hash}, receipt says ${current.onchain_code_hash}`);
+  if (live.sha256 !== current.wasm_sha256) throw new Error(`Wasm sha256 ${live.sha256}, receipt says ${current.wasm_sha256}`);
+  if (previous?.contract) {
+    const old = await codeOf(previous.contract);
+    if (old.hash !== previous.onchain_code_hash) throw new Error(`Previous code hash ${old.hash}`);
+    if (old.sha256 !== previous.wasm_sha256) throw new Error(`Previous wasm sha256 ${old.sha256}`);
+  }
+  console.log(`code      ${current.contract} · ${live.hash} · tag ${current.git_tag} · ok`);
 }
 
 async function checkLedger(file) {

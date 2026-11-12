@@ -276,7 +276,7 @@ export const docs: Record<string, Story & { group: string }> = {
         body: [
           "Payment record: m028a47.mtrfc658fd1.testnet.",
           "Signed release: m2b2440.mtrfc658fd1.testnet.",
-          "Time gate: m1870dd.mtrfc658fd1.testnet. This is the current contract on the desk.",
+          "Time gate: m1870dd.mtrfc658fd1.testnet. Previous build. install_agent on that account rejects a revoked meter. The hijack account clears the counter and installs a new key.",
         ],
       },
       {
