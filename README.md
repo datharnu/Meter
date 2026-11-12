@@ -22,11 +22,11 @@ The contract pays that line inside the stored window, or it moves nothing.
 
 There is no hijack GIF in this repo. The still below is the first screen. It is not a chain receipt.
 
-<img src="docs/home.jpg" width="820" alt="The first screen of Meter. It shows the stored-line headline and where to open the hijack. The picture is a still. It has no transaction hash and it does not prove that a payment moved." />
+<img src="docs/home.jpg" width="820" alt="The first screen of https://meter-brown.vercel.app. It shows the stored-line headline, See the hijack, and the three recorded stats. The picture is a still. It does not prove that a payment moved." />
 
 </div>
 
-An agent told to pay the wrong account obeyed. The Meter key moved 0.00. The same invoice on a full-access key lost 48.00. Cluster: NEAR testnet. Recorded 2026-11-11 22:01 UTC on [`i198b44.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet).
+An agent told to pay the wrong account obeyed. The Meter key moved 0.00. The same invoice on a full-access key lost 48.00. Open [meter-brown.vercel.app](https://meter-brown.vercel.app) and click **See the hijack**. Cluster: NEAR testnet. Recorded 2026-11-11 22:01 UTC on [`i198b44.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet).
 
 ## Contents
 
@@ -50,7 +50,7 @@ An agent told to pay the wrong account obeyed. The Meter key moved 0.00. The sam
 
 No key. No wallet.
 
-1. **Open the hijack.** From `app/`, run `npm install` and `npm run dev`, then open `http://localhost:3000`. Click **See the hijack**. The naive key shows **48.00 PAID**. The Meter key shows **0.00 STOPPED**. The page is also at `/attack` after the app is running. There is no public URL in this repo.
+1. **Open the hijack.** Open [meter-brown.vercel.app](https://meter-brown.vercel.app) and click **See the hijack**. The naive key shows **48.00 PAID**. The Meter key shows **0.00 STOPPED**. The page is also at `/attack`. To run it yourself, from `app/` run `npm install` and `npm run dev`, then open `http://localhost:3000`.
 2. **Try the refusal.** On the homepage, open **Try the refusal** and leave it on **Before the time**. The answer is `ERR_NOT_YET` and 0.00. That preview calls `decide` in `app/lib/rule.mjs`. It sends no transaction. A Clears mark is not a payment.
 3. **Re-read the chain.** From the repo root, `node chain/verify.mjs`. Expected last line: `verify: ok`. The command uses no key. It fails if a recorded account no longer matches the receipt.
 
@@ -68,7 +68,7 @@ No key. No wallet.
 | Intel quote | not checked | The command prints `quote not checked`. The model repeated a line this repo wrote. |
 | Time-gate refund | absent | The method exists and a unit test passes. Meter 1 was paid before the deadline, so there is no chain receipt. |
 | Wasm hash of the hijack account | ok | Stored in `app/public/inject2.json`, not in the earlier `inject.json`. `node chain/verify.mjs` re-reads the code hash. |
-| Public site | absent | The app is local. `npm run dev` serves it at `http://localhost:3000`. |
+| Public site | not checked | [meter-brown.vercel.app](https://meter-brown.vercel.app) serves this app. `verify.mjs` does not fetch it. The page is not a payment. |
 
 ## The hijack, recorded
 
@@ -285,7 +285,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. **Try the refusal** is already on **Before the time**. The answer is `ERR_NOT_YET` and 0.00. The page does not ask for a wallet.
+Open [meter-brown.vercel.app](https://meter-brown.vercel.app), or `http://localhost:3000` after `npm run dev`. **Try the refusal** is already on **Before the time**. The answer is `ERR_NOT_YET` and 0.00. The page does not ask for a wallet.
 
 Open the desk, then **Continue in this browser**. That writes a tab name into `sessionStorage`. The name cannot sign. The desk repeats the recorded figures. Slips sealed from `/new` follow the same rule and move no tokens. Pay a different recipient shows `ERR_RECIPIENT` and 0.00. The time gate on the desk reads 48.00 cleared, 0.00 sent back, and 4 stopped lines. The payment record reads 48.00 cleared, 48.00 sent back, and 4 stopped lines. The signed release reads 48.00 cleared, 0.00 sent back, and 1 stopped line.
 
@@ -385,8 +385,7 @@ chain/line.mjs             the same line hash as the contract
 - Mainnet after an audit. These runs are testnet.
 - CI does not run `cargo test` or `node chain/verify.mjs`.
 - The time-gate refund has no chain receipt.
-- <!-- TODO: deploy a public URL. The app is local. `npm run dev` serves it at http://localhost:3000. -->
-- <!-- TODO: a short GIF of Before the time returning ERR_NOT_YET. docs/home.jpg is a still of the first screen. -->
+- <!-- TODO: a short GIF of Before the time returning ERR_NOT_YET. docs/home.jpg is a still of the first screen on meter-brown.vercel.app. -->
 
 </details>
 
