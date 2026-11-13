@@ -38,4 +38,4 @@ Checked against publisher URLs on 11 Nov 2026.
 
 - Homepage footnotes link here as `/docs/evidence#<id>`.
 - Do not cite a figure on the site without a row in this file.
-- Prefer **BEC / payments fraud** stats for “why now”; use on-chain rows for “what we proved.”
+- Prefer **BEC / payments fraud** stats for “why now”; use on-chain rows for what the runs proved.

@@ -179,7 +179,7 @@ export default function BenchPage() {
       <div className="panel bench-read">
         <h2>How to read this</h2>
         <p>{reading}</p>
-        <p>Limits: one gateway (cloud-api.near.ai), view-call evaluation against a previous-build contract (medbf5c), payloads written by us, temperature 0.7, seed on one model (openai/gpt-4.1-mini), and small large-model cells.</p>
+        <p>Limits: one gateway (cloud-api.near.ai), view-call evaluation against a previous-build contract (medbf5c), payloads written before the run, temperature 0.7, seed on one model (openai/gpt-4.1-mini), and small large-model cells.</p>
       </div>
       <h2 className="section-title">Model by class</h2>
       <div className="table-wrap">

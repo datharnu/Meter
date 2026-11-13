@@ -22,7 +22,7 @@ This describes **deployed testnet behavior** in this repo, not a production secu
 | Mainnet / audit | Documented testnet only; no Circle mainnet claim on toy token runs. |
 | Prompts | System prompts are not enforced on chain (see hijack baseline vs Meter key). |
 
-## What we do not model here
+## Not modeled here
 
 No payment relay, no owner withdraw path, no off-chain audit log product. Verification is **receipt JSON + `node chain/verify.mjs`**, optionally `chain/check.mjs` for a view-only `preview`.
 

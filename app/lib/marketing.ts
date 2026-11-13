@@ -109,7 +109,7 @@ export const whyNow = {
 } as const;
 
 export const researchCited = {
-  subhead: "Evidence we cite",
+  subhead: "Evidence cited",
   lead: "Public reports on payments fraud and BEC. What they establish—and what Meter does not claim—is spelled out per source.",
   items: [
     {
@@ -134,7 +134,7 @@ export const researchCited = {
 } as const;
 
 export const researchRecorded = {
-  subhead: "Evidence we recorded",
+  subhead: "Evidence recorded",
   lead: "No Meter server signs. These numbers come from three JSON files and the contracts they name.",
   items: [
     {
@@ -161,7 +161,7 @@ export const researchRecorded = {
 export const research = {
   eyebrow: "Research",
   title: "Cited industry evidence and recorded testnet receipts.",
-  lead: "Split what we read from publishers from what we re-read on chain.",
+  lead: "Split publisher reports from the chain re-read.",
 } as const;
 
 export const faq = {
