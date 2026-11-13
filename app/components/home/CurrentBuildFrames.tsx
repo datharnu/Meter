@@ -109,7 +109,7 @@ export function CurrentBuildFrames({
       ? [
           { label: "Steps", value: `${v3Steps} decoded from events` },
           { label: "Tripwire", value: tripwireLabel },
-          { label: "Cap", value: `${formatUnits(v3Body.cap)} USDC` },
+          { label: "Key cap", value: `${formatUnits(v3Body.cap)} USDC` },
         ]
       : null;
 
@@ -118,20 +118,29 @@ export function CurrentBuildFrames({
   const pokeMeter = usdc.receipt?.pokeMeterId;
   const perMeter = usdc.receipt?.amount;
 
+  const usdcContract = usdc.receipt?.contract;
+  const usdcShort = usdcContract?.split(".")[0];
+
   const usdcStats =
     usdc.state === "ready" && heroMeter != null && refundMeter != null && pokeMeter != null && perMeter != null
       ? [
           { label: "Hero", value: `meter ${heroMeter}` },
           { label: "Refund", value: `meter ${refundMeter}` },
-          { label: "Poke", value: `meter ${pokeMeter} · ${formatUnits(perMeter)} USDC per meter` },
+          { label: "Poke", value: `meter ${pokeMeter}` },
+          { label: "Size", value: `${formatUnits(perMeter)} USDC per meter` },
         ]
       : null;
+
+  const usdcTag =
+    usdcShort != null
+      ? `Circle testnet USDC · ${usdcShort} (previous build)`
+      : "Circle testnet USDC (previous build)";
 
   return (
     <div className="current-builds">
       <header className="current-builds-head">
         <p className="craft-eyebrow">Current builds</p>
-        <h3 className="current-builds-title">Recorded on the current build.</h3>
+        <h3 className="current-builds-title">Recorded on testnet, with real stablecoin.</h3>
       </header>
       <div className="current-build-grid">
         <ReceiptCard
@@ -143,7 +152,7 @@ export function CurrentBuildFrames({
           jsonHref="/v3.json"
         />
         <ReceiptCard
-          tag="Circle testnet USDC"
+          tag={usdcTag}
           contract={usdc.receipt?.contract}
           loading={usdc.state === "loading"}
           error={usdc.state === "error"}

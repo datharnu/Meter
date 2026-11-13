@@ -157,10 +157,11 @@ export default function HomePage() {
         <section className="craft-tape" id="run">
           <header className="craft-intro">
             <p className="craft-eyebrow">Receipts</p>
-            <h2>The older runs, each on its own.</h2>
+            <h2>Receipts. Each run on its own.</h2>
             <p className="craft-lead">The hijack record is <Link href="/attack">the list of calls</Link>.</p>
           </header>
           <CurrentBuildFrames v3={v3} usdc={usdc} />
+          <p className="craft-eyebrow previous-builds-label">Previous builds</p>
           <FramePreview state={state} receipt={receipt} onRetry={reload} />
           <header className="craft-intro">
             <p className="craft-eyebrow">Previous build · Payment record</p>

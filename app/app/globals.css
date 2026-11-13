@@ -1523,6 +1523,7 @@ html[data-theme="light"] .pitch::before {
 .receipt-links a { color: var(--ink); }
 .craft-tape > .craft-intro { margin-bottom: 20px; }
 .craft-tape > .craft-frame { margin: 16px 0 8px; }
+.craft-tape > .previous-builds-label { margin: 20px 0 12px; }
 .craft-tape > .craft-intro + .craft-intro { margin-top: 12px; margin-bottom: 16px; }
 .craft-tape > .craft-intro + .ledger,
 .craft-tape > .craft-intro + .note { margin-top: 0; }
