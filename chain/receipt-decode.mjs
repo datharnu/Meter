@@ -138,16 +138,23 @@ function sleep(ms) {
 
 // A row the RPC still will not serve after retries. Distinct from a pruned tx.
 export const RATE_LIMIT_LABEL = "not decoded: rate limited (429)";
-const MAX_TRIES = 5;
+export const RPC_GAP_MS = 500;
+export const RPC_MAX_TRIES = 6;
+export const RPC_BACKOFF_BASE_MS = 1000;
 
 function gapMs() {
   const n = Number(process.env.METER_RPC_GAP_MS);
-  return Number.isFinite(n) && n >= 0 ? n : 200;
+  return Number.isFinite(n) && n >= 0 ? n : RPC_GAP_MS;
+}
+
+function maxTries() {
+  const n = Number(process.env.METER_RPC_TRIES);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : RPC_MAX_TRIES;
 }
 
 function backoffMs(attempt) {
   const n = Number(process.env.METER_RPC_BACKOFF_MS);
-  const base = Number.isFinite(n) && n >= 0 ? n : 400;
+  const base = Number.isFinite(n) && n >= 0 ? n : RPC_BACKOFF_BASE_MS;
   return base * 2 ** attempt;
 }
 
@@ -174,7 +181,7 @@ async function pace() {
 
 export async function rpcCall(url, method, params) {
   let last = rateLimitError();
-  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+  for (let attempt = 0; attempt < maxTries(); attempt++) {
     await pace();
     const response = await fetch(url, {
       method: "POST",
@@ -191,7 +198,7 @@ export async function rpcCall(url, method, params) {
     const error = body?.error ?? null;
     if (response.status === 429 || isRateLimited(error)) {
       last = rateLimitError();
-      if (attempt < MAX_TRIES - 1) {
+      if (attempt < maxTries() - 1) {
         await sleep(backoffMs(attempt));
         continue;
       }
@@ -219,7 +226,7 @@ async function fetchTx(rpcUrls, hash, signers) {
       } catch (error) {
         last = error.message ?? String(error);
         if (error.rateLimited) {
-          // The limit is on this client, not on the signer. The next host gets its own five tries.
+          // The limit is on this client, not on the signer. The next host gets its own six tries.
           limited = true;
           break;
         }
@@ -389,7 +396,46 @@ export async function verifyReceiptRows(root, readFileSync, join, rpcUrl) {
 
 export { ARCHIVAL, decodeFromTx, fetchTx };
 
-export function printReceiptReport(report) {
+export const RECEIPT_CATEGORIES = [
+  "decoded",
+  "rate limited (429)",
+  "pruned",
+  "no return value to decode",
+  "recorded from the run script",
+];
+
+export function dualEventNote(events) {
+  const codes = new Set((events ?? []).map((row) => row?.code).filter(Boolean));
+  if (codes.has("ERR_NOT_YET") && codes.has("BURNED")) {
+    return "one transaction yields two events: ERR_NOT_YET and BURNED";
+  }
+  return null;
+}
+
+export function receiptCategory(row) {
+  const reason = String(row?.reason ?? "");
+  if (reason.includes(RATE_LIMIT_LABEL) || /\b429\b/.test(reason)) return "rate limited (429)";
+  if (/pruned/i.test(reason)) return "pruned";
+  if (row?.status === "match") return "decoded";
+  if (
+    /recorded run|from the recorded run|admin or non-release|fund path/i.test(reason) ||
+    row?.expected === "WINDOW_WAIT" ||
+    (/deposit|fund/i.test(row?.label ?? "") && row?.expected === "ERR_TOO_LATE")
+  ) {
+    return "recorded from the run script";
+  }
+  return "no return value to decode";
+}
+
+export function printReceiptReport(report, options = {}) {
+  const verbose = options.verbose === true;
+  const counts = Object.fromEntries(RECEIPT_CATEGORIES.map((name) => [name, 0]));
+  for (const row of report.rows) {
+    const category = receiptCategory(row);
+    counts[category] = (counts[category] ?? 0) + 1;
+  }
+  for (const name of RECEIPT_CATEGORIES) console.log(`${name} ${counts[name]}`);
+  if (!verbose) return;
   console.log(`receipts ${report.matched}/${report.total} match (${report.notDecoded.length} not decoded)`);
   for (const row of report.rows) {
     const tail = row.status === "match" ? row.decoded : row.status === "not decoded" ? (String(row.reason ?? "").startsWith("not decoded") ? row.reason : `not decoded, ${row.reason ?? "unknown"}`) : `${row.decoded}`;

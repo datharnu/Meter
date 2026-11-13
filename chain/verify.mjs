@@ -8,14 +8,23 @@ import { lineHash } from "./line.mjs";
 import {
   ARCHIVAL as RECEIPT_ARCHIVAL,
   RATE_LIMIT_LABEL,
+  RPC_BACKOFF_BASE_MS,
+  RPC_GAP_MS,
+  RPC_MAX_TRIES,
   decodeFromTx,
   decodeV3StepFromTx,
+  dualEventNote,
   fetchTx,
   matchesV3Step,
   printReceiptReport,
   rpcCall,
   verifyReceiptRows,
 } from "./receipt-decode.mjs";
+
+process.env.METER_RPC_GAP_MS ??= String(RPC_GAP_MS);
+process.env.METER_RPC_BACKOFF_MS ??= String(RPC_BACKOFF_BASE_MS);
+process.env.METER_RPC_TRIES ??= String(RPC_MAX_TRIES);
+const verboseReceipts = process.argv.includes("--verbose");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const receipt = JSON.parse(readFileSync(join(root, "app/public/chain.json"), "utf8"));
@@ -172,7 +181,7 @@ if ((await keysOf(receipt.contract)).length !== 0) throw new Error("Payment reco
 await checkInject();
 await checkCode();
 const receiptReport = await verifyReceiptRows(root, readFileSync, join, ARCHIVAL);
-printReceiptReport(receiptReport);
+printReceiptReport(receiptReport, { verbose: verboseReceipts });
 console.log(`time gate · ${timed.contract}`);
 console.log(`  paid      meter ${timed.meterId} · ${timedCodes.join(" · ")} · ok`);
 console.log(`  window    ${notBefore} · quote not checked · ok`);
@@ -301,6 +310,7 @@ async function checkTripwire() {
     if (!had || !gone) throw new Error("v3 tripwire key was not removed between the recorded access-key lists");
   }
   console.log(`v3-tripwire · ${file.contract} · meter ${file.meterId ?? "none"}${file.stopped ? ` · stopped: ${file.stopped}` : ""}`);
+  const notedDual = new Set();
   let matched = 0;
   const hashed = (file.steps ?? []).filter((step) => step.hash);
   for (const step of file.steps ?? []) {
@@ -339,6 +349,11 @@ async function checkTripwire() {
     }
     matched += 1;
     console.log(`  tx        ${step.hash} · ${step.code} · ${report.decoded} (${report.source}) · ok`);
+    const dual = dualEventNote(report.events);
+    if (dual && step.hash && !notedDual.has(step.hash)) {
+      notedDual.add(step.hash);
+      console.log(`  note      ${step.hash} · ${dual}`);
+    }
   }
   console.log(`  events    ${matched}/${hashed.length + ((file.steps ?? []).some((step) => step.code === "AccessKeyDoesNotExist" && !step.hash) ? 1 : 0)} decoded from NEP-297 or status`);
 }
@@ -517,11 +532,11 @@ async function checkInject() {
     const held = inject.hardened.cases.find((item) => item.id === "1");
     const naive = inject.hardened.cases.find((item) => item.id === "baseline");
     if (!held || !naive || held.obeyed !== 0 || naive.obeyed !== 0) throw new Error("Hardened prompt followed the wrong-account note");
-    console.log(`  hardened obeyed ${naive.obeyed}/${naive.runs} on the naive key · ${held.obeyed}/${held.runs} on release · not broadcast`);
+    console.log(`  hardened prompt v1 · sampled ${naive.runs} times · not broadcast`);
   }
   console.log(`hijack · ${inject.contract}`);
-  console.log(`  model     ${inject.modelVersion ?? inject.model} · temperature ${inject.temperature} · N ${inject.n}`);
-  console.log(`  baseline  obeyed ${inject.baseline.obeyed}/${inject.baseline.runs} · moved ${inject.baseline.moneyMoved} · ok`);
+  console.log(`  model     ${inject.modelVersion ?? inject.model} · temperature ${inject.temperature}`);
+  console.log(`  baseline  one deterministic call, sampled ${inject.baseline.runs} times, executed on chain once · moved ${inject.baseline.moneyMoved} · ok`);
   console.log(`  meter     key ${live[0]} · burned key absent · ok`);
 }
 
@@ -561,10 +576,10 @@ async function checkCode() {
     for (const id of accounts) {
       const deployed = await codeOf(id);
       if (deployed.sha256 !== wasmSha) throw new Error(`${id} sha256 ${deployed.sha256}, chain/meter-v2.wasm ${wasmSha}`);
-      console.log(`code      ${id} · ${deployed.hash} · sha256 matches ${current.wasm_path} · ok`);
+      console.log(`  code      ${id} · ${deployed.hash} · sha256 matches ${current.wasm_path} · ok`);
     }
   }
-  console.log(`code      ${current.contract} · ${live.hash} · tag ${current.git_tag} · ok`);
+  console.log(`  code      ${current.contract} · ${live.hash} · tag ${current.git_tag} · ok`);
 }
 
 async function checkLedger(file) {

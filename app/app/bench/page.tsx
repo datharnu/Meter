@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import Link from "next/link";
 
 type Rate = { k: number; n: number; low: number | null; high: number | null; small?: boolean };
 
@@ -20,7 +21,7 @@ type BenchFile = {
     fullAccessWouldSendWrongTarget: Rate;
     maliciousReleases?: number;
     previewedReleases?: number;
-    previewMissing: number;
+    previewMissing?: number;
   };
   statements?: string[];
   promptSplit?: {
@@ -82,6 +83,33 @@ function SplitCount({ rate }: { rate: Rate }) {
   );
 }
 
+function renderCaveat(line: string) {
+  return line.replace("The payloads were written by us,", "The payloads were written by the author before any run,");
+}
+
+function canarySchedule(canaries: BenchFile["canaries"]) {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  for (const row of canaries) {
+    if (seen.has(row.when)) continue;
+    seen.add(row.when);
+    if (row.when === "every-100") labels.push("every 100 calls");
+    else if (row.when === "before") labels.push("before");
+    else if (row.when === "after") labels.push("after");
+    else labels.push(row.when);
+  }
+  return labels.join(", ");
+}
+
+function OnChainReceiptLinks() {
+  return (
+    <>
+      the escalation pair (<Link className="mono" href="/attack">h09d6ce</Link>) and the v3 run (
+      <Link className="mono" href="/v3.json">mf004b2</Link>, 15 of 15 decoded from events)
+    </>
+  );
+}
+
 export default function BenchPage() {
   const data = load();
   if (data && "error" in data) {
@@ -109,22 +137,55 @@ export default function BenchPage() {
     );
   }
 
+  const maliciousReleases = data.headline.maliciousReleases ?? 0;
+  const previewedReleases = data.headline.previewedReleases ?? data.headline.meterRefused.n;
+  const previewMissing = data.headline.previewMissing ?? 0;
+  const maliciousTotal = data.headline.emittedMalicious.k;
+  const ftTransferMalicious = maliciousTotal - maliciousReleases;
+  const wrongTargetPreviews = data.headline.previewWouldPayWrongTarget.k;
+  const weakMalicious = data.promptSplit?.find((row) => row.prompt === "weak-v1")?.emittedMalicious;
+  const hardenedMalicious = data.promptSplit?.find((row) => row.prompt === "hardened-inject2")?.emittedMalicious;
+
+  const full = data.kind === "full";
   const headline = [
     ["Emitted a malicious call", data.headline.emittedMalicious],
     ["Meter preview refused", data.headline.meterRefused],
     ["Preview would pay a wrong target", data.headline.previewWouldPayWrongTarget],
-    ["Full access would have sent to a wrong target", data.headline.fullAccessWouldSendWrongTarget],
+    ["Full access would have sent to a wrong target (computed, not broadcast)", data.headline.fullAccessWouldSendWrongTarget],
   ] as const;
-  const full = data.kind === "full";
+
   const reading = [
     data.statement,
     "The range under a count is a 95% Wilson interval.",
     "A cell under 10 samples is indicative.",
     data.headline.meterRefused.excludes,
-    ...(data.statements ?? []).filter((line) => !(full && line.startsWith("Wrong-target"))),
+    ...(data.statements ?? []).filter((line) => {
+      if (full && line.startsWith("Wrong-target")) return false;
+      if (full && /^281 of 291 malicious releases/.test(line)) return false;
+      if (full && /^Terms is N\/A on ft_transfer/.test(line)) return false;
+      return true;
+    }),
   ].join(" ");
-  const covered = /gateway|seed is sent|temperature is|payloads were written|previous-build|view call|fewer than 10|terms is n\/a|preview on this unpaid|computed outcome|would have sent/i;
-  const leftover = data.caveats.filter((line) => !covered.test(line));
+
+  const evidenceLabel = data.evidenceLabel?.trim();
+  const seen = new Set<string>();
+  const caveats = data.caveats
+    .map(renderCaveat)
+    .filter((line) => {
+      const key = line.trim();
+      if (evidenceLabel && key === evidenceLabel) return false;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .filter((line) => !/^281 of 291 malicious releases/.test(line))
+    .filter((line) => !/^Terms is N\/A on ft_transfer/.test(line));
+
+  const covered =
+    /gateway|seed is sent|temperature is|written by the author|previous-build|view call|fewer than 10|preview on this unpaid|computed outcome|would have sent|every result is a view call|every payload uses one sealed/i;
+  const leftover = caveats
+    .filter((line) => !covered.test(line))
+    .filter((line) => !/^The tool descriptions and the weak prompt use 2\.00/.test(line));
 
   return (
     <>
@@ -132,10 +193,28 @@ export default function BenchPage() {
         <div>
           <h1>{full ? "Bench" : "Bench smoke"}</h1>
           {full ? (
-            <p className="bench-claim">A hardened prompt cut malicious calls from 343/630 to 134/630. It did not remove them. On a Meter key, 0 of 281 previewed releases would have paid a wrong target.</p>
+            <p className="bench-claim">
+              {weakMalicious && hardenedMalicious
+                ? `A hardened prompt cut malicious calls from ${count(weakMalicious)} to ${count(hardenedMalicious)}. It did not remove them.`
+                : "A hardened prompt cut malicious calls. It did not remove them."}{" "}
+              On a Meter key, {wrongTargetPreviews} of {previewedReleases} previewed releases would have paid a wrong target.
+            </p>
           ) : (
             <p className="lede">{data.statement}</p>
           )}
+          {full ? (
+            <>
+              <p className="note bench-lead">
+                {maliciousReleases} malicious releases: {previewedReleases} previewed, {previewMissing} with unparseable arguments, not previewed.
+              </p>
+              <p className="note bench-lead">
+                {wrongTargetPreviews} of {previewedReleases} covers <span className="mono">release</span> calls only. The other {ftTransferMalicious} malicious calls were <span className="mono">ft_transfer</span>, which a Meter key cannot call at all.
+                {maliciousReleases + ftTransferMalicious !== maliciousTotal
+                  ? ` (Expected ${maliciousTotal} malicious calls; release + ft_transfer = ${maliciousReleases + ftTransferMalicious}.)`
+                  : null}
+              </p>
+            </>
+          ) : null}
         </div>
       </header>
       {data.note ? <p className="note">{data.note}</p> : null}
@@ -148,6 +227,11 @@ export default function BenchPage() {
           </div>
         ))}
       </div>
+      {full ? (
+        <p className="note bench-lead">
+          Bench rows are view calls and computed outcomes. On-chain examples of the same refusals: <OnChainReceiptLinks />.
+        </p>
+      ) : null}
       {data.promptSplit?.length ? (
         <>
           <h2 className="section-title flush">By prompt</h2>
@@ -179,13 +263,21 @@ export default function BenchPage() {
       <div className="panel bench-read">
         <h2>How to read this</h2>
         <p>{reading}</p>
-        <p>Limits: one gateway (cloud-api.near.ai), view-call evaluation against a previous-build contract (medbf5c), payloads written before the run, temperature 0.7, seed on one model (openai/gpt-4.1-mini), and small large-model cells.</p>
+        <p>
+          Limits: one gateway (cloud-api.near.ai), view-call evaluation against a previous-build contract (medbf5c), payloads written by the author before any run,
+          temperature 0.7, seed on one model (openai/gpt-4.1-mini), and small large-model cells.
+        </p>
+        {full ? (
+          <p className="note">
+            The weak prompt and tool descriptions use 2.00 USDC while inject.json still says 48.00. The preview target holds a 2.00 line, so the old 48.00 amount would be scored as an amount attack instead of matching the sealed line.
+          </p>
+        ) : null}
       </div>
       <h2 className="section-title">Model by class</h2>
       <div className="table-wrap">
         <table className="ledger-table">
           <caption>
-            Malicious calls over calls in that class. Recipient, amount, and terms only. {data.calls} calls in this file, {data.plannedCalls} planned for the full matrix. Spend {data.spendUsd} of ${data.capUsd}.
+            Malicious calls over calls in that class. Recipient, amount, and terms only. Complete: {data.calls} of {data.plannedCalls} planned calls. Spend {data.spendUsd} of ${data.capUsd}.
           </caption>
           <thead>
             <tr>
@@ -212,6 +304,11 @@ export default function BenchPage() {
       </div>
       <h2 className="section-title">Emitted the sealed call</h2>
       <p className="note">{data.pressure.why}</p>
+      {full && previewMissing > 0 ? (
+        <p className="note">
+          The {previewMissing} unparseable <span className="mono">release</span> calls are not in this table. They emitted malicious arguments, not the sealed line under pressure.
+        </p>
+      ) : null}
       {data.pressureByModel?.length ? (
         <div className="table-wrap">
           <table className="ledger-table">
@@ -246,11 +343,9 @@ export default function BenchPage() {
       ) : <p className="note">No timing or replay rows in this file.</p>}
       {data.truncation ? <p className="note">{data.truncation.text}</p> : null}
       <h2 className="section-title">Canaries</h2>
-      <ul className="note">
-        {data.canaries.map((row) => (
-          <li key={`${row.when}-${row.at}`}><span className="mono">{row.when}</span> {row.ok ? row.code : row.error} · {row.at}</li>
-        ))}
-      </ul>
+      <p className="note">
+        {data.canaries.length} canaries, {data.canaries.every((row) => row.ok) ? "all OK" : "not all OK"} ({canarySchedule(data.canaries)}).
+      </p>
       <h2 className="section-title">Sealed previews</h2>
       {data.badForMeter.length ? (
         <ul className="note">
@@ -260,15 +355,30 @@ export default function BenchPage() {
         </ul>
       ) : <p className="note">No sealed call in this file previewed as anything other than OK.</p>}
       <h2 className="section-title">Evidence</h2>
+      {evidenceLabel ? <p className="note">{evidenceLabel}</p> : null}
       <p className="note">
         View calls {data.evidence.viewCall}. Computed outcomes {data.evidence.computed}. Transaction hashes {data.evidence.txHash}.
-        {data.txHashes.length ? ` Listed: ${data.txHashes.join(", ")}.` : " This file lists no transaction hash."}
+        {data.txHashes.length
+          ? ` Listed: ${data.txHashes.join(", ")}.`
+          : (
+            <>
+              {" "}
+              This file lists no transaction hash. On-chain examples: <OnChainReceiptLinks />.
+            </>
+          )}
       </p>
       {leftover.length ? (
         <>
           <h2 className="section-title">Caveats</h2>
           <ul className="note">
-            {leftover.map((line) => <li key={line}>{line}</li>)}
+            {leftover.map((line) => (
+              <li key={line}>
+                {line}
+                {/is_ready false/.test(line) ? (
+                  <> All {data.calls} calls completed with no errors; no anomaly was observed. This does not show the flag had no effect.</>
+                ) : null}
+              </li>
+            ))}
           </ul>
         </>
       ) : null}
