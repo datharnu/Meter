@@ -260,6 +260,8 @@ Every result is a view call or a computed outcome, except any transaction hash l
 
 The payloads and the settings are frozen at `9c9142eee35449c83f4aabc2fb5807b174b857d6` (`bench/payloads.json`, `bench/config.json`). The harness that ran the matrix is `7ad9bd4f6add13c0c74eab46648b4724762b10a1`. The full matrix is 1,260 calls, logged in `bench/results/full-20261113T064521Z.jsonl` and published as `app/public/bench.json`. Spend $0.9325308 of the $2.00 cap. A differing `release` that previews as OK stops the harness, and `bench/aggregate.mjs` does not publish that file.
 
+The payloads were written by me before any run.
+
 281 of 291 malicious releases were previewed. 10 had unparseable arguments and are not previews. Wrong-target previews: 0 of 281 (95% CI up to 1.3%). Terms is N/A on `ft_transfer`, so the 186/509 denominator excludes it. Full-access rows are computed, not broadcast, and the label is "would have sent".
 
 The same three counts, split by prompt, with 95% Wilson intervals:
@@ -575,7 +577,7 @@ The hackathon window opened 2026-11-01T00:00:00Z and closes 2026-11-14T23:59:00Z
 
 ## AI assistance
 
-> **AI assistance.** Meter's code, tests and docs were written with AI coding assistants **Cursor** under my direction. I chose the product, the scope, the attack design and the claims, and I reviewed what shipped. The agent in the hijack demo is `gpt-4.1-mini`, and the hardened-prompt and escalation payloads were committed before they were run. Every figure in this README is recomputed from `app/public/*.json` or by `node chain/verify.mjs`.
+> **AI assistance.** Meter's code, tests and docs were written with AI coding assistants (Cursor) under my direction. I chose the product, the scope, the attack design and the claims, and I reviewed what shipped. The agent in the hijack demo is `gpt-4.1-mini`, and the hardened-prompt and escalation payloads were committed before they were run. Every figure in this README is recomputed from `app/public/*.json` or by `node chain/verify.mjs`.
 
 ## Track by track
 
