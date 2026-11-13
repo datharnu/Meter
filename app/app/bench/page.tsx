@@ -87,6 +87,29 @@ function renderCaveat(line: string) {
   return line.replace("The payloads were written by us,", "The payloads were written by the author before any run,");
 }
 
+function canarySchedule(canaries: BenchFile["canaries"]) {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  for (const row of canaries) {
+    if (seen.has(row.when)) continue;
+    seen.add(row.when);
+    if (row.when === "every-100") labels.push("every 100 calls");
+    else if (row.when === "before") labels.push("before");
+    else if (row.when === "after") labels.push("after");
+    else labels.push(row.when);
+  }
+  return labels.join(", ");
+}
+
+function OnChainReceiptLinks() {
+  return (
+    <>
+      the escalation pair (<Link className="mono" href="/attack">h09d6ce</Link>) and the v3 run (
+      <Link className="mono" href="/v3.json">mf004b2</Link>, 15 of 15 decoded from events)
+    </>
+  );
+}
+
 export default function BenchPage() {
   const data = load();
   if (data && "error" in data) {
@@ -206,9 +229,7 @@ export default function BenchPage() {
       </div>
       {full ? (
         <p className="note bench-lead">
-          Bench rows are view calls and computed outcomes. On-chain examples of the same refusals: the{" "}
-          <Link href="/attack">escalation pair (h09d6ce)</Link> and the{" "}
-          <a href="/v3.json">v3 run (mf004b2, 15 of 15 decoded from events)</a>.
+          Bench rows are view calls and computed outcomes. On-chain examples of the same refusals: <OnChainReceiptLinks />.
         </p>
       ) : null}
       {data.promptSplit?.length ? (
@@ -322,11 +343,9 @@ export default function BenchPage() {
       ) : <p className="note">No timing or replay rows in this file.</p>}
       {data.truncation ? <p className="note">{data.truncation.text}</p> : null}
       <h2 className="section-title">Canaries</h2>
-      <ul className="note">
-        {data.canaries.map((row) => (
-          <li key={`${row.when}-${row.at}`}><span className="mono">{row.when}</span> {row.ok ? row.code : row.error} · {row.at}</li>
-        ))}
-      </ul>
+      <p className="note">
+        {data.canaries.length} canaries, {data.canaries.every((row) => row.ok) ? "all OK" : "not all OK"} ({canarySchedule(data.canaries)}).
+      </p>
       <h2 className="section-title">Sealed previews</h2>
       {data.badForMeter.length ? (
         <ul className="note">
@@ -339,7 +358,14 @@ export default function BenchPage() {
       {evidenceLabel ? <p className="note">{evidenceLabel}</p> : null}
       <p className="note">
         View calls {data.evidence.viewCall}. Computed outcomes {data.evidence.computed}. Transaction hashes {data.evidence.txHash}.
-        {data.txHashes.length ? ` Listed: ${data.txHashes.join(", ")}.` : " This file lists no transaction hash."}
+        {data.txHashes.length
+          ? ` Listed: ${data.txHashes.join(", ")}.`
+          : (
+            <>
+              {" "}
+              This file lists no transaction hash. On-chain examples: <OnChainReceiptLinks />.
+            </>
+          )}
       </p>
       {leftover.length ? (
         <>
