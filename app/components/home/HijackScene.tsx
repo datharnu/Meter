@@ -151,6 +151,7 @@ export function HijackCompare({ receipt }: { receipt: InjectReceipt }) {
         )}
       </div>
       <p className="hijack-differ">{CARD_SUBLINE}</p>
+      <p><Link href="/check">Try it yourself: run a read-only check against a live meter (no wallet, no transaction).</Link></p>
     </div>
   );
 }

@@ -18,7 +18,7 @@ The contract pays that line inside the stored window, or it moves nothing.
 [The result](#the-result) ·
 [The hijack](https://meter-brown.vercel.app/attack) ·
 [Try the refusal](https://meter-brown.vercel.app/#hijack) ·
-[Check a meter](https://meter-brown.vercel.app/check) ·
+[Check a call](https://meter-brown.vercel.app/check) ·
 [The book](https://meter-brown.vercel.app/book) ·
 [Docs](https://meter-brown.vercel.app/docs) ·
 [Verify](#verify-it-yourself)
@@ -138,7 +138,7 @@ The payment-record receipts (`m028a47`) are on chain. The source in `contract/` 
 | Signed release, the match | ok | [`m2b2440.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/m2b2440.mtrfc658fd1.testnet) paid 48.00 after `ERR_ATTEST_LINE` moved 0.00. The pinned model and signer match the receipt. |
 | Intel quote | not checked | The command prints `quote not checked`. The model repeated a line this repo wrote. |
 | Time-gate refund | ok | On Circle USDC [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet): refund meter **3** — **2.00 USDC** to buyer **[`2ND722Q…`](https://testnet.nearblocks.io/txns/2ND722QNPuXGn6L4AstHFV7bFk2QHuBhKnqRABCmJx1V)** confirmed by **meter state** (`refunded`); second `refund` **decoded** panic **`ERR_ALREADY_PAID`** **[`CvYFiaiK…`](https://testnet.nearblocks.io/txns/CvYFiaiKsepxu25Z2gqvCWMLpisVLEw66w1DzZ9LYEvm)**; early refund **decoded** panic **`ERR_TOO_EARLY`** **[`33ajEgY…`](https://testnet.nearblocks.io/txns/33ajEgYpyvWLT2r1zSCEs8c3npkCDzVYgaroTFrcZxNc)**. Toy `m1870dd` has no refund receipt. |
-| Circle USDC (Track 08) | ok | [`medbf5c.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) · `real-token.json`. Hero **4**, refund **3**, poke **1** (2.00 USDC). Sealed pay **[`GLNMWqT…`](https://testnet.nearblocks.io/txns/GLNMWqTrhH3mjteKvMU6sMQ2nJfqX1fkdRjC7fKw7T7E)** confirmed by **`paid` + balance**, not receipt decode alone. **`/check`** defaults to poke **1** (deadline **2026-11-20T09:53:42.339Z**) — never `release` or `refund` it; after deadline anyone can refund and change state. Aborted [`mbec276`](https://testnet.nearblocks.io/address/mbec276.mtrfc658fd1.testnet) (~8 USDC locked). |
+| Circle USDC (Track 08) | ok | [`medbf5c.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) · `real-token.json`. Hero **4**, refund **3**, poke **1** (2.00 USDC). Sealed pay **[`GLNMWqT…`](https://testnet.nearblocks.io/txns/GLNMWqTrhH3mjteKvMU6sMQ2nJfqX1fkdRjC7fKw7T7E)** confirmed by **`paid` + balance**, not receipt decode alone. [**/check**](https://meter-brown.vercel.app/check) defaults to poke **1** (deadline **2026-11-20T09:53:42.339Z**) — never `release` or `refund` it; after deadline anyone can refund and change state. Aborted [`mbec276`](https://testnet.nearblocks.io/address/mbec276.mtrfc658fd1.testnet) (~8 USDC locked). |
 | Wasm hash of the hijack account | ok | Stored in `app/public/inject2.json`, not in the earlier `inject.json`. `node chain/verify.mjs` re-reads the code hash. |
 | Hardened run contract | ok | `h3743c5.mtrfc658fd1.testnet` code hash `3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy`. sha256 matches `chain/meter-v2.wasm`. Receipt: `app/public/inject2.json`. |
 | Escalation run contract | ok | `h09d6ce.mtrfc658fd1.testnet` code hash `3cjYWgNvXqotkSDwSTz7vM6TzKSNi2iwkSqoTtDpRtKy`. sha256 matches `chain/meter-v2.wasm`. Receipt: `app/public/inject2.json`. |
@@ -296,7 +296,7 @@ Spending-limit products cap how much a key may send. **Meter pins one obligation
 | **Contract rule** | Every `release` (and `preview`) recomputes checks from storage and block time. | A fake UI cannot change on-chain storage; wrong args still return `ERR_*`. Same rule in `app/lib/rule.mjs` for the browser only — no hash. `contract-v2/src/rule.rs` tests. |
 | **Scoped paying key** | Function-call key: `release` only, 0.50 NEAR gas, no deposit; five counted refusals delete the key (`ERR_NOT_YET` counts; `preview` does not). | A hijacked key can burn itself or call `release` on the sealed line; it cannot call `open`, `refund`, or pay elsewhere. Hijack: `app/public/inject.json`; test `preview_leaves_the_refusal_counter_unchanged` in `contract-v2`. |
 
-On-chain **`preview`** takes the same arguments as **`release`** and does not increment refusals. CLI: `node chain/check.mjs`; site: `/check`.
+On-chain **`preview`** takes the same arguments as **`release`** and does not increment refusals. CLI: `node chain/check.mjs`; site: [/check](https://meter-brown.vercel.app/check).
 
 | Claim | Why it holds | Where it stops |
 | --- | --- | --- |
