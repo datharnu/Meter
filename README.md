@@ -229,13 +229,17 @@ The browser preview calls `decide` in `app/lib/rule.mjs`. It does not call `rele
 
 ### Meter v3 recording (`chain/v3-prove.mjs`)
 
-Dry run: `node chain/v3-prove.mjs`. The script spends only when `RUN=1`. It deploys `contract-v3/meter-v3.wasm`, passes `domain: "meter/v3"` into `chain/line.mjs`, and writes `app/public/v3.json`.
+Dry run: `node chain/v3-prove.mjs`. The script spends only when `RUN=1`. It deploys `contract-v3/meter-v3.wasm`, passes `domain: "meter/v3"` into `chain/line.mjs`, and writes `app/public/v3.json`. The recorded contract is [`mf004b2.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/mf004b2.mtrfc658fd1.testnet). The first deploy, [`m17248d.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/m17248d.mtrfc658fd1.testnet), was aborted. That account is a known cost of the aborted deploy, and it is not the receipt. `app/public/v3.json` and `app/public/v3-tripwire.json` both name `mf004b2`. It holds 7.43667 NEAR, its Circle USDC balance is 0, and it has no access keys, so it cannot be deleted or drained. That NEAR is not recoverable.
 
-**Codes recorded on chain** in the planned v3 receipt: `no event, panic` (deposit `ERR_BAD_MSG`), `ERR_NEED_BOTH`, `ERR_TOO_LATE`, fund `OK`, key `OK` (`install_agent`), `ERR_NOT_YET`, `ERR_RECIPIENT`, `ERR_AMOUNT`, `ERR_EVIDENCE`, paid `OK`, `ERR_ALREADY_PAID` (release), `ERR_TOO_EARLY`, `ERR_CAP`, refund `OK`, `ERR_ALREADY_PAID` (refund).
+The panic-path check counts a step only when the transaction panics with `ERR_BAD_MSG` and the receipt has no meter event. A meter event on that path is not a match.
 
-**Codes covered only by unit tests** (`contract-v3` `cargo test`): `ERR_NOT_BUYER`, `ERR_WRONG_TOKEN`, `ERR_UNKNOWN`, `ERR_CAP_MISMATCH`, `ERR_NOT_LOCKED`, `ERR_BUSY`, `ERR_TRANSFER`, `BURNED`, `ERR_REVOKED`, `ERR_UNAUTHORIZED`, `ERR_AGENT`, `ERR_NOT_PARTY`, `ERR_ALREADY_SIGNED`, `ERR_BAD_AMOUNT`, `ERR_BAD_WINDOW`, `ERR_NOTHING`.
+**Codes recorded on chain** in `app/public/v3.json`: `no event, panic` (deposit `ERR_BAD_MSG`), `ERR_NEED_BOTH`, `ERR_TOO_LATE`, fund `OK`, key `OK` (`install_agent`), `ERR_NOT_YET`, `ERR_RECIPIENT`, `ERR_AMOUNT`, `ERR_EVIDENCE`, paid `OK`, `ERR_ALREADY_PAID` (release), `ERR_TOO_EARLY`, `ERR_CAP`, refund `OK`, `ERR_ALREADY_PAID` (refund).
 
-A third meter for the fifth-refusal key deletion, the `BURNED` key event, a reinstall, and a second pay is not in the script yet. Budget roughly **+2.00 USDC** to fund that meter and **+2.00 USDC** net second payment to the payee, plus **~0.2–0.6 NEAR** gas and maybe another **0.5 NEAR** key allowance if the account key is deleted and must be re-added.
+`BURNED` is a key event, not a refusal code. On meter 5 the fifth early release returned refusal `ERR_NOT_YET` and, in the same transaction [`FEWbxY4BE47tpAtV1pVc6YY4Mtu6QoPCSwNnb4tCXL96`](https://testnet.nearblocks.io/txns/FEWbxY4BE47tpAtV1pVc6YY4Mtu6QoPCSwNnb4tCXL96), the key event `BURNED`. The access-key list lost that key. The next call returned `AccessKeyDoesNotExist`. No transaction. Rejected before inclusion. Not a contract refusal. The buyer reinstalled it ([`2tY3Sg5dz7rg4Fzu5bfS7y7YM9U3tLB6XKLctW3E6uba`](https://testnet.nearblocks.io/txns/2tY3Sg5dz7rg4Fzu5bfS7y7YM9U3tLB6XKLctW3E6uba)) and the pay moved 2.00 ([`5uFj9jFaF1oDWzDpdBc9GAgny9577JZGtCBjHhiKQJKt`](https://testnet.nearblocks.io/txns/5uFj9jFaF1oDWzDpdBc9GAgny9577JZGtCBjHhiKQJKt)). Receipt: `app/public/v3-tripwire.json`. The vendor_signed transaction hash was not captured.
+
+**Codes covered only by unit tests** (`contract-v3` `cargo test`): `ERR_NOT_BUYER`, `ERR_WRONG_TOKEN`, `ERR_UNKNOWN`, `ERR_CAP_MISMATCH`, `ERR_NOT_LOCKED`, `ERR_BUSY`, `ERR_TRANSFER`, `ERR_REVOKED`, `ERR_UNAUTHORIZED`, `ERR_AGENT`, `ERR_NOT_PARTY`, `ERR_ALREADY_SIGNED`, `ERR_BAD_AMOUNT`, `ERR_BAD_WINDOW`, `ERR_NOTHING`.
+
+`node chain/v3-tripwire.mjs` prints the plan and spends only when `RUN=1`. The recorded run funded meter 5 with **2.00 USDC** and paid **2.00 USDC**. NEAR was gas, plus the **0.50** allowance added again after the key was deleted. Meter 4 still holds a different key, so the burn deleted only the tripwire key.
 
 ## Claims and their limits
 

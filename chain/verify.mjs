@@ -11,6 +11,7 @@ import {
   decodeFromTx,
   decodeV3StepFromTx,
   fetchTx,
+  matchesV3Step,
   printReceiptReport,
   rpcCall,
   verifyReceiptRows,
@@ -178,6 +179,7 @@ console.log(`  window    ${notBefore} · quote not checked · ok`);
 console.log(`  line      ${recomputed.slice(0, 16)} · token ${pinnedToken} · ok`);
 await checkRealToken();
 await checkV3();
+await checkTripwire();
 console.log("verify: ok");
 
 function requireHash(file) {
@@ -251,9 +253,7 @@ async function checkV3() {
     }
     const { decoded, source, reason } = report;
     const expected = step.code;
-    const ok =
-      decoded === expected ||
-      (expected === "no event, panic" && source === "panic" && decoded === "ERR_BAD_MSG" && !report.events?.length);
+    const ok = matchesV3Step(expected, report);
     if (!decoded) {
       console.log(`  tx        ${step.hash} · ${expected} · not decoded${reason ? `, ${reason}` : ""}`);
       continue;
@@ -266,6 +266,81 @@ async function checkV3() {
     }
   }
   console.log(`  events    ${matched}/${(v3.steps ?? []).filter((s) => s.hash).length} decoded from NEP-297 or panic`);
+}
+
+async function checkTripwire() {
+  const path = join(root, "app/public/v3-tripwire.json");
+  if (!existsSync(path)) {
+    console.log("v3-tripwire · absent · ok");
+    return;
+  }
+  const file = JSON.parse(readFileSync(path, "utf8"));
+  if (file.contract && file.lineHash && file.meterId != null) {
+    const live = await call(file.contract, "get", { id: file.meterId });
+    const line = lineHash({
+      contract: file.contract,
+      meterId: file.meterId,
+      token: file.token,
+      recipient: file.recipient,
+      amount: file.amount,
+      notBefore: file.notBefore,
+      deadline: file.deadline,
+      evidence: file.sentence,
+      domain: file.domain ?? "meter/v3",
+    });
+    if (line !== file.lineHash || line !== live?.line_hash) throw new Error("v3 tripwire line hash drifted");
+    if (file.ok && String(live?.paid) !== String(file.amount)) {
+      throw new Error(`v3 tripwire paid ${live?.paid}, receipt ${file.amount}`);
+    }
+  }
+  const before = file.keysBeforeFifth ?? [];
+  const after = file.keysAfterFifth ?? [];
+  if (file.agentPublicKey && before.length) {
+    const had = before.some((key) => key.publicKey === file.agentPublicKey);
+    const gone = !after.some((key) => key.publicKey === file.agentPublicKey);
+    if (!had || !gone) throw new Error("v3 tripwire key was not removed between the recorded access-key lists");
+  }
+  console.log(`v3-tripwire · ${file.contract} · meter ${file.meterId ?? "none"}${file.stopped ? ` · stopped: ${file.stopped}` : ""}`);
+  let matched = 0;
+  const hashed = (file.steps ?? []).filter((step) => step.hash);
+  for (const step of file.steps ?? []) {
+    if (step.code === "AccessKeyDoesNotExist" && !step.hash) {
+      const text = `${step.failure ?? ""} ${step.detail ?? ""}`;
+      if (!/AccessKeyDoesNotExist|UNKNOWN_ACCESS_KEY|does not exist/i.test(text)) {
+        throw new Error("v3 tripwire missing-key call has no AccessKeyDoesNotExist record");
+      }
+      console.log("  tx        no hash · AccessKeyDoesNotExist · recorded · ok");
+      matched += 1;
+      continue;
+    }
+    if (!step.hash) continue;
+    const signers = [step.signer, file.buyer, file.vendor, file.contract, file.token].filter(Boolean);
+    let report = null;
+    try {
+      const tx = await fetchTx(RPC_TRY, step.hash, signers);
+      if (!tx) {
+        console.log(`  tx        ${step.hash} · ${step.code} · not decoded: pruned`);
+        continue;
+      }
+      report = decodeV3StepFromTx(tx, file.contract, step.code);
+    } catch (error) {
+      if (error.rateLimited) {
+        console.log(`  tx        ${step.hash} · ${step.code} · ${RATE_LIMIT_LABEL}`);
+        continue;
+      }
+      throw error;
+    }
+    if (!report.decoded) {
+      console.log(`  tx        ${step.hash} · ${step.code} · not decoded${report.reason ? `, ${report.reason}` : ""}`);
+      continue;
+    }
+    if (!matchesV3Step(step.code, report)) {
+      throw new Error(`v3-tripwire ${step.hash}: expected ${step.code}, decoded ${report.decoded} via ${report.source} (${step.label})`);
+    }
+    matched += 1;
+    console.log(`  tx        ${step.hash} · ${step.code} · ${report.decoded} (${report.source}) · ok`);
+  }
+  console.log(`  events    ${matched}/${hashed.length + ((file.steps ?? []).some((step) => step.code === "AccessKeyDoesNotExist" && !step.hash) ? 1 : 0)} decoded from NEP-297 or status`);
 }
 
 async function checkRealToken() {

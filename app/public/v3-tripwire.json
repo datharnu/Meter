@@ -1,0 +1,347 @@
+{
+  "network": "testnet",
+  "contract": "mf004b2.mtrfc658fd1.testnet",
+  "token": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
+  "buyer": "mtrfc658fd1.testnet",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "recipient": "u5237d3.mtrfc658fd1.testnet",
+  "amount": "2000000",
+  "domain": "meter/v3",
+  "sentence": "Field report 04, price column at most 100",
+  "meterId": 5,
+  "notBefore": "1794559450422786048",
+  "deadline": "1794566650422786048",
+  "lineHash": "730dc10dc593cf45b3331c48e89f62617afd880bf16e892df43b498152cacc63",
+  "agentPublicKey": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n",
+  "cap": "2000000",
+  "metersBeforeReleases": [
+    {
+      "id": 1,
+      "agent": null,
+      "revoked": false,
+      "refusals": 0,
+      "paid": "0"
+    },
+    {
+      "id": 2,
+      "agent": null,
+      "revoked": false,
+      "refusals": 0,
+      "paid": "0"
+    },
+    {
+      "id": 3,
+      "agent": null,
+      "revoked": true,
+      "refusals": 5,
+      "paid": "2000000"
+    },
+    {
+      "id": 4,
+      "agent": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3",
+      "revoked": false,
+      "refusals": 1,
+      "paid": "0"
+    },
+    {
+      "id": 5,
+      "agent": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n",
+      "revoked": false,
+      "refusals": 0,
+      "paid": "0"
+    }
+  ],
+  "keysBeforeFifth": [
+    {
+      "publicKey": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3",
+      "permission": "function-call"
+    },
+    {
+      "publicKey": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n",
+      "permission": "function-call"
+    }
+  ],
+  "keysAfterFifth": [
+    {
+      "publicKey": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3",
+      "permission": "function-call"
+    }
+  ],
+  "steps": [
+    {
+      "label": "Open tripwire",
+      "code": "included",
+      "hash": "BQQiL7rxm1dYW8Fux6Dsx7uBQPKjizfXiFVkCApuK7rH",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": []
+    },
+    {
+      "label": "Sign buyer",
+      "code": "included",
+      "hash": "FWotzRbHbUXZULRcqkhj2hsowHwtjB8JpD7nW5EjvdnG",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": []
+    },
+    {
+      "label": "Sign vendor",
+      "code": "hash not captured",
+      "hash": null,
+      "moved": "0",
+      "signer": "vendor.mtrfc658fd1.testnet",
+      "events": [],
+      "failure": "fetch failed",
+      "note": "The result fetch failed. Storage shows vendor_signed, so the signature landed. The vendor_signed transaction hash was not captured."
+    },
+    {
+      "label": "Fund tripwire",
+      "code": "OK",
+      "hash": "2wyTzyUDXHp9nXCsA6hZfaQLg5c2ZJWPuzKM2HahAF9w",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "fund",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "ft_on_transfer",
+              "code": "OK",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Install agent",
+      "code": "OK",
+      "hash": "38Ly8TuEz26kmwef8qNeBa12asLHPUuYfrtBkojfXMgQ",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "key",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "install_agent",
+              "code": "OK",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release 1 before time",
+      "code": "ERR_NOT_YET",
+      "hash": "9k3GrQRSXVVrZxVKwhcgJ2Y2Rptbr8NKpTSLNEWuVKBJ",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "ERR_NOT_YET",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release 2 before time",
+      "code": "ERR_NOT_YET",
+      "hash": "6nv97t6peomUeRWaNFcXdzat1t6v1hQ6wXQrEmfXm6cY",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "ERR_NOT_YET",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release 3 before time",
+      "code": "ERR_NOT_YET",
+      "hash": "8UMGkFsrW4CzS2qSg5N4N9qzSF7StKpREthcznxPcafy",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "ERR_NOT_YET",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release 4 before time",
+      "code": "ERR_NOT_YET",
+      "hash": "3sv4brM7jiVR8hqP79JvZu3UzD3yoEEyx3YancSe8ZzQ",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "ERR_NOT_YET",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release 5 before time",
+      "code": "ERR_NOT_YET",
+      "hash": "FEWbxY4BE47tpAtV1pVc6YY4Mtu6QoPCSwNnb4tCXL96",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "ERR_NOT_YET",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        },
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "key",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "BURNED",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Key burned",
+      "code": "BURNED",
+      "event": "key",
+      "hash": "FEWbxY4BE47tpAtV1pVc6YY4Mtu6QoPCSwNnb4tCXL96",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "key",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "BURNED",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Same key after delete",
+      "code": "AccessKeyDoesNotExist",
+      "hash": null,
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [],
+      "failure": "Access key ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n does not exist on account mf004b2.mtrfc658fd1.testnet",
+      "detail": "Access key ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n does not exist on account mf004b2.mtrfc658fd1.testnet",
+      "note": "No transaction. Rejected before inclusion. Not a contract refusal."
+    },
+    {
+      "label": "Reinstall agent",
+      "code": "OK",
+      "hash": "2tY3Sg5dz7rg4Fzu5bfS7y7YM9U3tLB6XKLctW3E6uba",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "key",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "install_agent",
+              "code": "OK",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Second pay on tripwire meter",
+      "code": "OK",
+      "hash": "5uFj9jFaF1oDWzDpdBc9GAgny9577JZGtCBjHhiKQJKt",
+      "moved": "2000000",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "paid",
+          "data": [
+            {
+              "meter_id": "5",
+              "method": "release",
+              "code": "OK",
+              "caller": "ed25519:DjxLS69VKT1PEPfZgMKPnYrtQbHG6LncBPDHPPNjYM6n"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ok": true,
+  "stopped": null,
+  "at": "2026-11-13T08:44:21.181Z",
+  "unusedPublicKey": "ed25519:BmiJtSJ76oSuU9Vkj2kRk9vfcq97aeKHZVRqWS6CNsRg"
+}

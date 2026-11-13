@@ -70,8 +70,45 @@ export function panicCodeFromTx(result) {
   return text.match(/ERR_[A-Z_]+/)?.[0] ?? null;
 }
 
+function failureText(result) {
+  const parts = [];
+  if (result?.status?.Failure) parts.push(JSON.stringify(result.status.Failure));
+  for (const receipt of result?.receipts_outcome ?? []) {
+    if (receipt.outcome?.status?.Failure) parts.push(JSON.stringify(receipt.outcome.status.Failure));
+  }
+  return parts.join(" ");
+}
+
+export function matchesV3Step(expected, report) {
+  if (!report?.decoded) return false;
+  if (expected === "no event, panic") {
+    return report.source === "panic" && report.decoded === "ERR_BAD_MSG" && !(report.events?.length);
+  }
+  if (expected === "BURNED") {
+    return report.decoded === "BURNED" && report.events?.some((row) => row.event === "key" && row.code === "BURNED");
+  }
+  return report.decoded === expected;
+}
+
 export function decodeV3StepFromTx(result, contract, expected) {
   const events = meterEventsFromTx(result, contract);
+  if (expected === "included") {
+    const text = failureText(result);
+    if (text) return { decoded: panicCodeFromTx(result) ?? "failed", source: "status", reason: text.slice(0, 180), events };
+    return { decoded: "included", source: "status", reason: "transaction included", events };
+  }
+  if (expected === "AccessKeyDoesNotExist") {
+    const text = failureText(result);
+    if (/AccessKeyDoesNotExist|UNKNOWN_ACCESS_KEY|does not exist/i.test(text)) {
+      return { decoded: "AccessKeyDoesNotExist", source: "status", reason: "signer key is gone", events };
+    }
+    return { decoded: null, source: "none", reason: "no AccessKeyDoesNotExist in the status", events };
+  }
+  if (expected === "BURNED") {
+    const burned = events.find((row) => row.event === "key" && row.code === "BURNED");
+    if (burned) return { decoded: "BURNED", source: "event", reason: "meter key event", events };
+    return { decoded: null, source: "none", reason: "no key BURNED event", events };
+  }
   if (expected === "no event, panic") {
     const panic = panicCodeFromTx(result);
     if (events.length) return { decoded: events[events.length - 1].code, source: "event", reason: "meter event on panic path", events };
