@@ -15,6 +15,7 @@ import {
   type ToolCall,
 } from "@/lib/hijack";
 import { formatUnits, txUrl } from "@/lib/useReceipt";
+import { BenchHomeLine } from "@/components/home/BenchHomeLine";
 
 function shortHash(hash: string) {
   return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
@@ -151,6 +152,7 @@ export function HijackCompare({ receipt }: { receipt: InjectReceipt }) {
         )}
       </div>
       <p className="hijack-differ">{CARD_SUBLINE}</p>
+      <BenchHomeLine />
       <p><Link href="/check">Try it yourself: run a read-only check against a live meter (no wallet, no transaction).</Link></p>
     </div>
   );

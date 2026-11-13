@@ -182,7 +182,7 @@ export const faq = {
     },
     {
       q: "Is this mainnet USDC?",
-      a: "Not on mainnet. The hijack runs use a toy testnet token (public mint). The medbf5c run uses Circle testnet USDC. Mainnet waits on an audit.",
+      a: "No. The hijack runs use a toy testnet token (public mint). The medbf5c and mf004b2 runs use Circle testnet USDC. Mainnet waits on an audit.",
     },
     {
       q: "Does Meter hold a signer?",

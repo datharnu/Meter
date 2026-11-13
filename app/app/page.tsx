@@ -15,7 +15,8 @@ import { ReceiptGate } from "@/components/ReceiptGate";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SectionHead } from "@/components/SectionHead";
 import { SiteNav } from "@/components/SiteNav";
-import { sampleLine, tierLine, wrongTargetUnits } from "@/lib/hijack";
+import { CurrentBuildFrames } from "@/components/home/CurrentBuildFrames";
+import { sampleLine, tierLineParts, wrongTargetUnits } from "@/lib/hijack";
 import { useInject } from "@/lib/useInject";
 import { formatUnits, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
@@ -78,7 +79,7 @@ function SampleNote() {
 function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?: number; broadcast?: number; moneyMoved?: string }; attacker?: string }) {
   const { file, state } = useDefence();
   const times = baseline.broadcast === 1 ? "1 time" : `${baseline.broadcast ?? "—"} times`;
-  const tiers = tierLine(file);
+  const tiers = tierLineParts(file);
   const wrong = state === "ready"
     ? formatUnits(wrongTargetUnits(file))
     : state === "error" ? "Receipt failed" : state === "empty" ? "No run" : "Reading";
@@ -91,12 +92,13 @@ function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?:
       </div>
       <div className="stat">
         <span>Hardened prompt</span>
-        <b className="stat-tier">{state === "ready" && tiers ? tiers : state === "error" ? "The hardened receipt did not load." : state === "empty" ? "No hardened run in this receipt." : "Reading the hardened run."}</b>
+        <b className="stat-tier">{state === "ready" && tiers ? tiers.main : state === "error" ? "The hardened receipt did not load." : state === "empty" ? "No hardened run in this receipt." : "Reading the hardened run."}</b>
+        {state === "ready" && tiers?.note ? <small className="note">{tiers.note}</small> : null}
       </div>
       <div className="stat">
-        <span>Wrong target</span>
+        <span>Meter key</span>
         <b>{wrong}</b>
-        <small>{state === "ready" ? "moved to a wrong target in every Meter run" : "Reading the Meter runs."}</small>
+        <small>{state === "ready" ? "to a wrong target in every recorded run" : "Reading the Meter runs."}</small>
       </div>
     </div>
   );
@@ -107,6 +109,8 @@ export default function HomePage() {
   const inject = useInject();
   const signed = useReceipt("/tee.json");
   const timed = useReceipt("/v2.json");
+  const v3 = useReceipt("/v3.json");
+  const usdc = useReceipt("/real-token.json");
   const signedSteps = signed.receipt?.steps ?? [];
   const signedWhen = signed.receipt ? recordedAt(signed.receipt.at) : "the signed release";
   const steps = receipt?.steps ?? [];
@@ -156,6 +160,7 @@ export default function HomePage() {
             <h2>The older runs, each on its own.</h2>
             <p className="craft-lead">The hijack record is <Link href="/attack">the list of calls</Link>.</p>
           </header>
+          <CurrentBuildFrames v3={v3} usdc={usdc} />
           <FramePreview state={state} receipt={receipt} onRetry={reload} />
           <header className="craft-intro">
             <p className="craft-eyebrow">Previous build · Payment record</p>
@@ -265,6 +270,18 @@ export default function HomePage() {
           </header>
           <div>
             <div className="proof-panel">
+              {v3.receipt?.contract ? (
+                <a href={`https://testnet.nearblocks.io/address/${v3.receipt.contract}`}>
+                  <span>Current build (v3)</span>
+                  <b className="mono break">{v3.receipt.contract}</b>
+                </a>
+              ) : <p><span>Current build (v3)</span><b>{v3.state === "error" ? "The receipt did not load." : "Reading the receipt."}</b></p>}
+              {usdc.receipt?.contract ? (
+                <a href={`https://testnet.nearblocks.io/address/${usdc.receipt.contract}`}>
+                  <span>Circle testnet USDC</span>
+                  <b className="mono break">{usdc.receipt.contract}</b>
+                </a>
+              ) : <p><span>Circle testnet USDC</span><b>{usdc.state === "error" ? "The receipt did not load." : "Reading the receipt."}</b></p>}
               {receipt?.contract ? (
                 <a href={`https://testnet.nearblocks.io/address/${receipt.contract}`}>
                   <span>Payment record</span>
@@ -320,7 +337,7 @@ export default function HomePage() {
             </div>
             <div>
               <dt>This is Circle USDC on mainnet.</dt>
-              <dd>Not on mainnet. The hijack runs use a toy testnet token (public mint), <span className="mono">token.mtrfc658fd1.testnet</span>. The medbf5c run uses Circle testnet USDC. Mainnet waits on an audit. The contract has no owner withdraw.</dd>
+              <dd>Not on mainnet. The hijack runs use a toy testnet token (public mint), <span className="mono">token.mtrfc658fd1.testnet</span>. The medbf5c and mf004b2 runs use Circle testnet USDC. Mainnet waits on an audit. The contract has no owner withdraw.</dd>
             </div>
             <div>
               <dt>A server holds the key.</dt>

@@ -237,7 +237,7 @@ export function overpay(row: DefenceAttack) {
   return { moved: moved.toString(), times: (moved / sealed).toString() };
 }
 
-export function tierLine(file: DefenceFile | null) {
+export function tierLineParts(file: DefenceFile | null): { main: string; note: string | null } | null {
   const plain = file?.promptOnly?.attacks ?? [];
   const meter = file?.meterKey?.attacks ?? [];
   if (!plain.length || !meter.length) return null;
@@ -251,7 +251,15 @@ export function tierLine(file: DefenceFile | null) {
   }
   const payNow = [...plain, ...meter].filter((row) => row.id === 4);
   const payNowText = payNow.length ? `Pay-now: ${payNow.some((row) => row.emittedMalicious) ? "obeyed" : "not obeyed"}.` : "";
-  return [`Plain injections: ${obeyed} of ${counted} obeyed.`, payNowText, escalationLine(file?.escalation?.runs ?? [])].filter(Boolean).join(" ");
+  const esc = escalationLineParts(file?.escalation?.runs ?? []);
+  const main = [`Plain injections: ${obeyed} of ${counted} obeyed.`, payNowText, esc.main].filter(Boolean).join(" ");
+  return { main, note: esc.note };
+}
+
+export function tierLine(file: DefenceFile | null) {
+  const parts = tierLineParts(file);
+  if (!parts) return null;
+  return parts.note ? `${parts.main} ${parts.note}` : parts.main;
 }
 
 function idList(ids: number[]) {
@@ -260,7 +268,7 @@ function idList(ids: number[]) {
   return `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}`;
 }
 
-function escalationLine(runs: DefenceAttack[]) {
+function escalationLineParts(runs: DefenceAttack[]): { main: string; note: string | null } {
   const both: number[] = [];
   const meterOnly: number[] = [];
   const fullOnly: number[] = [];
@@ -281,11 +289,17 @@ function escalationLine(runs: DefenceAttack[]) {
     meterOnly.length ? `on ${meterOnly.length === 1 ? "attack" : "attacks"} ${idList(meterOnly)} under the Meter key` : "",
     fullOnly.length ? `on ${fullOnly.length === 1 ? "attack" : "attacks"} ${idList(fullOnly)} under the full-access key` : "",
   ].filter(Boolean);
-  if (!parts.length) return "";
-  const na = missingTerms.length
-    ? ` ${missingTerms.length === 1 ? "Attack" : "Attacks"} ${idList(missingTerms)} ${missingTerms.length === 1 ? "has" : "have"} no terms field on the full-access key, so ${missingTerms.length === 1 ? "it is" : "they are"} N/A there.`
-    : "";
-  return `Escalation: ${parts.join(", and ")}.${na}`;
+  if (!parts.length) return { main: "", note: null };
+  const note = missingTerms.length
+    ? `${missingTerms.length === 1 ? "Attack" : "Attacks"} ${idList(missingTerms)} ${missingTerms.length === 1 ? "has" : "have"} no terms field on the full-access key, so N/A there.`
+    : null;
+  return { main: `Escalation: ${parts.join(", and ")}.`, note };
+}
+
+function escalationLine(runs: DefenceAttack[]) {
+  const { main, note } = escalationLineParts(runs);
+  if (!main) return "";
+  return note ? `${main} ${note}` : main;
 }
 
 export function hardenedCalls(file: DefenceFile | null) {
