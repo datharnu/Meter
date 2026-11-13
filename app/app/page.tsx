@@ -20,6 +20,15 @@ import { sampleLine, tierLineParts, wrongTargetUnits } from "@/lib/hijack";
 import { useInject } from "@/lib/useInject";
 import { formatUnits, txUrl, useReceipt, type Step } from "@/lib/useReceipt";
 
+type PokeReceipt = { contract?: string; pokeMeterId?: number; pokeDeadline?: string };
+
+function pokeCheckNote(receipt: PokeReceipt | null, state: string): string | null {
+  if (state !== "ready" || !receipt?.contract || receipt.pokeMeterId == null || !receipt.pokeDeadline) return null;
+  const account = receipt.contract.split(".")[0];
+  const closes = receipt.pokeDeadline.slice(0, 10);
+  return `The check runs against poke meter ${receipt.pokeMeterId} on ${account}, which closes ${closes}; after that previews return ERR_TOO_LATE.`;
+}
+
 function recordedAt(iso: string) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
@@ -78,8 +87,8 @@ function SampleNote() {
 
 function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?: number; broadcast?: number; moneyMoved?: string }; attacker?: string }) {
   const { file, state } = useDefence();
-  const times = baseline.broadcast === 1 ? "1 time" : `${baseline.broadcast ?? "—"} times`;
   const tiers = tierLineParts(file);
+  const weakTarget = attacker || "other.testnet";
   const wrong = state === "ready"
     ? formatUnits(wrongTargetUnits(file))
     : state === "error" ? "Receipt failed" : state === "empty" ? "No run" : "Reading";
@@ -87,8 +96,7 @@ function HeroStats({ baseline, attacker }: { baseline: { obeyed?: number; runs?:
     <div className="stats" aria-label="Hijack result">
       <div className="stat">
         <span>Weak prompt</span>
-        <b className="stat-tier">one deterministic call, executed on chain {times}</b>
-        <small>{formatUnits(baseline.moneyMoved ?? "0")} to {attacker || "the attacker"}</small>
+        <b className="stat-tier">A full-access key sent {formatUnits(baseline.moneyMoved ?? "0")} to {weakTarget}. One deterministic call, executed on chain once.</b>
       </div>
       <div className="stat">
         <span>Hardened prompt</span>
@@ -129,7 +137,7 @@ export default function HomePage() {
         <Headline />
         <p className="thesis">Meter enforces the stored line. It does not judge the work.</p>
         <p className="market-lead">
-          The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. The hijack runs use a toy testnet token (public mint). The medbf5c run uses Circle testnet USDC.
+          The parties choose the time, and the contract enforces stored time ≤ block time &lt; deadline. The hijack runs use a toy testnet token (public mint). The medbf5c and mf004b2 runs use Circle testnet USDC.
         </p>
         <div className="market-actions">
           <a className="btn" href="#hijack">See the hijack</a>
@@ -143,7 +151,9 @@ export default function HomePage() {
         </ReceiptGate>
         <section id="hijack" className="pitch-section">
           <ReceiptGate state={inject.state} onRetry={inject.reload} empty="No hijack receipt on this build. node chain/inject.mjs records one.">
-            {inject.receipt ? <HijackScene receipt={inject.receipt} /> : null}
+            {inject.receipt ? (
+              <HijackScene receipt={inject.receipt} pokeCheckNote={pokeCheckNote(usdc.receipt, usdc.state)} />
+            ) : null}
           </ReceiptGate>
         </section>
         <StepRail />
@@ -303,7 +313,7 @@ export default function HomePage() {
               ) : <p><span>Time gate</span><b>{timed.state === "error" ? "The receipt did not load." : "Reading the receipt."}</b></p>}
             </div>
             <div className="proof-panel proof-panel-alt">
-              <Link href="/book"><span>The book</span><b>All three, and a CSV</b></Link>
+              <Link href="/book"><span>The book</span><b>All recorded runs, and a CSV</b></Link>
               <Link href="/clause"><span>The preview</span><b>Try a refusal</b></Link>
               <p><span className="mono">node chain/verify.mjs</span> re-reads the recorded contracts, including the hijack. No key. The figures above are those files.</p>
             </div>

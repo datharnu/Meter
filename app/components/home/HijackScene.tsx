@@ -99,7 +99,7 @@ function Bill({
 
 const CARD_SUBLINE = "Same model. The first card is the weak-prompt baseline. The other two are the same escalated injection against a hardened prompt, on a full-access key and on a Meter key.";
 
-export function HijackCompare({ receipt }: { receipt: InjectReceipt }) {
+export function HijackCompare({ receipt, pokeCheckNote }: { receipt: InjectReceipt; pokeCheckNote?: string | null }) {
   const naive = baselineTrial(receipt);
   const { file: defence, state } = useDefence();
   const { full, meter } = escalationAttack(defence, 1);
@@ -154,6 +154,7 @@ export function HijackCompare({ receipt }: { receipt: InjectReceipt }) {
       <p className="hijack-differ">{CARD_SUBLINE}</p>
       <BenchHomeLine />
       <p><Link href="/check">Try it yourself: run a read-only check against a live meter (no wallet, no transaction).</Link></p>
+      {pokeCheckNote ? <p className="note">{pokeCheckNote}</p> : null}
     </div>
   );
 }
@@ -212,14 +213,14 @@ export function ThreatCard({ note }: { note?: string | null }) {
   );
 }
 
-export function HijackScene({ receipt }: { receipt: InjectReceipt }) {
+export function HijackScene({ receipt, pokeCheckNote }: { receipt: InjectReceipt; pokeCheckNote?: string | null }) {
   return (
     <div className="hijack">
       <header className="craft-intro">
         <p className="craft-eyebrow">The hijack</p>
         <h2>A prompt can be talked into the wrong payment. The Meter key moved 0.00.</h2>
       </header>
-      <HijackCompare receipt={receipt} />
+      <HijackCompare receipt={receipt} pokeCheckNote={pokeCheckNote} />
       <ThreatCard note={receipt.notYetNote} />
       <p><Link href="/attack">Open the record</Link></p>
     </div>
