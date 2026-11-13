@@ -5,7 +5,16 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { lineHash } from "./line.mjs";
-import { ARCHIVAL as RECEIPT_ARCHIVAL, RATE_LIMIT_LABEL, decodeFromTx, fetchTx, printReceiptReport, rpcCall, verifyReceiptRows } from "./receipt-decode.mjs";
+import {
+  ARCHIVAL as RECEIPT_ARCHIVAL,
+  RATE_LIMIT_LABEL,
+  decodeFromTx,
+  decodeV3StepFromTx,
+  fetchTx,
+  printReceiptReport,
+  rpcCall,
+  verifyReceiptRows,
+} from "./receipt-decode.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const receipt = JSON.parse(readFileSync(join(root, "app/public/chain.json"), "utf8"));
@@ -168,6 +177,7 @@ console.log(`  paid      meter ${timed.meterId} · ${timedCodes.join(" · ")} ·
 console.log(`  window    ${notBefore} · quote not checked · ok`);
 console.log(`  line      ${recomputed.slice(0, 16)} · token ${pinnedToken} · ok`);
 await checkRealToken();
+await checkV3();
 console.log("verify: ok");
 
 function requireHash(file) {
@@ -187,6 +197,75 @@ async function seen(hash, signers) {
     if (error.rateLimited) return false;
     throw error;
   }
+}
+
+async function checkV3() {
+  const path = join(root, "app/public/v3.json");
+  if (!existsSync(path)) {
+    console.log("v3 · absent · ok");
+    return;
+  }
+  const v3 = JSON.parse(readFileSync(path, "utf8"));
+  const live = await codeOf(v3.contract);
+  if (live.sha256 !== v3.wasmSha256) throw new Error(`v3 code sha256 ${live.sha256}, receipt ${v3.wasmSha256}`);
+  const pinnedToken = await call(v3.contract, "token", {});
+  const tokenId = String(pinnedToken).replaceAll('"', "");
+  if (tokenId !== v3.token) throw new Error(`v3 pinned token ${tokenId}, receipt ${v3.token}`);
+  const hero = await call(v3.contract, "get", { id: v3.meterId });
+  if (String(hero.paid) !== String(v3.amount)) throw new Error(`v3 hero paid ${hero.paid}, receipt ${v3.amount}`);
+  const line = lineHash({
+    contract: v3.contract,
+    meterId: v3.meterId,
+    token: v3.token,
+    recipient: v3.recipient,
+    amount: v3.amount,
+    notBefore: v3.notBefore,
+    deadline: v3.deadline,
+    evidence: v3.sentence,
+    domain: v3.domain ?? "meter/v3",
+  });
+  if (line !== v3.lineHash || line !== hero.line_hash) throw new Error("v3 hero line hash drifted");
+
+  console.log(`v3 · ${v3.contract}`);
+  console.log(`  code      ${live.hash} · sha256 ${live.sha256.slice(0, 12)}… · domain ${v3.domain ?? "meter/v3"} · ok`);
+  console.log(`  hero      meter ${v3.meterId} · paid ${v3.amount} · cap ${v3.cap} · ok`);
+
+  let matched = 0;
+  for (const step of v3.steps ?? []) {
+    if (!step.hash) continue;
+    const signers = [step.signer, v3.buyer, v3.vendor, v3.contract, v3.token].filter(Boolean);
+    let report = null;
+    try {
+      const tx = await fetchTx(RPC_TRY, step.hash, signers);
+      if (!tx) {
+        console.log(`  tx        ${step.hash} · ${step.code} · not decoded: pruned`);
+        continue;
+      }
+      report = decodeV3StepFromTx(tx, v3.contract, step.code);
+    } catch (error) {
+      if (error.rateLimited) {
+        console.log(`  tx        ${step.hash} · ${step.code} · ${RATE_LIMIT_LABEL}`);
+        continue;
+      }
+      throw error;
+    }
+    const { decoded, source, reason } = report;
+    const expected = step.code;
+    const ok =
+      decoded === expected ||
+      (expected === "no event, panic" && source === "panic" && decoded === "ERR_BAD_MSG" && !report.events?.length);
+    if (!decoded) {
+      console.log(`  tx        ${step.hash} · ${expected} · not decoded${reason ? `, ${reason}` : ""}`);
+      continue;
+    }
+    if (ok) {
+      matched += 1;
+      console.log(`  tx        ${step.hash} · ${expected} · ${decoded} (${source}) · ok`);
+    } else {
+      throw new Error(`v3 ${step.hash}: expected ${expected}, decoded ${decoded} via ${source} (${step.label})`);
+    }
+  }
+  console.log(`  events    ${matched}/${(v3.steps ?? []).filter((s) => s.hash).length} decoded from NEP-297 or panic`);
 }
 
 async function checkRealToken() {

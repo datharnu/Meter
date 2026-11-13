@@ -37,6 +37,64 @@ function decodeFromTx(result, contract) {
   return { decoded: last.code, reason: hits.length > 1 ? `${hits.length} contract outcomes; used last` : null };
 }
 
+export function meterEventsFromTx(result, _contract) {
+  const events = [];
+  for (const receipt of result?.receipts_outcome ?? []) {
+    for (const log of receipt.outcome?.logs ?? []) {
+      if (typeof log !== "string" || !log.startsWith("EVENT_JSON:")) continue;
+      try {
+        const parsed = JSON.parse(log.slice("EVENT_JSON:".length));
+        if (parsed?.standard === "meter" && parsed?.version === "1.0.0") {
+          events.push({
+            event: parsed.event,
+            code: parsed.data?.[0]?.code ?? null,
+            method: parsed.data?.[0]?.method ?? null,
+            meterId: parsed.data?.[0]?.meter_id ?? null,
+          });
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  return events;
+}
+
+export function panicCodeFromTx(result) {
+  const parts = [];
+  if (result?.status?.Failure) parts.push(JSON.stringify(result.status.Failure));
+  for (const receipt of result?.receipts_outcome ?? []) {
+    if (receipt.outcome?.status?.Failure) parts.push(JSON.stringify(receipt.outcome.status.Failure));
+  }
+  const text = parts.join(" ");
+  return text.match(/ERR_[A-Z_]+/)?.[0] ?? null;
+}
+
+export function decodeV3StepFromTx(result, contract, expected) {
+  const events = meterEventsFromTx(result, contract);
+  if (expected === "no event, panic") {
+    const panic = panicCodeFromTx(result);
+    if (events.length) return { decoded: events[events.length - 1].code, source: "event", reason: "meter event on panic path", events };
+    if (panic) return { decoded: panic, source: "panic", reason: "no meter EVENT_JSON", events };
+    return { decoded: null, source: "none", reason: "no meter event and no ERR_* panic", events };
+  }
+  const hit =
+    events.find((row) => row.code === expected) ??
+    (expected === "OK" ? events.find((row) => row.code === "OK") : null) ??
+    events.at(-1);
+  if (hit?.code && (hit.code === expected || (expected === "OK" && hit.code === "OK"))) {
+    return { decoded: hit.code, source: "event", reason: hit.event ? `meter ${hit.event}` : null, events };
+  }
+  const fromReturn = decodeFromTx(result, contract);
+  if (fromReturn.decoded && fromReturn.decoded !== "0" && !/^\d+$/.test(String(fromReturn.decoded))) {
+    return { decoded: fromReturn.decoded, source: "return", reason: fromReturn.reason, events };
+  }
+  if (hit?.code) return { decoded: hit.code, source: "event", reason: "token return shadowed by event", events };
+  const panic = panicCodeFromTx(result);
+  if (panic) return { decoded: panic, source: "panic", reason: "status panic", events };
+  return { decoded: null, source: "none", reason: fromReturn.reason ?? "no meter NEP-297 event", events };
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

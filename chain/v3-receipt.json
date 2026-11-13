@@ -1,0 +1,353 @@
+{
+  "network": "testnet",
+  "contract": "mf004b2.mtrfc658fd1.testnet",
+  "wasmSha256": "208e223123613d75d63ecdee9d6b9fa61e22da5751b7afccec9fff17538db65e",
+  "token": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
+  "buyer": "mtrfc658fd1.testnet",
+  "vendor": "vendor.mtrfc658fd1.testnet",
+  "recipient": "u5237d3.mtrfc658fd1.testnet",
+  "meterId": 3,
+  "amount": "2000000",
+  "domain": "meter/v3",
+  "evidence": "Field report 04, price column at most 100",
+  "sentence": "Field report 04, price column at most 100",
+  "notBefore": "1794554571215495424",
+  "deadline": "1794561651215495424",
+  "lineHash": "1f82fd3a7fa56432cc61edefe112dfb1f133aa4f60a998331085843adb759347",
+  "agentPublicKey": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3",
+  "cap": "2000000",
+  "lateMeter": 2,
+  "capMeter": 4,
+  "steps": [
+    {
+      "label": "Bad message, no event",
+      "code": "no event, panic",
+      "hash": "5g6tgFBd66Cdrq5eWwAhKA6tpKE5DFVPuYqUyJdemiAT",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": []
+    },
+    {
+      "label": "Deposit before both signatures",
+      "code": "ERR_NEED_BOTH",
+      "hash": "EmFrKimyDzDiqkRyqhLX2BByvjChaTWMJsRjUPxPoS85",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "1",
+              "method": "ft_on_transfer",
+              "code": "ERR_NEED_BOTH",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Deposit at the deadline",
+      "code": "ERR_TOO_LATE",
+      "hash": "aWRg6kL1wUCVeqvPWwz7Gb2UntgodqXK6rwgFynR2SA",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "2",
+              "method": "ft_on_transfer",
+              "code": "ERR_TOO_LATE",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Fund the hero",
+      "code": "OK",
+      "hash": "oPV9KjTRdAM4PXtjYSoqSUBUjzHYbYUQBgFbKrAgJnb",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "fund",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "ft_on_transfer",
+              "code": "OK",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Install the key, cap 2.00",
+      "code": "OK",
+      "hash": "9XUsxaX4JdgQohRyN5C3UG9SxABvJJxYbBDU5UJpLspL",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "key",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "install_agent",
+              "code": "OK",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release before the stored time",
+      "code": "ERR_NOT_YET",
+      "hash": "AqB47zX5jvmqvEbsjzyauhkZWbmG3Yp38Th4PgZyvvBf",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "ERR_NOT_YET",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Wrong recipient other.testnet",
+      "code": "ERR_RECIPIENT",
+      "hash": "C1W5xRgMXScfyj5XMpJMtWgoJHJLAeJc6C62NB29gTic",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "ERR_RECIPIENT",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Wrong amount 1.00",
+      "code": "ERR_AMOUNT",
+      "hash": "54UUWWQJdat3q7g1vp7xzReFUPxz1rS7sKkWQi5tpzin",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "ERR_AMOUNT",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Wrong sentence hash",
+      "code": "ERR_EVIDENCE",
+      "hash": "4a3jj8kJBJT9BNvzjMZMuK9vVbG6waMtZxsu8FU74Dui",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "ERR_EVIDENCE",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Paid u5237d3.mtrfc658fd1.testnet",
+      "code": "OK",
+      "hash": "f8NCj4CDoX3CuJY61eEz9L5gLs4GtXLwYLfUb3E9huG",
+      "moved": "2000000",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "paid",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "OK",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Second release moved nothing",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "J7cKGYRE93ux4CQLHta6jYfL4CWKYgjAbPFA6oMwWEts",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "ERR_ALREADY_PAID",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        },
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "key",
+          "data": [
+            {
+              "meter_id": "3",
+              "method": "release",
+              "code": "BURNED",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Refund before the deadline",
+      "code": "ERR_TOO_EARLY",
+      "hash": "H1oCRJt7oFABTFtWeKFNq6PyHbMFWZHzYah3tzfxQYRW",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "4",
+              "method": "refund",
+              "code": "ERR_TOO_EARLY",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Release over the key cap",
+      "code": "ERR_CAP",
+      "hash": "9ea4w13qfaw2NVCMi5P785swefg8XuJcLzFAi7dfUK3A",
+      "moved": "0",
+      "signer": "mf004b2.mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "4",
+              "method": "release",
+              "code": "ERR_CAP",
+              "caller": "ed25519:4831ovj5fLf1aR5fsLnm6Qt2yn4EqDSbdy17SnjRTnE3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Refund after the deadline",
+      "code": "OK",
+      "hash": "Buj7ZxZ3fy3hJxCCs616iELMMwKGoahe1yzgBeKvjUz",
+      "moved": "2000000",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refund",
+          "data": [
+            {
+              "meter_id": "4",
+              "method": "refund",
+              "code": "OK",
+              "caller": "mf004b2.mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Second refund moved nothing",
+      "code": "ERR_ALREADY_PAID",
+      "hash": "7zPjNDF1viV3K6DbANBPSRhkM5upPKtDeWBNrxwTpwpf",
+      "moved": "0",
+      "signer": "mtrfc658fd1.testnet",
+      "events": [
+        {
+          "standard": "meter",
+          "version": "1.0.0",
+          "event": "refusal",
+          "data": [
+            {
+              "meter_id": "4",
+              "method": "refund",
+              "code": "ERR_ALREADY_PAID",
+              "caller": "mtrfc658fd1.testnet"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "at": "2026-11-13T07:25:55.139Z"
+}

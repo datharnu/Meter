@@ -182,7 +182,9 @@ function eventsOf(result) {
   const found = [];
   for (const receipt of result?.receipts_outcome ?? []) {
     for (const log of receipt.outcome?.logs ?? []) {
-      if (typeof log === "string" && log.startsWith("EVENT_JSON:")) found.push(JSON.parse(log.slice("EVENT_JSON:".length)));
+      if (typeof log !== "string" || !log.startsWith("EVENT_JSON:")) continue;
+      const parsed = JSON.parse(log.slice("EVENT_JSON:".length));
+      if (parsed?.standard === "meter" && parsed?.version === "1.0.0") found.push(parsed);
     }
   }
   return found;
