@@ -227,6 +227,16 @@ The paying key can call `release` and nothing else. Its allowance is 0.50 NEAR, 
 
 The browser preview calls `decide` in `app/lib/rule.mjs`. It does not call `release`. A second click cannot move money, because the preview never sends a transaction.
 
+### Meter v3 recording (`chain/v3-prove.mjs`)
+
+Dry run: `node chain/v3-prove.mjs`. The script spends only when `RUN=1`. It deploys `contract-v3/meter-v3.wasm`, passes `domain: "meter/v3"` into `chain/line.mjs`, and writes `app/public/v3.json`.
+
+**Codes recorded on chain** in the planned v3 receipt: `no event, panic` (deposit `ERR_BAD_MSG`), `ERR_NEED_BOTH`, `ERR_TOO_LATE`, fund `OK`, key `OK` (`install_agent`), `ERR_NOT_YET`, `ERR_RECIPIENT`, `ERR_AMOUNT`, `ERR_EVIDENCE`, paid `OK`, `ERR_ALREADY_PAID` (release), `ERR_TOO_EARLY`, `ERR_CAP`, refund `OK`, `ERR_ALREADY_PAID` (refund).
+
+**Codes covered only by unit tests** (`contract-v3` `cargo test`): `ERR_NOT_BUYER`, `ERR_WRONG_TOKEN`, `ERR_UNKNOWN`, `ERR_CAP_MISMATCH`, `ERR_NOT_LOCKED`, `ERR_BUSY`, `ERR_TRANSFER`, `BURNED`, `ERR_REVOKED`, `ERR_UNAUTHORIZED`, `ERR_AGENT`, `ERR_NOT_PARTY`, `ERR_ALREADY_SIGNED`, `ERR_BAD_AMOUNT`, `ERR_BAD_WINDOW`, `ERR_NOTHING`.
+
+A third meter for the fifth-refusal key deletion, the `BURNED` key event, a reinstall, and a second pay is not in the script yet. Budget roughly **+2.00 USDC** to fund that meter and **+2.00 USDC** net second payment to the payee, plus **~0.2–0.6 NEAR** gas and maybe another **0.5 NEAR** key allowance if the account key is deleted and must be re-added.
+
 ## Claims and their limits
 
 Full boundaries: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md). FAQ: [docs/FAQ.md](docs/FAQ.md). Agent index: [AGENTS.md](AGENTS.md).
