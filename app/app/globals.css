@@ -1106,6 +1106,8 @@ textarea { resize: vertical; line-height: 1.4; }
   display: flex; align-items: center; gap: 18px;
 }
 .nav-end { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.nav-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-left: auto; }
+.nav-desk-short { display: none; }
 .theme-btn {
   width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 8px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -1173,7 +1175,22 @@ html[data-theme="light"] .pitch::before {
 @media (max-width: 1199.98px) {
   .market h1, .hero-title, .story h1 { font-size: 38px; }
   .pitch-section h2, .section-head h2 { font-size: 32px; }
-  .nav-center, .nav-desk { display: none; }
+  .nav-center { display: none; }
+  .nav-actions { gap: 4px; }
+  .market .market-nav a.btn.nav-desk {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    height: auto;
+    padding: 4px 10px;
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .menu-btn, .theme-btn { width: 48px; min-height: 48px; }
+  .menu-btn .icon { width: 20px; height: 20px; }
+  .theme-btn .icon { width: 18px; height: 18px; }
   .market-bar { height: auto; overflow: visible; background: var(--bg); }
   .market-bar[data-open="true"] .market-pill {
     flex-wrap: wrap;
@@ -1201,10 +1218,10 @@ html[data-theme="light"] .pitch::before {
   .market-links[data-open="true"] { display: flex; max-height: calc(100vh - 88px); overflow: auto; }
   .market-links a.market-sheet-cta { padding: 8px 12px; min-height: 48px; }
   .market-links a:not(.market-sheet-cta) {
-    min-height: 48px;
-    padding: 0 12px;
+    min-height: 52px;
+    padding: 0 14px;
     border-radius: 12px;
-    font-size: 17px;
+    font-size: 19px;
     letter-spacing: -0.02em;
   }
   .market-links a:not(.market-sheet-cta):hover,
@@ -1213,6 +1230,10 @@ html[data-theme="light"] .pitch::before {
   .market-pill { flex-wrap: nowrap; align-items: center; }
   .market-nav { flex-wrap: nowrap; justify-content: flex-end; }
   .action-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 359.98px) {
+  .nav-desk-long { display: none; }
+  .nav-desk-short { display: inline; }
 }
 @media (max-width: 809.98px) {
   .market-bar { padding: 0; }
@@ -1649,10 +1670,10 @@ html[data-theme="light"] .pitch::before {
     box-shadow: none;
   }
   .market-bar[data-open="true"] .market-links a:not(.market-sheet-cta) {
-    min-height: 56px;
+    min-height: 60px;
     padding: 0;
     border-radius: 0;
-    font-size: 22px;
+    font-size: 24px;
     letter-spacing: -0.03em;
     background: transparent;
   }

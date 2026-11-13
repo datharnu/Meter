@@ -84,22 +84,25 @@ export function SiteNav() {
               </Link>
             ))}
           </div>
-          <button
-            ref={menuButton}
-            className="menu-btn"
-            type="button"
-            aria-expanded={menu}
-            aria-controls="site-menu"
-            aria-label={menu ? "Close menu" : "Open menu"}
-            onClick={() => setMenu((open) => !open)}
-          >
-            <Icon name={menu ? "close" : "menu"} />
-          </button>
+          <div className="nav-actions">
+            <ThemeToggle />
+            <Link className="btn nav-desk" href="/sign-in" aria-label="Open the desk">
+              <span className="nav-desk-long">Open the desk</span>
+              <span className="nav-desk-short" aria-hidden="true">Desk</span>
+            </Link>
+            <button
+              ref={menuButton}
+              className="menu-btn"
+              type="button"
+              aria-expanded={menu}
+              aria-controls="site-menu"
+              aria-label={menu ? "Close menu" : "Open menu"}
+              onClick={() => setMenu((open) => !open)}
+            >
+              <Icon name={menu ? "close" : "menu"} size={20} />
+            </button>
+          </div>
         </nav>
-        <div className="nav-end">
-          <ThemeToggle />
-          <Link className="btn nav-desk" href="/sign-in">Open the desk</Link>
-        </div>
         </div>
         <div id="site-menu" ref={menuPanel} className="market-links" data-open={menu ? "true" : "false"} aria-hidden={menu ? undefined : true}>
           {topNav.map((item) => (
