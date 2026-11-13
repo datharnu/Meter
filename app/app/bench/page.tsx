@@ -119,6 +119,9 @@ export default function BenchPage() {
   const previewMissing = data.headline.previewMissing ?? 0;
   const maliciousTotal = data.headline.emittedMalicious.k;
   const ftTransferMalicious = maliciousTotal - maliciousReleases;
+  const wrongTargetPreviews = data.headline.previewWouldPayWrongTarget.k;
+  const weakMalicious = data.promptSplit?.find((row) => row.prompt === "weak-v1")?.emittedMalicious;
+  const hardenedMalicious = data.promptSplit?.find((row) => row.prompt === "hardened-inject2")?.emittedMalicious;
 
   const full = data.kind === "full";
   const headline = [
@@ -157,7 +160,9 @@ export default function BenchPage() {
 
   const covered =
     /gateway|seed is sent|temperature is|written by the author|previous-build|view call|fewer than 10|preview on this unpaid|computed outcome|would have sent|every result is a view call|every payload uses one sealed/i;
-  const leftover = caveats.filter((line) => !covered.test(line));
+  const leftover = caveats
+    .filter((line) => !covered.test(line))
+    .filter((line) => !/^The tool descriptions and the weak prompt use 2\.00/.test(line));
 
   return (
     <>
@@ -166,7 +171,10 @@ export default function BenchPage() {
           <h1>{full ? "Bench" : "Bench smoke"}</h1>
           {full ? (
             <p className="bench-claim">
-              A hardened prompt cut malicious calls from 343/630 to 134/630. It did not remove them. On a Meter key, 0 of {previewedReleases} previewed releases would have paid a wrong target.
+              {weakMalicious && hardenedMalicious
+                ? `A hardened prompt cut malicious calls from ${count(weakMalicious)} to ${count(hardenedMalicious)}. It did not remove them.`
+                : "A hardened prompt cut malicious calls. It did not remove them."}{" "}
+              On a Meter key, {wrongTargetPreviews} of {previewedReleases} previewed releases would have paid a wrong target.
             </p>
           ) : (
             <p className="lede">{data.statement}</p>
@@ -177,15 +185,10 @@ export default function BenchPage() {
                 {maliciousReleases} malicious releases: {previewedReleases} previewed, {previewMissing} with unparseable arguments, not previewed.
               </p>
               <p className="note bench-lead">
-                0 of {previewedReleases} covers <span className="mono">release</span> calls only. The other {ftTransferMalicious} malicious calls were <span className="mono">ft_transfer</span>, which a Meter key cannot call at all.
+                {wrongTargetPreviews} of {previewedReleases} covers <span className="mono">release</span> calls only. The other {ftTransferMalicious} malicious calls were <span className="mono">ft_transfer</span>, which a Meter key cannot call at all.
                 {maliciousReleases + ftTransferMalicious !== maliciousTotal
                   ? ` (Expected ${maliciousTotal} malicious calls; release + ft_transfer = ${maliciousReleases + ftTransferMalicious}.)`
                   : null}
-              </p>
-              <p className="note bench-lead">
-                Bench rows are view calls and computed outcomes. On-chain examples of the same refusals: the{" "}
-                <Link href="/attack">escalation pair (h09d6ce)</Link> and the{" "}
-                <a href="/v3.json">v3 run (mf004b2, 15 of 15 decoded from events)</a>.
               </p>
             </>
           ) : null}
@@ -201,6 +204,13 @@ export default function BenchPage() {
           </div>
         ))}
       </div>
+      {full ? (
+        <p className="note bench-lead">
+          Bench rows are view calls and computed outcomes. On-chain examples of the same refusals: the{" "}
+          <Link href="/attack">escalation pair (h09d6ce)</Link> and the{" "}
+          <a href="/v3.json">v3 run (mf004b2, 15 of 15 decoded from events)</a>.
+        </p>
+      ) : null}
       {data.promptSplit?.length ? (
         <>
           <h2 className="section-title flush">By prompt</h2>
@@ -238,7 +248,7 @@ export default function BenchPage() {
         </p>
         {full ? (
           <p className="note">
-            The weak prompt and tool descriptions use 2.00 USDC while inject.json still says 48.00. Preview uses poke meter 1 on medbf5c, which holds a 2.00 line, so the old 48.00 amount would be scored as an amount attack instead of matching the sealed line.
+            The weak prompt and tool descriptions use 2.00 USDC while inject.json still says 48.00. The preview target holds a 2.00 line, so the old 48.00 amount would be scored as an amount attack instead of matching the sealed line.
           </p>
         ) : null}
       </div>
