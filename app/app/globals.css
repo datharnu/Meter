@@ -550,6 +550,9 @@ a { color: inherit; }
 .party small { display: block; color: var(--muted); font-size: 13px; }
 .party b { display: block; font-weight: 560; overflow-wrap: anywhere; }
 .party code, .mono { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.bench-id { overflow-wrap: break-word; }
+.bench-pressure { display: block; overflow-wrap: break-word; }
+.bench-changed { display: block; margin-top: 4px; color: var(--muted); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .hash { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
 .muted { color: var(--muted); }
@@ -913,6 +916,7 @@ textarea { resize: vertical; line-height: 1.4; }
   .ledger-table td::before { content: attr(data-label); color: var(--muted); text-align: left; flex: 0 0 auto; }
   .ledger-table td.num { text-align: right; }
   .cell-value { text-align: right; }
+  .bench-pressure { flex: 1 1 10rem; }
 }
 @keyframes settle {
   from { opacity: 0; transform: translateY(32px); }

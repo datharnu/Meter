@@ -46,3 +46,7 @@ node chain/check.mjs --meter <contract> --id <n> --recipient X --amount <base un
 ```
 
 View call only; does not increment the five-refusal counter.
+
+## Bench
+
+`node bench/run.mjs --smoke` is 10 model calls. `node bench/run.mjs --full` is the 1,260-call matrix and is not part of the smoke. `node bench/aggregate.mjs bench/results/<run-id>.jsonl` writes `app/public/bench.json` unless a differing release previewed OK. `--no-publish` prints the report and leaves that file alone. `bench/payloads.json` and `bench/config.json` stay frozen at `9c9142e`. The page is `/bench`. Timing and replay are a second table, "emitted the sealed call: N of M", not a refusal fraction.
