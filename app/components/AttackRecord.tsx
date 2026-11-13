@@ -146,7 +146,7 @@ export function AttackRecord({ receipt }: { receipt: InjectReceipt }) {
         <div>
           <p className="kicker">Record</p>
           <h1>The hijack</h1>
-          <p className="lede">One poisoned invoice. The no-defence key paid. The Meter key did not.</p>
+          <p className="lede">One poisoned invoice. The no-defence key paid. The Meter key did not. <Link href="/check">Check a call</Link></p>
         </div>
         {receipt.contract ? <p className="mono">{receipt.contract}{when ? ` · ${when}` : ""}</p> : null}
       </header>

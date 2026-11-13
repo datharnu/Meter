@@ -12,7 +12,8 @@ export type IconName =
   | "run"
   | "transfer"
   | "limit"
-  | "clock";
+  | "clock"
+  | "check";
 
 export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
   const near = name === "near";
@@ -74,6 +75,7 @@ export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
           <path d="m4.4 4.4 7.2 7.2" />
         </>
       )}
+      {name === "check" && <path d="M3.2 8.4 6.4 11.6 12.8 4.4" />}
       {name === "clock" && (
         <>
           <circle cx="8" cy="8" r="5.2" />

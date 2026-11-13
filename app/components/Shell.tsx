@@ -3,21 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { Icon, type IconName } from "@/components/Icons";
+import { Icon } from "@/components/Icons";
 import { Logo } from "@/components/Logo";
 import { NearMark } from "@/components/NearMark";
 import { ProfileDock } from "@/components/ProfileDock";
+import { deskNav } from "@/lib/site";
 import { useDesk } from "@/lib/store";
-
-const links: { href: string; label: string; short: string; icon: IconName }[] = [
-  { href: "/desk", label: "Desk", short: "Desk", icon: "desk" },
-  { href: "/new", label: "New slip", short: "New", icon: "slip" },
-  { href: "/clause", label: "The line", short: "Line", icon: "line" },
-  { href: "/book", label: "The book", short: "Book", icon: "book" },
-  { href: "/key", label: "The key", short: "Key", icon: "key" },
-  { href: "/attack", label: "The hijack", short: "Hijack", icon: "limit" },
-  { href: "/bench", label: "Bench", short: "Bench", icon: "run" },
-];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -31,7 +22,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <aside className="nav">
         <Link className="mark" href="/"><Logo /></Link>
         <div className="nav-links">
-          {links.map((link) => (
+          {deskNav.map((link) => (
             <Link key={link.href} className="item" href={link.href} data-on={current(link.href)} aria-current={current(link.href) ? "page" : undefined}>
               <Icon name={link.icon} />
               {link.label}
@@ -44,7 +35,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="frame frame-bar">
             <Link className="mark mark-phone" href="/"><Logo /></Link>
             <nav className="tabs" aria-label="Sections">
-              {links.map((link) => (
+              {deskNav.map((link) => (
                 <Link key={link.href} href={link.href} data-on={current(link.href)} aria-current={current(link.href) ? "page" : undefined}>
                   {link.short}
                 </Link>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SiteNav } from "@/components/SiteNav";
+import Link from "next/link";
 
 const DEFAULT = {
   meter: "medbf5c.mtrfc658fd1.testnet",
@@ -33,29 +33,32 @@ export default function CheckPage() {
   }
 
   return (
-    <div className="market">
-      <SiteNav />
-      <main id="content" className="market-main story">
-        <p className="eyebrow"><i data-hue="teal" />View call</p>
-        <h1>Check before you sign</h1>
-        <p className="market-lead">
-          This calls <span className="mono">preview</span> on NEAR testnet with the same arguments as <span className="mono">release</span>.
-          No key. No transaction. It does not count toward the five-refusal tripwire.
-        </p>
-        <form className="check-form" onSubmit={run}>
-          <label>Meter contract<input value={form.meter} onChange={(e) => setForm({ ...form, meter: e.target.value })} /></label>
-          <label>Meter id<input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} /></label>
-          <label>Recipient<input value={form.recipient} onChange={(e) => setForm({ ...form, recipient: e.target.value })} /></label>
-          <label>Amount (base units)<input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></label>
-          <label>Sentence<input value={form.sentence} onChange={(e) => setForm({ ...form, sentence: e.target.value })} /></label>
-          <button className="btn" type="submit" disabled={loading}>{loading ? "Calling…" : "Run preview"}</button>
-        </form>
+    <>
+      <header className="page-head">
+        <div>
+          <p className="kicker">View call</p>
+          <h1 className="page-title">Check a call</h1>
+          <p className="lede">
+            This calls <span className="mono">preview</span> on NEAR testnet with the same arguments as <span className="mono">release</span>.
+            No key. No transaction. It does not count toward the five-refusal tripwire.
+          </p>
+        </div>
+      </header>
+      <form className="panel form-narrow" onSubmit={run}>
+        <div className="form-grid">
+          <label>Meter contract<input value={form.meter} onChange={(e) => setForm({ ...form, meter: e.target.value })} spellCheck={false} /></label>
+          <label>Meter id<input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} inputMode="numeric" spellCheck={false} /></label>
+          <label>Recipient<input value={form.recipient} onChange={(e) => setForm({ ...form, recipient: e.target.value })} spellCheck={false} /></label>
+          <label>Amount (base units)<input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} inputMode="numeric" spellCheck={false} /></label>
+        </div>
+        <label>Sentence<input value={form.sentence} onChange={(e) => setForm({ ...form, sentence: e.target.value })} spellCheck={false} /></label>
+        <button className="btn" type="submit" disabled={loading}>{loading ? "Calling…" : "Run preview"}</button>
         {result && (
           <div className="check-result" role="status">
-            {result.error ? <p className="alert">{result.error}</p> : (
+            {result.error ? <p className="alert" role="alert">{result.error}</p> : (
               <>
                 <p className="mono">{result.code}</p>
-                <p>{result.wouldMove === "0.00" ? "0.00 would move" : `${result.wouldMove}`}</p>
+                <p>{result.wouldMove === "0.00" ? "0.00 would move" : result.wouldMove}</p>
               </>
             )}
           </div>
@@ -68,7 +71,8 @@ export default function CheckPage() {
           on-chain state (and <span className="mono">preview</span>) may differ from what you see on the 19th or 20th.
         </p>
         <p className="note">CLI: <span className="mono break">node chain/check.mjs</span> with no flags uses the same defaults.</p>
-      </main>
-    </div>
+        <p className="note"><Link href="/attack">The hijack</Link> · <Link href="/bench">Bench</Link></p>
+      </form>
+    </>
   );
 }

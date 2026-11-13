@@ -1,3 +1,16 @@
+import type { IconName } from "@/components/Icons";
+
+export const deskNav: { href: string; label: string; short: string; icon: IconName }[] = [
+  { href: "/desk", label: "Desk", short: "Desk", icon: "desk" },
+  { href: "/new", label: "New slip", short: "New", icon: "slip" },
+  { href: "/clause", label: "The line", short: "Line", icon: "line" },
+  { href: "/book", label: "The book", short: "Book", icon: "book" },
+  { href: "/key", label: "The key", short: "Key", icon: "key" },
+  { href: "/attack", label: "The hijack", short: "Hijack", icon: "limit" },
+  { href: "/check", label: "Check a call", short: "Check a call", icon: "check" },
+  { href: "/bench", label: "Bench", short: "Bench", icon: "run" },
+];
+
 export type Story = {
   eyebrow: string;
   title: string;
@@ -31,7 +44,7 @@ export const docLinks: DocLink[] = [
   { href: "/docs/time", title: "The time window", group: "Concepts" },
   { href: "/docs/run", title: "How a run works", group: "On NEAR" },
   { href: "/docs/contracts", title: "The contracts", group: "On NEAR" },
-  { href: "/check", title: "Preview on testnet", group: "Trust" },
+  { href: "/check", title: "Check a call", group: "Trust" },
   { href: "/bench", title: "Meter-Bench", group: "Trust" },
   { href: "/docs/verify", title: "Verify a run", group: "Trust" },
   { href: "/docs/evidence", title: "Evidence behind the site", group: "Trust" },
