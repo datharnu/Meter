@@ -18,8 +18,19 @@ type BenchFile = {
     meterRefused: Rate & { excludes: string };
     previewWouldPayWrongTarget: Rate;
     fullAccessWouldSendWrongTarget: Rate;
+    maliciousReleases?: number;
+    previewedReleases?: number;
     previewMissing: number;
   };
+  statements?: string[];
+  promptSplit?: {
+    prompt: string;
+    emittedMalicious: Rate;
+    meterRefused: Rate;
+    fullAccessWouldSendWrongTarget: Rate;
+  }[];
+  truncation?: { text: string } | null;
+  evidenceLabel?: string;
   modelByClass: { model: string; classes: ({ class: string } & Rate)[] }[];
   pressureByModel?: { model: string; classes: { class: string; sealed: number; n: number; changed: number; label: string | null }[] }[];
   smallCells: { cell: string; n: number }[];
@@ -49,6 +60,26 @@ function count(rate: Rate) {
 function band(rate: Rate) {
   if (rate.low == null || rate.high == null || rate.n === 0) return "no interval";
   return `${(rate.low * 100).toFixed(1)}–${(rate.high * 100).toFixed(1)}%`;
+}
+
+function Count({ rate }: { rate?: Rate }) {
+  if (!rate || rate.n === 0) return <span className="cell-value">—</span>;
+  return (
+    <span className="cell-value">
+      {count(rate)}
+      {rate.n < 10 ? <small className="bench-meta">indicative</small> : null}
+    </span>
+  );
+}
+
+function SplitCount({ rate }: { rate: Rate }) {
+  return (
+    <span className="cell-value">
+      {count(rate)}
+      <small className="bench-meta">{band(rate)}</small>
+      {rate.n < 10 ? <small className="bench-meta">indicative</small> : null}
+    </span>
+  );
 }
 
 export default function BenchPage() {
@@ -82,7 +113,7 @@ export default function BenchPage() {
     ["Emitted a malicious call", data.headline.emittedMalicious],
     ["Meter preview refused", data.headline.meterRefused],
     ["Preview would pay a wrong target", data.headline.previewWouldPayWrongTarget],
-    ["Full access would send to a wrong target", data.headline.fullAccessWouldSendWrongTarget],
+    ["Full access would have sent to a wrong target", data.headline.fullAccessWouldSendWrongTarget],
   ] as const;
 
   return (
@@ -96,10 +127,7 @@ export default function BenchPage() {
       {data.note ? <p className="note">{data.note}</p> : null}
       {data.smallCells.length ? (
         <div className="panel">
-          <p>
-            {data.smallCells.length} model, prompt, and tool cells have fewer than 10 samples.
-            The refusal table merges the two tools. Those fractions are not a rate.
-          </p>
+          <p>A cell with fewer than 10 samples is marked indicative.</p>
         </div>
       ) : null}
       <div className="stats four">
@@ -113,13 +141,43 @@ export default function BenchPage() {
       </div>
       <p className="note">The ranges under the counts are 95% Wilson intervals.</p>
       <p className="note">{data.headline.meterRefused.excludes}</p>
+      {data.statements?.map((line) => <p className="note" key={line}>{line}</p>)}
+      {data.promptSplit?.length ? (
+        <>
+          <h2 className="section-title">By prompt</h2>
+          <div className="table-wrap">
+            <table className="ledger-table">
+              <caption>
+                The three counts above, split by prompt. The range under each count is a 95% Wilson interval.
+                Terms is N/A on ft_transfer, so the would-have-sent column excludes it.
+              </caption>
+              <thead>
+                <tr>
+                  <th>Prompt</th>
+                  <th>Malicious calls</th>
+                  <th>Meter preview refused</th>
+                  <th>Would have sent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.promptSplit.map((row) => (
+                  <tr key={row.prompt}>
+                    <td data-label="Prompt"><span className="mono bench-id">{row.prompt}</span></td>
+                    <td data-label="Malicious calls"><SplitCount rate={row.emittedMalicious} /></td>
+                    <td data-label="Meter preview refused"><SplitCount rate={row.meterRefused} /></td>
+                    <td data-label="Would have sent"><SplitCount rate={row.fullAccessWouldSendWrongTarget} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
       <h2 className="section-title">Model by class</h2>
       <div className="table-wrap">
         <table className="ledger-table">
           <caption>
-            Malicious calls over calls in that class. Recipient, amount, and terms only.
-            {data.calls} calls in this file, {data.plannedCalls} planned for the full matrix.
-            Spend {data.spendUsd} of ${data.capUsd}.
+            Malicious calls over calls in that class. Recipient, amount, and terms only. A cell under 10 samples is marked indicative. {data.calls} calls in this file, {data.plannedCalls} planned for the full matrix. Spend {data.spendUsd} of ${data.capUsd}.
           </caption>
           <thead>
             <tr>
@@ -135,7 +193,7 @@ export default function BenchPage() {
                   const column = row.classes.find((item) => item.class === name);
                   return (
                     <td key={name} data-label={name}>
-                      <span className="cell-value">{!column || column.n === 0 ? "—" : count(column)}</span>
+                      <Count rate={column} />
                     </td>
                   );
                 })}
@@ -151,6 +209,7 @@ export default function BenchPage() {
           <table className="ledger-table">
             <caption>
               Timing and replay only. A cell counts calls that emitted the stored line. It is not a refusal count.
+              A cell under 10 samples is marked indicative.
             </caption>
             <thead>
               <tr>
@@ -165,8 +224,11 @@ export default function BenchPage() {
                   <td data-label="Model"><span className="mono bench-id">{row.model}</span></td>
                   {row.classes.map((column) => (
                     <td key={column.class} data-label={column.class}>
-                      <span className="cell-value bench-pressure">{column.n === 0 || !column.label ? "—" : column.label}</span>
-                      {column.changed > 0 ? <small className="bench-changed">changed a field: {column.changed}</small> : null}
+                      <span className="cell-value bench-pressure">
+                        {column.n === 0 || !column.label ? "—" : column.label}
+                        {column.n > 0 && column.n < 10 ? <small className="bench-meta">indicative</small> : null}
+                        {column.changed > 0 ? <small className="bench-changed">changed a field: {column.changed}</small> : null}
+                      </span>
                     </td>
                   ))}
                 </tr>
@@ -175,16 +237,14 @@ export default function BenchPage() {
           </table>
         </div>
       ) : <p className="note">No timing or replay rows in this file.</p>}
+      {data.truncation ? <p className="note">{data.truncation.text}</p> : null}
       <h2 className="section-title">Canaries</h2>
       <ul className="note">
         {data.canaries.map((row) => (
           <li key={`${row.when}-${row.at}`}><span className="mono">{row.when}</span> {row.ok ? row.code : row.error} · {row.at}</li>
         ))}
       </ul>
-      <h2 className="section-title">What resisted, and what looks bad</h2>
-      <p className="note">
-        {data.resisted.length ? `No malicious call from ${data.resisted.join(", ")}.` : "No model in this file resisted every payload."}
-      </p>
+      <h2 className="section-title">Sealed previews</h2>
       {data.badForMeter.length ? (
         <ul className="note">
           {data.badForMeter.map((row) => (
@@ -192,10 +252,10 @@ export default function BenchPage() {
           ))}
         </ul>
       ) : <p className="note">No sealed call in this file previewed as anything other than OK.</p>}
-      {data.headline.previewMissing ? <p className="note">Malicious release calls with no preview code: {data.headline.previewMissing}.</p> : null}
       <h2 className="section-title">Evidence</h2>
       <p className="note">
-        View calls {data.evidence.viewCall}. Computed outcomes {data.evidence.computed}. Transaction hashes {data.evidence.txHash}.
+        {data.evidenceLabel ?? "Release rows are a view call against poke meter 1 on a previous-build contract. Full-access outcomes are computed, not broadcast. The label is would have sent."}
+        {" "}View calls {data.evidence.viewCall}. Computed outcomes {data.evidence.computed}. Transaction hashes {data.evidence.txHash}.
         {data.txHashes.length ? ` Listed: ${data.txHashes.join(", ")}.` : " This file lists no transaction hash."}
       </p>
       <h2 className="section-title">Caveats</h2>

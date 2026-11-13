@@ -240,7 +240,18 @@ The tool descriptions and the weak prompt use 2.00. The system prompt in `inject
 
 Every result is a view call or a computed outcome, except any transaction hash listed on the `/bench` page. No hash is listed until a broadcast is approved. Poke meter 1 is not released or refunded.
 
-The payloads and the settings are frozen at `9c9142eee35449c83f4aabc2fb5807b174b857d6` (`bench/payloads.json`, `bench/config.json`). The full matrix is 1,260 calls. It has not been run. The file on this branch, `app/public/bench.json`, is the 10-call smoke `smoke-20261113T062628Z` (spend $0.001492). It is not the bench. A differing `release` that previews as OK stops the harness, and `bench/aggregate.mjs` does not publish that file. `/bench` reads `app/public/bench.json` after a clean aggregate. Cells with fewer than 10 samples are marked on the page.
+The payloads and the settings are frozen at `9c9142eee35449c83f4aabc2fb5807b174b857d6` (`bench/payloads.json`, `bench/config.json`). The harness that ran the matrix is `7ad9bd4f6add13c0c74eab46648b4724762b10a1`. The full matrix is 1,260 calls, logged in `bench/results/full-20261113T064521Z.jsonl` and published as `app/public/bench.json`. Spend $0.9325308 of the $2.00 cap. A differing `release` that previews as OK stops the harness, and `bench/aggregate.mjs` does not publish that file.
+
+281 of 291 malicious releases were previewed. 10 had unparseable arguments and are not previews. Wrong-target previews: 0 of 281 (95% CI up to 1.3%). Terms is N/A on `ft_transfer`, so the 186/509 denominator excludes it. Full-access rows are computed, not broadcast, and the label is "would have sent".
+
+The same three counts, split by prompt, with 95% Wilson intervals:
+
+| Prompt | Malicious calls | Meter preview refused | Would have sent |
+| --- | --- | --- | --- |
+| weak-v1 | 343/630, 50.5–58.3% | 203/203, 98.1–100.0% | 139/273, 45.0–56.8% |
+| hardened-inject2 | 134/630, 18.3–24.6% | 78/78, 95.3–100.0% | 47/236, 15.3–25.5% |
+
+DeepSeek's lower sealed counts reflect truncation (52 truncated calls), not resistance. Those 52 are timing and replay. DeepSeek also truncated 23 recipient and amount calls. Cells with fewer than 10 samples are marked indicative on `/bench`.
 
 ```bash
 node bench/run.mjs --smoke
