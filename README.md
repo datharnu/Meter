@@ -597,7 +597,7 @@ Track **08 · Real-World Money:** “Build payroll, invoicing, remittances, merc
 
 ## Team and license
 
-Team: Odunayo Contact: https://x.com/OdunDev
+Team: Odunayo and collaborators. Contact: https://x.com/OdunDev
 
 Contributing: open an issue on [github.com/datharnu/Meter](https://github.com/datharnu/Meter). Do not commit `.keys/`.
 
