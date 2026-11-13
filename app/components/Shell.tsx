@@ -16,6 +16,7 @@ const links: { href: string; label: string; short: string; icon: IconName }[] = 
   { href: "/book", label: "The book", short: "Book", icon: "book" },
   { href: "/key", label: "The key", short: "Key", icon: "key" },
   { href: "/attack", label: "The hijack", short: "Hijack", icon: "limit" },
+  { href: "/bench", label: "Bench", short: "Bench", icon: "run" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {

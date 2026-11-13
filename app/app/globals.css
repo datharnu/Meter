@@ -438,6 +438,12 @@ a { color: inherit; }
 .lede { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
 .lede a, .note a { color: var(--teal); }
 .section-title { font-size: 20px; font-weight: 500; letter-spacing: -0.03em; margin: 40px 0 12px; }
+.section-title.flush { margin-top: 4px; }
+.bench-claim { margin: 10px 0 0; max-width: 68ch; color: var(--ink); font-size: 18px; line-height: 1.35; letter-spacing: -0.02em; }
+.bench-read { margin-top: 16px; }
+.bench-read h2 { margin: 0 0 8px; font-size: 16px; font-weight: 560; letter-spacing: -0.02em; }
+.bench-read p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.bench-read p + p { margin-top: 10px; }
 
 .panel, .sheet, .empty, .error, .skeleton {
   background: var(--surface);
@@ -550,6 +556,9 @@ a { color: inherit; }
 .party small { display: block; color: var(--muted); font-size: 13px; }
 .party b { display: block; font-weight: 560; overflow-wrap: anywhere; }
 .party code, .mono { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.bench-id { overflow-wrap: break-word; }
+.bench-pressure { display: block; overflow-wrap: break-word; }
+.bench-changed, .bench-meta { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .hash { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
 .muted { color: var(--muted); }
@@ -913,6 +922,7 @@ textarea { resize: vertical; line-height: 1.4; }
   .ledger-table td::before { content: attr(data-label); color: var(--muted); text-align: left; flex: 0 0 auto; }
   .ledger-table td.num { text-align: right; }
   .cell-value { text-align: right; }
+  .bench-pressure { flex: 1 1 8rem; min-width: 0; }
 }
 @keyframes settle {
   from { opacity: 0; transform: translateY(32px); }
