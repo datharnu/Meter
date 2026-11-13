@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
 
-// Same bytes as contract-v2/src/rule.rs `line_bytes`. Amount is the integer string of base units.
-export function lineBytes({ contract, meterId, token, recipient, amount, notBefore, deadline, evidence }) {
+// Same length-prefixed bytes as the contracts. Amount is the integer string of base units.
+// The domain defaults to meter/v2 so the recorded receipts keep their hash.
+// contract-v3 passes domain: "meter/v3".
+export function lineBytes({ contract, meterId, token, recipient, amount, notBefore, deadline, evidence, domain = "meter/v2" }) {
   const fields = [
-    "meter/v2",
+    domain,
     contract,
     String(meterId),
     token,
