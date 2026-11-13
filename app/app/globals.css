@@ -438,6 +438,12 @@ a { color: inherit; }
 .lede { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
 .lede a, .note a { color: var(--teal); }
 .section-title { font-size: 20px; font-weight: 500; letter-spacing: -0.03em; margin: 40px 0 12px; }
+.section-title.flush { margin-top: 4px; }
+.bench-claim { margin: 10px 0 0; max-width: 68ch; color: var(--ink); font-size: 18px; line-height: 1.35; letter-spacing: -0.02em; }
+.bench-read { margin-top: 16px; }
+.bench-read h2 { margin: 0 0 8px; font-size: 16px; font-weight: 560; letter-spacing: -0.02em; }
+.bench-read p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.bench-read p + p { margin-top: 10px; }
 
 .panel, .sheet, .empty, .error, .skeleton {
   background: var(--surface);

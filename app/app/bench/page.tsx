@@ -115,21 +115,30 @@ export default function BenchPage() {
     ["Preview would pay a wrong target", data.headline.previewWouldPayWrongTarget],
     ["Full access would have sent to a wrong target", data.headline.fullAccessWouldSendWrongTarget],
   ] as const;
+  const full = data.kind === "full";
+  const reading = [
+    data.statement,
+    "The range under a count is a 95% Wilson interval.",
+    "A cell under 10 samples is indicative.",
+    data.headline.meterRefused.excludes,
+    ...(data.statements ?? []).filter((line) => !(full && line.startsWith("Wrong-target"))),
+  ].join(" ");
+  const covered = /gateway|seed is sent|temperature is|payloads were written|previous-build|view call|fewer than 10|terms is n\/a|preview on this unpaid|computed outcome|would have sent/i;
+  const leftover = data.caveats.filter((line) => !covered.test(line));
 
   return (
     <>
       <header className="page-head">
         <div>
-          <h1>{data.kind === "full" ? "Bench" : "Bench smoke"}</h1>
-          <p className="lede">{data.statement}</p>
+          <h1>{full ? "Bench" : "Bench smoke"}</h1>
+          {full ? (
+            <p className="bench-claim">A hardened prompt cut malicious calls from 343/630 to 134/630. It did not remove them. On a Meter key, 0 of 281 previewed releases would have paid a wrong target.</p>
+          ) : (
+            <p className="lede">{data.statement}</p>
+          )}
         </div>
       </header>
       {data.note ? <p className="note">{data.note}</p> : null}
-      {data.smallCells.length ? (
-        <div className="panel">
-          <p>A cell with fewer than 10 samples is marked indicative.</p>
-        </div>
-      ) : null}
       <div className="stats four">
         {headline.map(([label, rate]) => (
           <div className="stat" key={label}>
@@ -139,18 +148,12 @@ export default function BenchPage() {
           </div>
         ))}
       </div>
-      <p className="note">The ranges under the counts are 95% Wilson intervals.</p>
-      <p className="note">{data.headline.meterRefused.excludes}</p>
-      {data.statements?.map((line) => <p className="note" key={line}>{line}</p>)}
       {data.promptSplit?.length ? (
         <>
-          <h2 className="section-title">By prompt</h2>
+          <h2 className="section-title flush">By prompt</h2>
           <div className="table-wrap">
             <table className="ledger-table">
-              <caption>
-                The three counts above, split by prompt. The range under each count is a 95% Wilson interval.
-                Terms is N/A on ft_transfer, so the would-have-sent column excludes it.
-              </caption>
+              <caption>The counts above, split by prompt.</caption>
               <thead>
                 <tr>
                   <th>Prompt</th>
@@ -173,11 +176,16 @@ export default function BenchPage() {
           </div>
         </>
       ) : null}
+      <div className="panel bench-read">
+        <h2>How to read this</h2>
+        <p>{reading}</p>
+        <p>Limits: one gateway (cloud-api.near.ai), view-call evaluation against a previous-build contract (medbf5c), payloads written by us, temperature 0.7, seed on one model (openai/gpt-4.1-mini), and small large-model cells.</p>
+      </div>
       <h2 className="section-title">Model by class</h2>
       <div className="table-wrap">
         <table className="ledger-table">
           <caption>
-            Malicious calls over calls in that class. Recipient, amount, and terms only. A cell under 10 samples is marked indicative. {data.calls} calls in this file, {data.plannedCalls} planned for the full matrix. Spend {data.spendUsd} of ${data.capUsd}.
+            Malicious calls over calls in that class. Recipient, amount, and terms only. {data.calls} calls in this file, {data.plannedCalls} planned for the full matrix. Spend {data.spendUsd} of ${data.capUsd}.
           </caption>
           <thead>
             <tr>
@@ -209,7 +217,6 @@ export default function BenchPage() {
           <table className="ledger-table">
             <caption>
               Timing and replay only. A cell counts calls that emitted the stored line. It is not a refusal count.
-              A cell under 10 samples is marked indicative.
             </caption>
             <thead>
               <tr>
@@ -254,14 +261,17 @@ export default function BenchPage() {
       ) : <p className="note">No sealed call in this file previewed as anything other than OK.</p>}
       <h2 className="section-title">Evidence</h2>
       <p className="note">
-        {data.evidenceLabel ?? "Release rows are a view call against poke meter 1 on a previous-build contract. Full-access outcomes are computed, not broadcast. The label is would have sent."}
-        {" "}View calls {data.evidence.viewCall}. Computed outcomes {data.evidence.computed}. Transaction hashes {data.evidence.txHash}.
+        View calls {data.evidence.viewCall}. Computed outcomes {data.evidence.computed}. Transaction hashes {data.evidence.txHash}.
         {data.txHashes.length ? ` Listed: ${data.txHashes.join(", ")}.` : " This file lists no transaction hash."}
       </p>
-      <h2 className="section-title">Caveats</h2>
-      <ul className="note">
-        {data.caveats.map((line) => <li key={line}>{line}</li>)}
-      </ul>
+      {leftover.length ? (
+        <>
+          <h2 className="section-title">Caveats</h2>
+          <ul className="note">
+            {leftover.map((line) => <li key={line}>{line}</li>)}
+          </ul>
+        </>
+      ) : null}
       <p className="note">Run {data.runId}. Design {data.design}. This page reads the file. It does not call a model.</p>
     </>
   );
