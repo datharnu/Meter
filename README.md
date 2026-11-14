@@ -10,6 +10,8 @@
 
 **Track:** AI Security & Defense (also Real-World Money). Built at NEAR HACKATHON, https://nearhackathon.com.
 
+**Network:** NEAR testnet, all runs. The hijack account [`i198b44`](https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet) is a previous build and uses a toy token (public mint). The [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) and [`mf004b2`](https://testnet.nearblocks.io/address/mf004b2.mtrfc658fd1.testnet) runs use Circle testnet USDC. Mainnet comes only after an audit.
+
 **Current build:** [`mf004b2.mtrfc658fd1.testnet`](https://testnet.nearblocks.io/address/mf004b2.mtrfc658fd1.testnet) (v3).
 
 **Headline results**
@@ -35,9 +37,6 @@ The contract pays that line inside the stored window, or it moves nothing.
 [Docs](https://meter-brown.vercel.app/docs) ·
 [Verify](#verify-it-yourself)
 
-<a href="https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet"><img alt="Network: NEAR testnet. The hijack account is i198b44.mtrfc658fd1.testnet (previous build)." src="docs/badges/network.svg" /></a>
-<img alt="Hijack runs use a toy token (public mint). The medbf5c and mf004b2 runs use Circle testnet USDC." src="docs/badges/token.svg" />
-<img alt="Mainnet: after an audit. These runs are testnet." src="docs/badges/mainnet.svg" />
 <a href="LICENSE"><img alt="License: MIT." src="docs/badges/license.svg" /></a>
 
 <p align="center">
