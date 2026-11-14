@@ -16,7 +16,7 @@
 
 [Meter-Bench](https://meter-brown.vercel.app/bench): a hardened prompt cut malicious calls from 343/630 to 134/630; 0 of 281 previewed releases would have paid a wrong target.
 
-[Circle testnet USDC](#real-world-money) run on [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet).
+[Circle testnet USDC](#real-world-money) runs on [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) and [`mf004b2`](https://testnet.nearblocks.io/address/mf004b2.mtrfc658fd1.testnet).
 
 [v3 tripwire](#meter-v3-recording-chainv3-provemjs) on `mf004b2`: fifth refusal deleted the key, BURNED event decoded.
 
@@ -36,7 +36,7 @@ The contract pays that line inside the stored window, or it moves nothing.
 [Verify](#verify-it-yourself)
 
 <a href="https://testnet.nearblocks.io/address/i198b44.mtrfc658fd1.testnet"><img alt="Network: NEAR testnet. The hijack account is i198b44.mtrfc658fd1.testnet (previous build)." src="docs/badges/network.svg" /></a>
-<img alt="Hijack runs use a toy token (public mint). The medbf5c run uses Circle testnet USDC." src="docs/badges/token.svg" />
+<img alt="Hijack runs use a toy token (public mint). The medbf5c and mf004b2 runs use Circle testnet USDC." src="docs/badges/token.svg" />
 <img alt="Mainnet: after an audit. These runs are testnet." src="docs/badges/mainnet.svg" />
 <a href="LICENSE"><img alt="License: MIT." src="docs/badges/license.svg" /></a>
 
@@ -83,7 +83,7 @@ No key. No wallet.
 
 1. **Open the hijack.** Open [meter-brown.vercel.app](https://meter-brown.vercel.app) and click **See the hijack**. The No defence key shows **48.00 PAID**. The Meter key shows **0.00 STOPPED**. The page is also at `/attack`. To run it yourself, from `app/` run `npm install` and `npm run dev`, then open `http://localhost:3000`.
 2. **Try the refusal.** On the homepage, open **Try the refusal** and leave it on **Before the time**. The answer is `ERR_NOT_YET` and 0.00. That preview calls `decide` in `app/lib/rule.mjs`. It sends no transaction. A Clears mark is not a payment.
-3. **Re-read the chain.** From the repo root, `node chain/verify.mjs`. Expected last line: `verify: ok`. The command uses no key. It fails if a recorded account no longer matches the receipt. See [What is and is not verifiable](#what-is-and-is-not-verifiable). The reliable checks are the v3 events (15/15), the tripwire (13/13), the code hashes, and the poke meter state.
+3. **Re-read the chain.** From the repo root, `node chain/verify.mjs`. Expected last line: `verify: ok`. The command uses no key. It fails if a recorded account no longer matches the receipt. See [What is and is not verifiable](#what-is-and-is-not-verifiable). The reliable checks are the v3 events (15/15), the tripwire (13/13), the code hashes, and the poke meter state. Default output prints the hijack rows inside the decoded count; use `--verbose` to list them. A rate-limited row is not a mismatch.
 
 ## The result
 
@@ -466,7 +466,7 @@ A pool needs more than one buyer and more than one balance. The deployed meter i
 
 | Layer | Choice | Why |
 | --- | --- | --- |
-| Contracts | Rust, `near-sdk` 5.30.0, `near-sys` 0.4.0 | **Current:** `contract-v3/` → `mf004b2` (v3 events). **Hijack / bench:** `contract-v2/` → `i198b44`, `h3743c5`, `h09d6ce`, `medbf5c` (Circle USDC). **Earlier builds:** `m1870dd` (time gate), `m028a47` (payment record), `m2b2440` (signed release) via `contract-tee/` and incomplete `contract/`. CI runs `cargo test` in `contract-tee` and `contract-v2`. No Intel quote check on the time gate. |
+| Contracts | Rust, `near-sdk` 5.30.0, `near-sys` 0.4.0 | **Current:** `contract-v3/` → `mf004b2` (v3 events, Circle testnet USDC). **Hijack / bench:** `contract-v2/` → `i198b44`, `h3743c5`, `h09d6ce` (toy token); bench previews on `medbf5c`. **Circle testnet USDC:** `medbf5c` and `mf004b2` only. **Earlier builds:** `m1870dd` (time gate), `m028a47` (payment record), `m2b2440` (signed release) via `contract-tee/` and incomplete `contract/`. CI runs `cargo test` in `contract-tee` and `contract-v2`. No Intel quote check on the time gate. |
 | Hashing | `sha2` 0.10, `unicode-normalization` 0.1 | The line hash has to match in Rust and in `chain/line.mjs`. |
 | App | Next.js 15.5.4, React 19.1.1 | The page is a reader for the recorded receipts in `app/public/` plus a local preview. No wallet library. |
 | Rule shared with the page | `app/lib/rule.mjs` | The homepage and `/clause` call this function. They do not keep a second copy of the checks. |
@@ -542,7 +542,10 @@ app/lib/rule.mjs           decide(), the preview's only rule
 app/components/LinePreview.tsx
 app/app/page.tsx           homepage: the hijack, then the preview
 chain/verify.mjs           re-reads the recorded accounts, including the hijack
+chain/check.mjs            read-only preview
+chain/conformance-v3.mjs   reads codes back from events
 chain/line.mjs             the same line hash as the contract
+app/public/bench.json      Meter-Bench results
 ```
 
 </details>
@@ -579,10 +582,10 @@ chain/line.mjs             the same line hash as the contract
 
 - An accept method. The parties choose the time. The contract enforces the window.
 - A detached-signature release. `sign` is an account call that stores approval of the line hash. There is no detached signature to replay.
-- A domain proof or a market-making observer. The overlap of a ceiling and a floor stays in the browser.
+- The ceiling and floor overlap stays in the browser; no domain proof or observer.
 - Pool and condition methods on the wasm a judge re-reads.
 - Wallet connect. The desk name is a tab id.
-- A checked Intel quote, Circle USDC, an owner withdraw, and one account per meter. `open` on one contract holds many meters. `new(token)` stores the token. No full-access key is added, so the account cannot upgrade the code.
+- A checked Intel quote, mainnet Circle USDC, an owner withdraw, and one account per meter. Circle testnet USDC is used on medbf5c and mf004b2. `open` on one contract holds many meters. `new(token)` stores the token. No full-access key is added, so the account cannot upgrade the code.
 
 </details>
 
@@ -616,7 +619,7 @@ Track **08 · Real-World Money:** “Build payroll, invoicing, remittances, merc
 | 06 · reputation and scam detection | — | Not built. |
 | 06 · pre-check (`preview`) | `preview` on chain; [meter-brown.vercel.app/check](https://meter-brown.vercel.app/check) or `node chain/check.mjs` (see [Try it](#try-it) for the poke deadline) | Does not block a spend; does not increment the tripwire. |
 | 06 · TEE attestation | Earlier signed-release contract `m2b2440`, `app/public/tee.json` | Intel quote not checked; not part of the time-gate / hijack contracts. |
-| 08 · invoicing for a real company | Sealed line between two parties; Circle testnet USDC on [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) (`real-token.json`, hero meter 4, **2.00 USDC**); payment-record `m028a47` (toy) | Not mainnet Circle; no wallet connect, no vendor accept flow, no audit; [poke meter 1 deadline](#try-it) must stay unpaid. |
+| 08 · invoicing for a real company | Sealed line between two parties; Circle testnet USDC on [`medbf5c`](https://testnet.nearblocks.io/address/medbf5c.mtrfc658fd1.testnet) (`real-token.json`, hero meter 4, **2.00 USDC**) and [`mf004b2`](https://testnet.nearblocks.io/address/mf004b2.mtrfc658fd1.testnet) (`v3.json`, hero meter 3, **2.00 USDC**); payment-record `m028a47` (toy) | Not mainnet Circle; no wallet connect, no vendor accept flow, no audit; [poke meter 1 deadline](#try-it) must stay unpaid. |
 | 08 · stablecoin rails and NEAR Intents | — | Not built. |
 | 08 · “usable tomorrow” | — | Not claimed for production payroll or merchant use. |
 

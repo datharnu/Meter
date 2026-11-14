@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="298" height="20" role="img" aria-label="Hijack runs use a toy token (public mint). The medbf5c run uses Circle testnet USDC.">
-  <title>Hijack runs use a toy token (public mint). The medbf5c run uses Circle testnet USDC.</title>
-  <rect width="298" height="20" rx="3" fill="#121413"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="20" role="img" aria-label="Hijack runs use a toy token (public mint). The medbf5c and mf004b2 runs use Circle testnet USDC.">
+  <title>Hijack runs use a toy token (public mint). The medbf5c and mf004b2 runs use Circle testnet USDC.</title>
+  <rect width="420" height="20" rx="3" fill="#121413"/>
   <rect width="52" height="20" fill="#3a3d3b"/>
   <text x="26" y="14" text-anchor="middle" fill="#ffffff" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">token</text>
-  <text x="175" y="14" text-anchor="middle" fill="#f3ffc9" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">toy public mint · Circle USDC medbf5c</text>
+  <text x="236" y="14" text-anchor="middle" fill="#f3ffc9" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">toy public mint · Circle USDC medbf5c, mf004b2</text>
 </svg>
